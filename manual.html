@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Инструкция — АР CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0D14;--s1:#131720;--s2:#1A1F2E;--border:#252B3B;
+  --text:#EDF0F7;--muted:#5C6580;--muted2:#8892AA;
+  --aziz:#4F8EF7;--redvan:#F7A94F;
+  --green:#2ECC8A;--yellow:#F5C518;--red:#F75F5F;--blue:#4F8EF7;
+  --r:14px;--r-sm:9px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;padding:0 0 60px}
+
+.hero{
+  background:linear-gradient(135deg,rgba(79,142,247,.15),rgba(247,169,79,.10));
+  border-bottom:1px solid var(--border);
+  padding:40px 24px 32px;text-align:center
+}
+.hero-icon{
+  width:64px;height:64px;border-radius:18px;margin:0 auto 16px;
+  background:linear-gradient(135deg,var(--aziz),var(--redvan));
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;font-weight:800;color:#fff;letter-spacing:-.5px
+}
+.hero-title{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+.hero-sub{font-size:14px;color:var(--muted2);line-height:1.5;max-width:360px;margin:0 auto}
+
+.content{max-width:600px;margin:0 auto;padding:0 20px}
+
+/* SECTION */
+.section{margin-top:36px}
+.section-num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:50%;
+  background:var(--aziz);color:#fff;font-size:13px;font-weight:800;
+  flex-shrink:0;margin-right:10px
+}
+.section-title{font-size:18px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;margin-bottom:16px}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:10px}
+.card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.card-icon{font-size:20px;flex-shrink:0}
+.card-title{font-size:14px;font-weight:700}
+.card-body{padding:14px 16px}
+.card-body p{font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:8px}
+.card-body p:last-child{margin-bottom:0}
+.card-body p b{color:var(--text);font-weight:600}
+
+/* STATUS LEGEND */
+.status-legend{display:flex;flex-direction:column;gap:10px}
+.sl-row{display:flex;align-items:flex-start;gap:12px}
+.sl-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;
+  flex-shrink:0;min-width:110px
+}
+.sl-badge.red{background:rgba(247,95,95,.12);color:var(--red);border:1px solid rgba(247,95,95,.25)}
+.sl-badge.yellow{background:rgba(245,197,24,.12);color:var(--yellow);border:1px solid rgba(245,197,24,.25)}
+.sl-badge.green{background:rgba(46,204,138,.12);color:var(--green);border:1px solid rgba(46,204,138,.25)}
+.sl-badge.blue{background:rgba(79,142,247,.12);color:var(--aziz);border:1px solid rgba(79,142,247,.25)}
+.sl-dot{width:7px;height:7px;border-radius:50%}
+.sl-badge.red .sl-dot{background:var(--red)}
+.sl-badge.yellow .sl-dot{background:var(--yellow)}
+.sl-badge.green .sl-dot{background:var(--green)}
+.sl-badge.blue .sl-dot{background:var(--aziz)}
+.sl-desc{font-size:13px;color:var(--muted2);padding-top:3px;line-height:1.5}
+
+/* STEPS */
+.steps{display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:none}
+.step-num{
+  width:28px;height:28px;border-radius:50%;flex-shrink:0;
+  background:var(--s2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:var(--muted2);margin-top:1px
+}
+.step-body{flex:1}
+.step-title{font-size:14px;font-weight:700;margin-bottom:4px}
+.step-desc{font-size:13px;color:var(--muted2);line-height:1.5}
+.step-desc b{color:var(--text)}
+
+/* TABS PREVIEW */
+.tabs-preview{display:flex;flex-direction:column;gap:8px}
+.tab-row{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--s2);border-radius:var(--r-sm);padding:12px 14px
+}
+.tab-ico{font-size:20px;flex-shrink:0;width:28px;text-align:center}
+.tab-info{}
+.tab-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.tab-desc{font-size:12px;color:var(--muted2);line-height:1.5}
+
+/* IMPORTANT */
+.important{
+  background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.25);
+  border-radius:var(--r-sm);padding:14px 16px;
+  display:flex;gap:12px;align-items:flex-start
+}
+.important-icon{font-size:20px;flex-shrink:0}
+.important-text{font-size:13px;color:var(--muted2);line-height:1.5}
+.important-text b{color:var(--text)}
+
+/* TIP */
+.tip{
+  background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);
+  border-radius:var(--r-sm);padding:14px 16px;margin-top:10px;
+  display:flex;gap:12px;align-items:flex-start
+}
+.tip-icon{font-size:18px;flex-shrink:0}
+.tip-text{font-size:13px;color:var(--muted2);line-height:1.5}
+.tip-text b{color:var(--text)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:32px 0}
+
+/* FOOTER */
+.footer{text-align:center;padding:32px 20px 0;color:var(--muted);font-size:12px}
+.footer b{color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-icon">АР</div>
+  <div class="hero-title">Инструкция АР CRM</div>
+  <div class="hero-sub">Азиз & Редван · Натяжные потолки<br>Прочитай один раз — дальше всё интуитивно</div>
+</div>
+
+<div class="content">
+
+  <!-- ── ЧТО ЭТО ── -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">0</span>Что это такое</div>
+    <div class="card">
+      <div class="card-body">
+        <p>Это общий рабочий блокнот для двух партнёров. Каждый ведёт свои объекты и замеры, оба видят общую картину бизнеса.</p>
+        <p><b>Что можно делать:</b> создавать объекты, добавлять замеры в календарь, вести учёт денег по каждому объекту отдельно, ставить статусы и видеть дату каждого изменения.</p>
+        <p><b>Уведомления:</b> когда один партнёр добавляет запись — второй получает сообщение в Telegram автоматически.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ВЫБОР ПАРТНЁРА ── -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">1</span>Первое что делаешь — выбираешь себя</div>
+    <div class="card">
+      <div class="card-body">
+        <p>Вверху экрана две кнопки — <b style="color:var(--aziz)">Азиз</b> и <b style="color:var(--redvan)">Редван</b>. Нажми на своё имя — оно подсветится.</p>
+        <p>После этого все новые объекты и замеры будут записаны на тебя. Это важно — не забывай переключаться если телефон общий.</p>
+      </div>
+    </div>
+    <div class="important">
+      <div class="important-icon">⚠️</div>
+      <div class="important-text"><b>Важно:</b> каждый работает со своего телефона. Выбор партнёра сохраняется пока не поменяешь сам.</div>
+    </div>
+  </div>
+
+  <!-- ── ВКЛАДКИ ── -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">2</span>Пять вкладок — что где</div>
+    <div class="card">
+      <div class="card-body" style="padding:10px">
+        <div class="tabs-preview">
+          <div class="tab-row">
+            <div class="tab-ico">📊</div>
+            <div class="tab-info">
+              <div class="tab-name">Сводка</div>
+              <div class="tab-desc">Главный экран. Общий приход и расход, баланс каждого партнёра, активные объекты.</div>
+            </div>
+          </div>
+          <div class="tab-row">
+            <div class="tab-ico">🏗</div>
+            <div class="tab-info">
+              <div class="tab-name">Объекты</div>
+              <div class="tab-desc">Список всех объектов с фильтрами по статусу. Нажми на объект — открывается карточка с деньгами.</div>
+            </div>
+          </div>
+          <div class="tab-row">
+            <div class="tab-ico">📅</div>
+            <div class="tab-info">
+              <div class="tab-name">Замеры</div>
+              <div class="tab-desc">Календарь. Выбери день — добавь замер. На днях с замерами видны цветные точки-статусы.</div>
+            </div>
+          </div>
+          <div class="tab-row">
+            <div class="tab-ico">➕</div>
+            <div class="tab-info">
+              <div class="tab-name">Создать</div>
+              <div class="tab-desc">Создать новый объект или замер. Объект с авансом сразу открывается в статусе «В работе».</div>
+            </div>
+          </div>
+          <div class="tab-row">
+            <div class="tab-ico">⚙️</div>
+            <div class="tab-info">
+              <div class="tab-name">Настройки</div>
+              <div class="tab-desc">Валюта (сўм или $), Telegram уведомления, экспорт данных.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── СТАТУСЫ ── -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">3</span>Статусы — цвет означает состояние</div>
+    <div class="card">
+      <div class="card-body">
+        <div class="status-legend">
+          <div class="sl-row">
+            <span class="sl-badge red"><span class="sl-dot"></span>Отменён</span>
+            <span class="sl-desc">Объект или замер не состоялся. Клиент отказался или перенесли.</span>
+          </div>
+          <div class="sl-row">
+            <span class="sl-badge yellow"><span class="sl-dot"></span>Ожидание</span>
+            <span class="sl-desc">Запись есть, но работа ещё не началась. Ждём замера, аванса или договорённости.</span>
+          </div>
+          <div class="sl-row">
+            <span class="sl-badge green"><span class="sl-dot"></span>В работе</span>
+            <span class="sl-desc">Аванс получен, монтаж идёт. Объект в активной стадии.</span>
+          </div>
+          <div class="sl-row">
+            <span class="sl-badge blue"><span class="sl-dot"></span>Сдан</span>
+            <span class="sl-desc">Объект завершён и сдан клиенту. Оплата получена.</span>
+          </div>
+        </div>
+        <div class="tip" style="margin-top:14px">
+          <div class="tip-icon">💡</div>
+          <div class="tip-text">Рядом с каждым статусом видна <b>дата и время изменения</b> — так понятно кто и когда обновил.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── КАК СОЗДАТЬ ОБЪЕКТ ── -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">4</span>Как создать объект</div>
+    <div class="card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Выбери тип</div>
+            <div class="step-desc"><b>Замер / новый объект</b> — клиент только пришёл, замер ещё предстоит. Статус автоматически «Ожидание».<br><b>Начатый объект</b> — аванс уже получен, работа идёт. Статус «В работе».</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Заполни данные</div>
+            <div class="step-desc">Имя клиента или адрес — обязательно. Площадь, дата, заметка — по желанию.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Если начатый объект — введи аванс</div>
+            <div class="step-desc">Сумма аванса автоматически запишется как первый приход внутри объекта.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Нажми «Создать объект»</div>
+            <div class="step-desc">Объект появится в списке. Нажми на него чтобы открыть и начать вести учёт.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ДЕНЬГИ ВНУТРИ ОБЪЕКТА ── -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">5</span>Учёт денег внутри объекта</div>
+    <div class="card">
+      <div class="card-body">
+        <p>Нажми на любой объект в списке — откроется его карточка.</p>
+        <p>Внизу экрана форма добавления записи. Три типа:</p>
+      </div>
+      <div style="display:flex;gap:0;border-top:1px solid var(--border)">
+        <div style="flex:1;padding:12px;text-align:center;border-right:1px solid var(--border)">
+          <div style="font-size:18px;margin-bottom:4px">💰</div>
+          <div style="font-size:12px;font-weight:700;color:var(--green)">+ Приход</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:4px">Аванс, доплата, оплата</div>
+        </div>
+        <div style="flex:1;padding:12px;text-align:center;border-right:1px solid var(--border)">
+          <div style="font-size:18px;margin-bottom:4px">📤</div>
+          <div style="font-size:12px;font-weight:700;color:var(--red)">− Расход</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:4px">Материал, транспорт, монтаж</div>
+        </div>
+        <div style="flex:1;padding:12px;text-align:center">
+          <div style="font-size:18px;margin-bottom:4px">📝</div>
+          <div style="font-size:12px;font-weight:700;color:var(--aziz)">ℹ Заметка</div>
+          <div style="font-size:11px;color:var(--muted2);margin-top:4px">Без суммы, просто текст</div>
+        </div>
+      </div>
+      <div class="card-body" style="border-top:1px solid var(--border)">
+        <p>Вверху карточки всегда видны <b>Приход, Расход и Баланс</b> по этому объекту.</p>
+      </div>
+    </div>
+    <div class="tip">
+      <div class="tip-icon">💡</div>
+      <div class="tip-text">Каждая запись показывает <b>дату и время добавления</b>. Ничего не потеряется и не изменится незаметно.</div>
+    </div>
+  </div>
+
+  <!-- ── ЗАМЕРЫ ── -->
+  <div class="section">
+    <div class="section-title"><span class="section-num">6</span>Календарь замеров</div>
+    <div class="card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Открой вкладку 📅 Замеры</div>
+            <div class="step-desc">Видишь месяц. Дни с замерами помечены цветными точками.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Нажми на нужный день</div>
+            <div class="step-desc">День выделится. Внизу появится форма добавления замера на этот день.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Заполни: имя клиента, адрес, время</div>
+            <div class="step-desc">Нажми <b>Добавить</b>. Замер появится под календарём.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Меняй статус замера кнопками 🔴🟡🟢🔵</div>
+            <div class="step-desc">После выезда — ставь «В работе» или «Сдан». Если клиент отменил — «Отменён».</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ── ПРАВИЛА ── -->
+  <div class="section" style="margin-top:0">
+    <div class="section-title"><span class="section-num">7</span>Три простых правила</div>
+    <div class="card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">①</div>
+          <div class="step-body">
+            <div class="step-title">Всегда выбирай своё имя перед работой</div>
+            <div class="step-desc">Кнопки <b style="color:var(--aziz)">Азиз</b> / <b style="color:var(--redvan)">Редван</b> вверху экрана.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">②</div>
+          <div class="step-body">
+            <div class="step-title">Объект начинается с аванса</div>
+            <div class="step-desc">Нет аванса — объект в статусе «Ожидание». Получил аванс — создай объект с авансом или смени статус на «В работе».</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">③</div>
+          <div class="step-body">
+            <div class="step-title">Сдал объект — ставь статус «Сдан»</div>
+            <div class="step-desc">Это помогает видеть на сводке сколько объектов реально активны прямо сейчас.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>АР CRM · Азиз & Редван · Натяжные потолки</p>
+  <p style="margin-top:4px">Вопросы — к <b>Азизу</b></p>
+</div>
+
+</body>
+</html>

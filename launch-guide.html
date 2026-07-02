@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Как запустить АР CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0A0D14;--s1:#131720;--s2:#1A1F2E;--border:#252B3B;
+  --text:#EDF0F7;--muted:#5C6580;--muted2:#8892AA;
+  --aziz:#4F8EF7;--green:#2ECC8A;--yellow:#F5C518;--red:#F75F5F;
+  --r:14px;--r-sm:9px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;padding:0 0 60px}
+
+.hero{
+  background:linear-gradient(135deg,rgba(79,142,247,.15),rgba(46,204,138,.08));
+  border-bottom:1px solid var(--border);padding:40px 24px 32px;text-align:center
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(46,204,138,.12);border:1px solid rgba(46,204,138,.25);
+  color:var(--green);border-radius:20px;padding:4px 14px;
+  font-size:12px;font-weight:700;margin-bottom:14px
+}
+.hero-title{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px}
+.hero-sub{font-size:14px;color:var(--muted2);max-width:380px;margin:0 auto;line-height:1.5}
+
+.content{max-width:600px;margin:0 auto;padding:0 20px}
+
+/* PHASE */
+.phase{margin-top:32px}
+.phase-header{
+  display:flex;align-items:center;gap:12px;
+  background:var(--s1);border:1px solid var(--border);
+  border-radius:var(--r) var(--r) 0 0;
+  padding:14px 16px;
+}
+.phase-num{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff
+}
+.phase-num.blue{background:var(--aziz)}
+.phase-num.green{background:var(--green)}
+.phase-num.yellow{background:var(--yellow)}
+.phase-title{font-size:16px;font-weight:800;letter-spacing:-.2px}
+.phase-sub{font-size:12px;color:var(--muted2);margin-top:1px}
+
+.phase-body{
+  background:var(--s1);border:1px solid var(--border);border-top:none;
+  border-radius:0 0 var(--r) var(--r);overflow:hidden
+}
+
+/* STEP */
+.step{
+  display:flex;gap:14px;padding:16px;
+  border-bottom:1px solid var(--border)
+}
+.step:last-child{border-bottom:none}
+.step-num{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  background:var(--s2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:var(--muted2);margin-top:1px
+}
+.step-body{flex:1;min-width:0}
+.step-title{font-size:14px;font-weight:700;margin-bottom:5px}
+.step-desc{font-size:13px;color:var(--muted2);line-height:1.6}
+.step-desc b{color:var(--text);font-weight:600}
+
+/* SCREENSHOT MOCK */
+.screen{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:12px 14px;margin-top:10px;
+  font-size:12px;color:var(--muted2);font-family:monospace;line-height:1.8
+}
+.screen b{color:var(--green);font-weight:700}
+.screen .click{color:var(--aziz)}
+.screen .input{color:var(--yellow)}
+
+/* BUTTON MOCK */
+.btn-mock{
+  display:inline-block;background:var(--green);color:#fff;
+  border-radius:6px;padding:5px 14px;font-size:12px;font-weight:700;
+  margin:6px 0
+}
+.btn-mock.gray{background:var(--s2);color:var(--text);border:1px solid var(--border)}
+.btn-mock.blue{background:var(--aziz)}
+
+/* TIP / WARNING */
+.tip{
+  background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);
+  border-radius:var(--r-sm);padding:12px 14px;margin-top:10px;
+  display:flex;gap:10px;align-items:flex-start
+}
+.tip-i{font-size:16px;flex-shrink:0}
+.tip-t{font-size:12px;color:var(--muted2);line-height:1.5}
+.tip-t b{color:var(--text)}
+
+.warn{
+  background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.2);
+  border-radius:var(--r-sm);padding:12px 14px;margin-top:10px;
+  display:flex;gap:10px;align-items:flex-start
+}
+.warn-i{font-size:16px;flex-shrink:0}
+.warn-t{font-size:12px;color:var(--muted2);line-height:1.5}
+.warn-t b{color:var(--text)}
+
+/* RESULT BOX */
+.result-box{
+  background:rgba(46,204,138,.08);border:2px solid rgba(46,204,138,.3);
+  border-radius:var(--r);padding:20px;text-align:center;margin-top:10px
+}
+.result-icon{font-size:36px;margin-bottom:10px}
+.result-title{font-size:16px;font-weight:800;color:var(--green);margin-bottom:6px}
+.result-link{
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:10px 14px;
+  font-family:monospace;font-size:13px;color:var(--aziz);
+  margin-top:10px;word-break:break-all
+}
+.result-desc{font-size:12px;color:var(--muted2);margin-top:8px;line-height:1.5}
+
+/* FILES */
+.files-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.file-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:10px 14px
+}
+.file-icon{font-size:16px;flex-shrink:0}
+.file-name{font-size:13px;font-weight:700;font-family:monospace;color:var(--aziz)}
+.file-desc{font-size:11px;color:var(--muted2);margin-top:1px}
+
+/* CHECKLIST */
+.checklist{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.check-row{
+  display:flex;align-items:center;gap:10px;
+  background:var(--s2);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:10px 14px
+}
+.check-box{
+  width:20px;height:20px;border-radius:5px;flex-shrink:0;
+  border:2px solid var(--border);display:flex;align-items:center;justify-content:center
+}
+.check-box.done{background:var(--green);border-color:var(--green);color:#fff;font-size:12px}
+.check-text{font-size:13px;color:var(--text)}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:28px 0}
+
+/* N8N SECTION */
+.n8n-phase{
+  background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.2);
+  border-radius:var(--r);padding:20px;margin-top:10px
+}
+.n8n-title{font-size:15px;font-weight:800;color:var(--aziz);margin-bottom:6px}
+.n8n-desc{font-size:13px;color:var(--muted2);line-height:1.5;margin-bottom:14px}
+.n8n-steps{display:flex;flex-direction:column;gap:10px}
+.n8n-step{display:flex;gap:10px;align-items:flex-start}
+.n8n-num{
+  width:22px;height:22px;border-radius:50%;background:var(--aziz);
+  color:#fff;font-size:10px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px
+}
+.n8n-text{font-size:13px;color:var(--muted2);line-height:1.5}
+.n8n-text b{color:var(--text)}
+
+.footer{text-align:center;padding:32px 20px 0;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-badge">✓ Пошаговая инструкция</div>
+  <div class="hero-title">Как запустить АР CRM</div>
+  <div class="hero-sub">От скачанных файлов до живой ссылки для двух телефонов. Займёт 10–15 минут.</div>
+</div>
+
+<div class="content">
+
+  <!-- ── ЧТО НУЖНО ── -->
+  <div class="phase" style="margin-top:28px">
+    <div class="phase-header">
+      <div class="phase-num blue">0</div>
+      <div>
+        <div class="phase-title">Что нужно перед стартом</div>
+        <div class="phase-sub">Убедись что всё есть</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-body">
+          <div class="files-list">
+            <div class="file-row">
+              <span class="file-icon">📄</span>
+              <div>
+                <div class="file-name">index.html</div>
+                <div class="file-desc">Главный файл приложения</div>
+              </div>
+            </div>
+            <div class="file-row">
+              <span class="file-icon">📄</span>
+              <div>
+                <div class="file-name">manifest.json</div>
+                <div class="file-desc">Настройки PWA — чтобы устанавливалось как приложение</div>
+              </div>
+            </div>
+            <div class="file-row">
+              <span class="file-icon">📄</span>
+              <div>
+                <div class="file-name">sw.js</div>
+                <div class="file-desc">Service Worker — работа офлайн</div>
+              </div>
+            </div>
+            <div class="file-row">
+              <span class="file-icon">📄</span>
+              <div>
+                <div class="file-name">manual.html</div>
+                <div class="file-desc">Инструкция для Редвана (опционально)</div>
+              </div>
+            </div>
+          </div>
+          <div class="tip" style="margin-top:12px">
+            <div class="tip-i">💡</div>
+            <div class="tip-t">Все файлы скачай из Claude на компьютер в одну папку. Удобнее всего сделать это с компьютера, не с телефона.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ФАЗА 1: GITHUB ── -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num blue">1</div>
+      <div>
+        <div class="phase-title">Создать аккаунт на GitHub</div>
+        <div class="phase-sub">Бесплатно · 3 минуты</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Открой сайт</div>
+          <div class="step-desc">Зайди на <b>github.com</b> с компьютера или телефона.</div>
+          <div class="screen"><b>github.com</b></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Нажми «Sign up»</div>
+          <div class="step-desc">Кнопка в правом верхнем углу. Введи email, пароль, придумай имя пользователя.</div>
+          <div class="warn" style="margin-top:8px">
+            <div class="warn-i">⚠️</div>
+            <div class="warn-t"><b>Запомни имя пользователя</b> — оно войдёт в адрес твоего приложения. Например: <b>aziz-ar</b></div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Подтверди email</div>
+          <div class="step-desc">GitHub пришлёт письмо — нажми кнопку подтверждения в письме. Без этого страница не откроется.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ФАЗА 2: РЕПОЗИТОРИЙ ── -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num blue">2</div>
+      <div>
+        <div class="phase-title">Создать репозиторий</div>
+        <div class="phase-sub">Это папка для файлов приложения · 2 минуты</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Нажми «+» → «New repository»</div>
+          <div class="step-desc">Кнопка плюс в правом верхнем углу после входа.</div>
+          <div class="screen"><span class="click">+ → New repository</span></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Заполни форму точно так:</div>
+          <div class="screen">
+            Repository name: <span class="input">ar-crm</span><br>
+            Visibility: <b>Public</b> ← обязательно!<br>
+            Add README: <b>✓ включи</b><br>
+            .gitignore: <b>None</b><br>
+            License: <b>None</b>
+          </div>
+          <div class="warn">
+            <div class="warn-i">⚠️</div>
+            <div class="warn-t"><b>Обязательно выбери Public</b> — иначе бесплатный хостинг не работает. Данные приложения хранятся на твоём телефоне, не на GitHub, поэтому это безопасно.</div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Нажми зелёную кнопку «Create repository»</div>
+          <div class="step-desc">Откроется пустая страница репозитория.</div>
+          <div class="btn-mock">Create repository</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ФАЗА 3: ЗАГРУЗКА ФАЙЛОВ ── -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num blue">3</div>
+      <div>
+        <div class="phase-title">Загрузить файлы</div>
+        <div class="phase-sub">3 файла — 2 минуты</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">На странице репозитория нажми «uploading an existing file»</div>
+          <div class="step-desc">Это ссылка в центре страницы — маленький текст под заголовком.</div>
+          <div class="screen"><span class="click">uploading an existing file</span></div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Перетащи все 4 файла в область загрузки</div>
+          <div class="step-desc">Или нажми «choose your files» и выбери все четыре сразу зажав <b>Ctrl</b> (на Windows) или <b>⌘</b> (на Mac).</div>
+          <div class="files-list" style="margin-top:8px">
+            <div class="file-row"><span class="file-icon">📄</span><div><div class="file-name">index.html</div></div></div>
+            <div class="file-row"><span class="file-icon">📄</span><div><div class="file-name">manifest.json</div></div></div>
+            <div class="file-row"><span class="file-icon">📄</span><div><div class="file-name">sw.js</div></div></div>
+            <div class="file-row"><span class="file-icon">📄</span><div><div class="file-name">manual.html</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Нажми зелёную кнопку «Commit changes»</div>
+          <div class="step-desc">Файлы загрузятся. Ничего не меняй в полях выше — просто нажми кнопку.</div>
+          <div class="btn-mock">Commit changes</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ФАЗА 4: PAGES ── -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num green">4</div>
+      <div>
+        <div class="phase-title">Включить GitHub Pages</div>
+        <div class="phase-sub">Это делает файлы доступными по ссылке · 2 минуты</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Нажми «Settings» вверху репозитория</div>
+          <div class="screen"><span class="click">Settings</span> (вкладка в меню репозитория)</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">В левом меню найди «Pages»</div>
+          <div class="step-desc">Прокрути левую панель вниз — раздел «Pages» в группе «Code and automation».</div>
+          <div class="screen">
+            Code and automation<br>
+            &nbsp;&nbsp;<span class="click">Pages</span> ← нажми сюда
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">В разделе «Source» выбери «Deploy from a branch»</div>
+          <div class="step-desc">Если уже стоит — не меняй.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">В разделе «Branch» выбери «main» → «/ (root)» → нажми Save</div>
+          <div class="screen">
+            Branch: <b>main</b> &nbsp; / (root) &nbsp; <span class="click">Save</span>
+          </div>
+          <div class="tip">
+            <div class="tip-i">⏳</div>
+            <div class="tip-t">Подожди <b>1–2 минуты</b>. Обнови страницу. Появится зелёная надпись с адресом сайта.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── РЕЗУЛЬТАТ ── -->
+  <div class="result-box">
+    <div class="result-icon">🎉</div>
+    <div class="result-title">Приложение запущено!</div>
+    <div class="result-link">https://ИМЯ_АККАУНТА.github.io/ar-crm/</div>
+    <div class="result-desc">Это твоя постоянная ссылка. Отправь её Редвану — он открывает на iPhone через Safari и устанавливает на главный экран.</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ── ФАЗА 5: УСТАНОВКА НА ТЕЛЕФОНЫ ── -->
+  <div class="phase" style="margin-top:0">
+    <div class="phase-header">
+      <div class="phase-num green">5</div>
+      <div>
+        <div class="phase-title">Установить на оба телефона</div>
+        <div class="phase-sub">Android и iPhone — разные способы</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-num">📱</div>
+        <div class="step-body">
+          <div class="step-title" style="color:var(--aziz)">Азиз — Android (Chrome)</div>
+          <div class="step-desc">
+            1. Открой ссылку в <b>Chrome</b><br>
+            2. Нажми три точки <b>⋮</b> вверху справа<br>
+            3. Выбери <b>«Добавить на главный экран»</b> или <b>«Установить приложение»</b><br>
+            4. Нажми <b>«Установить»</b><br>
+            5. Иконка АР CRM появится на рабочем столе
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">🍎</div>
+        <div class="step-body">
+          <div class="step-title" style="color:var(--redvan,#F7A94F)">Редван — iPhone (Safari)</div>
+          <div class="step-desc">
+            1. Открой ссылку в <b>Safari</b> (не Chrome!)<br>
+            2. Нажми кнопку <b>«Поделиться»</b> внизу — квадрат со стрелкой вверх<br>
+            3. Прокрути список вниз → <b>«На экран Домой»</b><br>
+            4. Нажми <b>«Добавить»</b><br>
+            5. Иконка АР CRM появится на главном экране
+          </div>
+          <div class="warn">
+            <div class="warn-i">⚠️</div>
+            <div class="warn-t">На iPhone работает <b>только через Safari</b>. Chrome на iPhone не поддерживает установку PWA.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ФАЗА 6: N8N ── -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num yellow">6</div>
+      <div>
+        <div class="phase-title">Подключить Telegram уведомления</div>
+        <div class="phase-sub">Через n8n · По желанию · 10 минут</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-body">
+          <div class="n8n-phase">
+            <div class="n8n-title">🔗 Схема подключения</div>
+            <div class="n8n-desc">Когда любой партнёр создаёт объект или меняет статус — оба получают сообщение в Telegram.</div>
+            <div class="n8n-steps">
+              <div class="n8n-step">
+                <div class="n8n-num">1</div>
+                <div class="n8n-text">Зайди на <b>stiv122469.app.n8n.cloud</b> → создай новый воркфлоу</div>
+              </div>
+              <div class="n8n-step">
+                <div class="n8n-num">2</div>
+                <div class="n8n-text">Добавь узел <b>Webhook</b> — скопируй его URL (кнопка «Copy URL»)</div>
+              </div>
+              <div class="n8n-step">
+                <div class="n8n-num">3</div>
+                <div class="n8n-text">Добавь узел <b>Telegram</b> → подключи токен бота АРВИС → в поле Text вставь: <b>{{ $json.message }}</b></div>
+              </div>
+              <div class="n8n-step">
+                <div class="n8n-num">4</div>
+                <div class="n8n-text">Продублируй Telegram узел — один с Chat ID Азиза, второй с Chat ID Редвана</div>
+              </div>
+              <div class="n8n-step">
+                <div class="n8n-num">5</div>
+                <div class="n8n-text">Активируй воркфлоу — тумблер вверху справа</div>
+              </div>
+              <div class="n8n-step">
+                <div class="n8n-num">6</div>
+                <div class="n8n-text">В приложении: вкладка <b>⚙️ Настройки</b> → вставь URL вебхука → нажми <b>Сохранить</b></div>
+              </div>
+            </div>
+            <div class="tip" style="margin-top:14px">
+              <div class="tip-i">💡</div>
+              <div class="tip-t">Chat ID найти просто: напиши боту <b>@userinfobot</b> в Telegram — он пришлёт твой ID числом. Попроси то же самое сделать Редвану.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ЧЕКЛИСТ ── -->
+  <div class="phase">
+    <div class="phase-header">
+      <div class="phase-num green">✓</div>
+      <div>
+        <div class="phase-title">Финальный чеклист</div>
+        <div class="phase-sub">Всё готово когда все пункты выполнены</div>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="step">
+        <div class="step-body">
+          <div class="checklist">
+            <div class="check-row"><div class="check-box">1</div><div class="check-text">Аккаунт на GitHub создан</div></div>
+            <div class="check-row"><div class="check-box">2</div><div class="check-text">Репозиторий ar-crm создан (Public)</div></div>
+            <div class="check-row"><div class="check-box">3</div><div class="check-text">Файлы загружены (index.html, manifest.json, sw.js)</div></div>
+            <div class="check-row"><div class="check-box">4</div><div class="check-text">GitHub Pages включён → ссылка получена</div></div>
+            <div class="check-row"><div class="check-box">5</div><div class="check-text">Установлено на твой Android</div></div>
+            <div class="check-row"><div class="check-box">6</div><div class="check-text">Редван установил на iPhone через Safari</div></div>
+            <div class="check-row"><div class="check-box">7</div><div class="check-text">n8n воркфлоу настроен (Telegram уведомления)</div></div>
+            <div class="check-row"><div class="check-box">8</div><div class="check-text">Webhook URL вставлен в ⚙️ Настройки приложения</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- ── ЕСЛИ ЧТО-ТО НЕ ТАК ── -->
+  <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-top:0">
+    <div style="font-size:15px;font-weight:800;margin-bottom:12px">🆘 Если что-то не работает</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:13px;color:var(--muted2);display:flex;gap:10px">
+        <span>❓</span><span><b style="color:var(--text)">Страница не открывается</b> — подожди 5 минут после включения Pages, обнови браузер</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted2);display:flex;gap:10px">
+        <span>❓</span><span><b style="color:var(--text)">На iPhone не устанавливается</b> — убедись что открываешь в Safari, не в Chrome</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted2);display:flex;gap:10px">
+        <span>❓</span><span><b style="color:var(--text)">Данные у Редвана не видны</b> — это нормально, каждый хранит свои данные локально. Синхронизация через Telegram уведомления</span>
+      </div>
+      <div style="font-size:13px;color:var(--muted2);display:flex;gap:10px">
+        <span>❓</span><span><b style="color:var(--text)">Нужно обновить приложение</b> — просто загрузи новый index.html на GitHub тем же способом</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>АР CRM · Азиз & Редван · Натяжные потолки</p>
+  <p style="margin-top:4px">Если застрял на каком-то шаге — скинь скриншот Клоду</p>
+</div>
+
+</body>
+</html>
