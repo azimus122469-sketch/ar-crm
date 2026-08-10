@@ -315,6 +315,35 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 </head>
 <body>
 
+<div id="pin-screen" style="position:fixed;inset:0;background:var(--bg);z-index:1500;display:none;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px">
+  <div class="loading-logo" style="animation:none">АР</div>
+  <div id="pin-title" style="font-size:16px;font-weight:800">Введите код доступа</div>
+  <div id="pin-sub" style="font-size:12px;color:var(--muted);margin-top:-14px;text-align:center;max-width:280px;line-height:1.5"></div>
+  <div style="display:flex;gap:12px" id="pin-dots"></div>
+  <div style="display:grid;grid-template-columns:repeat(3,64px);gap:14px;margin-top:4px">
+    <button class="pin-k" onclick="pinPress('1')">1</button>
+    <button class="pin-k" onclick="pinPress('2')">2</button>
+    <button class="pin-k" onclick="pinPress('3')">3</button>
+    <button class="pin-k" onclick="pinPress('4')">4</button>
+    <button class="pin-k" onclick="pinPress('5')">5</button>
+    <button class="pin-k" onclick="pinPress('6')">6</button>
+    <button class="pin-k" onclick="pinPress('7')">7</button>
+    <button class="pin-k" onclick="pinPress('8')">8</button>
+    <button class="pin-k" onclick="pinPress('9')">9</button>
+    <span></span>
+    <button class="pin-k" onclick="pinPress('0')">0</button>
+    <button class="pin-k" onclick="pinDel()" style="font-size:20px">⌫</button>
+  </div>
+</div>
+<style>
+.pin-k{width:64px;height:64px;border-radius:50%;border:1.5px solid var(--border2);background:var(--s1);color:var(--text);font-family:inherit;font-size:24px;font-weight:700;cursor:pointer;transition:background .15s}
+.pin-k:active{background:var(--s3)}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted2);transition:all .15s}
+.pin-dot.on{background:var(--aziz);border-color:var(--aziz)}
+.pin-dot.err{border-color:var(--red);animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
+
 <div class="loading-screen" id="loading-screen">
   <div class="loading-logo">АР</div>
   <div class="loading-text" id="loading-text">Подключение к базе данных...</div>
@@ -487,6 +516,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         <div><div class="setting-l">Объектов в базе</div></div>
         <div style="font-size:13px;color:var(--muted)" id="s-objs">0</div>
       </div>
+      <div class="setting-row">
+        <div><div class="setting-l">🔒 Код доступа</div><div class="setting-s">Спрашивается при каждом открытии</div></div>
+        <button class="cur-btn" style="border:1px solid var(--border2);border-radius:var(--r-xs);background:var(--s2)" onclick="changePin()">Сменить</button>
+      </div>
     </div>
 
     <div class="setting-block">
@@ -626,6 +659,62 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const APP_VERSION = 'v3.0';
+
+// ── PIN-ЭКРАН (защита от чужих глаз на устройстве) ──
+let pinBuf = '', pinMode = 'enter', pinFirst = '';
+function renderPinDots(err){
+  const set = document.getElementById('pin-dots');
+  set.innerHTML = '';
+  for(let i=0;i<4;i++){
+    const d = document.createElement('div');
+    d.className = 'pin-dot'+(i<pinBuf.length?' on':'')+(err?' err':'');
+    set.appendChild(d);
+  }
+}
+window.pinDel = () => { pinBuf = pinBuf.slice(0,-1); renderPinDots(); };
+window.pinPress = v => {
+  if(pinBuf.length>=4) return;
+  pinBuf += v; renderPinDots();
+  if(pinBuf.length===4) setTimeout(pinCheck, 120);
+};
+function pinCheck(){
+  const saved = localStorage.getItem('ar_pin');
+  if(!saved){
+    // первый запуск — задаём код
+    if(pinMode==='enter'){
+      pinFirst = pinBuf; pinBuf=''; pinMode='confirm';
+      document.getElementById('pin-title').textContent = 'Повторите код';
+      document.getElementById('pin-sub').textContent = 'Запомните его — он один на двоих';
+      renderPinDots();
+    } else {
+      if(pinBuf===pinFirst){
+        localStorage.setItem('ar_pin', pinBuf);
+        unlockApp();
+      } else {
+        pinBuf=''; pinMode='enter'; pinFirst='';
+        document.getElementById('pin-title').textContent = 'Коды не совпали, заново';
+        renderPinDots(true);
+      }
+    }
+  } else {
+    if(pinBuf===saved){ unlockApp(); }
+    else { renderPinDots(true); setTimeout(()=>{ pinBuf=''; renderPinDots(); }, 350); }
+  }
+}
+function unlockApp(){
+  document.getElementById('pin-screen').style.display='none';
+  document.getElementById('loading-screen').style.display='flex';
+  bootApp();
+}
+function showPinGate(){
+  const saved = localStorage.getItem('ar_pin');
+  pinBuf=''; pinFirst=''; pinMode='enter';
+  document.getElementById('pin-title').textContent = saved ? 'Введите код доступа' : 'Придумайте код доступа';
+  document.getElementById('pin-sub').textContent = saved ? '' : '4 цифры. Один общий для Азиза и Редвана.';
+  renderPinDots();
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('pin-screen').style.display='flex';
+}
 let objects = [], measures = {};
 let currency = localStorage.getItem('ar_cur') || 'UZS';
 let activePill = localStorage.getItem('ar_pill') || 'aziz';
@@ -719,7 +808,7 @@ function reveal(){
 }
 
 // ── INIT ──
-function init(){
+function bootApp(){
   if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
   const now = new Date();
   calYear = now.getFullYear(); calMonth = now.getMonth();
@@ -1242,7 +1331,13 @@ function toast(msg, type='success'){
   clearTimeout(tt); tt = setTimeout(()=>el.className='toast', 3200);
 }
 
-init();
+window.changePin = () => {
+  localStorage.removeItem('ar_pin');
+  toast('Задайте новый код','info');
+  setTimeout(showPinGate, 400);
+};
+
+showPinGate();
 </script>
 </body>
 </html>
