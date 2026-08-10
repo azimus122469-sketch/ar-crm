@@ -9,71 +9,66 @@
 <meta name="theme-color" content="#0A0D14">
 <link rel="manifest" href="manifest.json">
 <title>АР CRM — Азиз & Редван</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#0A0D14;--s1:#131720;--s2:#1A1F2E;--s3:#222736;--border:#252B3B;--border2:#2E364A;
   --text:#EDF0F7;--muted:#5C6580;--muted2:#8892AA;
-  --aziz:#4F8EF7;--aziz-bg:rgba(79,142,247,.12);--aziz-border:rgba(79,142,247,.25);
-  --redvan:#F7A94F;--redvan-bg:rgba(247,169,79,.12);--redvan-border:rgba(247,169,79,.25);
-  --green:#2ECC8A;--green-bg:rgba(46,204,138,.12);--green-border:rgba(46,204,138,.25);
-  --yellow:#F5C518;--yellow-bg:rgba(245,197,24,.12);--yellow-border:rgba(245,197,24,.25);
-  --red:#F75F5F;--red-bg:rgba(247,95,95,.12);--red-border:rgba(247,95,95,.25);
-  --blue:#4F8EF7;--blue-bg:rgba(79,142,247,.12);
+  --aziz:#4F8EF7;--aziz-bg:rgba(79,142,247,.12);--aziz-b:rgba(79,142,247,.25);
+  --redvan:#F7A94F;--redvan-bg:rgba(247,169,79,.12);--redvan-b:rgba(247,169,79,.25);
+  --green:#2ECC8A;--green-bg:rgba(46,204,138,.12);--green-b:rgba(46,204,138,.25);
+  --yellow:#F5C518;--yellow-bg:rgba(245,197,24,.12);--yellow-b:rgba(245,197,24,.25);
+  --red:#F75F5F;--red-bg:rgba(247,95,95,.12);--red-b:rgba(247,95,95,.25);
+  --purple:#9B6FFF;--purple-bg:rgba(155,111,255,.12);--purple-b:rgba(155,111,255,.28);
   --r:14px;--r-sm:9px;--r-xs:6px;
-  --sb:env(safe-area-inset-bottom,0px);
-  --st:env(safe-area-inset-top,0px);
+  --sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);
 }
 html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased}
 .app{display:flex;flex-direction:column;height:100%;height:100dvh}
 
-/* HEADER */
-.hdr{
-  background:var(--s1);border-bottom:1px solid var(--border);
-  padding:12px 16px;padding-top:calc(12px + var(--st));flex-shrink:0;
-  display:flex;align-items:center;justify-content:space-between;gap:12px
-}
-.logo{display:flex;align-items:center;gap:10px}
-.logo-ico{
-  width:36px;height:36px;border-radius:10px;flex-shrink:0;
-  background:linear-gradient(135deg,var(--aziz),var(--redvan));
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:12px;color:#fff;letter-spacing:-.3px
-}
+.loading-screen{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;text-align:center}
+.loading-logo{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--aziz),var(--redvan));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(.95)}}
+.loading-text{font-size:14px;color:var(--muted);font-weight:500}
+.loading-ver{font-size:11px;color:var(--muted);opacity:.6}
+
+.hdr{background:var(--s1);border-bottom:1px solid var(--border);padding:12px 16px;padding-top:calc(12px + var(--st));flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-ico{width:36px;height:36px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,var(--aziz),var(--redvan));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#fff}
 .logo-name{font-weight:800;font-size:15px;letter-spacing:-.3px}
 .logo-sub{font-size:10px;color:var(--muted);margin-top:1px}
 .hdr-pills{display:flex;gap:6px}
-.pill{
-  display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;
-  font-size:12px;font-weight:700;border:1.5px solid transparent;cursor:pointer;
-  transition:opacity .2s;user-select:none
-}
+.pill{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:700;border:1.5px solid transparent;cursor:pointer;transition:opacity .2s;user-select:none}
 .pill.aziz{border-color:var(--aziz);color:var(--aziz);background:var(--aziz-bg)}
 .pill.redvan{border-color:var(--redvan);color:var(--redvan);background:var(--redvan-bg)}
 .pill:not(.active){opacity:.3}
 .pdot{width:6px;height:6px;border-radius:50%}
 .pill.aziz .pdot{background:var(--aziz)}
 .pill.redvan .pdot{background:var(--redvan)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+.sync-dot.ok{background:var(--green)}
+.sync-dot.sync{background:var(--yellow);animation:blink .6s infinite}
+.sync-dot.err{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* TABS */
+.conn-banner{display:none;padding:10px 16px;background:var(--red-bg);border-bottom:1px solid var(--red-b);font-size:12px;color:var(--red);font-weight:600;line-height:1.5;flex-shrink:0}
+.conn-banner.show{display:block}
+
 .tabs{background:var(--s1);border-bottom:1px solid var(--border);display:flex;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{flex:1;min-width:60px;padding:10px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none}
+.tab{flex:1;min-width:56px;padding:10px 4px;text-align:center;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none}
 .tab.active{color:var(--aziz);border-bottom-color:var(--aziz)}
 
-/* PAGES */
 .pages{flex:1;overflow:hidden;position:relative}
 .page{position:absolute;inset:0;overflow-y:auto;display:none;flex-direction:column;-webkit-overflow-scrolling:touch;padding-bottom:calc(20px + var(--sb))}
 .page.active{display:flex}
 
-/* SECTION */
 .sec{padding:16px 16px 0}
 .sec-t{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .sec-t::after{content:'';flex:1;height:1px;background:var(--border)}
 .sec-t span{background:var(--s2);border:1px solid var(--border2);color:var(--muted2);font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px}
 
-/* STATS */
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px}
 .stat{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
 .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
@@ -82,72 +77,67 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .stat.obj::before{background:var(--aziz)}
 .stat.mea::before{background:var(--yellow)}
 .stat-l{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
-.stat-v{font-size:20px;font-weight:800;line-height:1;letter-spacing:-.5px}
+.stat-v{font-size:18px;font-weight:800;line-height:1;letter-spacing:-.5px}
 .stat.inc .stat-v{color:var(--green)}
 .stat.exp .stat-v{color:var(--red)}
 .stat.obj .stat-v{color:var(--aziz)}
 .stat.mea .stat-v{color:var(--yellow)}
 .stat-s{font-size:10px;color:var(--muted);margin-top:4px}
 
-/* STATUS BADGE */
 .status{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;flex-shrink:0}
-.status.cancelled{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
-.status.waiting{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-border)}
-.status.working{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.status.done{background:var(--blue-bg);color:var(--aziz);border:1px solid var(--aziz-border)}
+.status.cancelled{background:var(--red-bg);color:var(--red);border:1px solid var(--red-b)}
+.status.waiting{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-b)}
+.status.working{background:var(--green-bg);color:var(--green);border:1px solid var(--green-b)}
+.status.done{background:var(--aziz-bg);color:var(--aziz);border:1px solid var(--aziz-b)}
 .status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .status.cancelled .status-dot{background:var(--red)}
 .status.waiting .status-dot{background:var(--yellow)}
 .status.working .status-dot{background:var(--green)}
 .status.done .status-dot{background:var(--aziz)}
 
-/* OBJECT CARD */
 .obj-list{display:flex;flex-direction:column;gap:10px;padding:0 16px}
 .obj-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:border-color .2s}
 .obj-card:active{border-color:var(--border2)}
 .obj-card-top{padding:14px;border-bottom:1px solid var(--border)}
-.obj-card-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.obj-card-r1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
 .obj-name{font-size:15px;font-weight:700;letter-spacing:-.2px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .obj-type{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:700;flex-shrink:0}
 .obj-type.measure{background:var(--yellow-bg);color:var(--yellow)}
 .obj-type.project{background:var(--green-bg);color:var(--green)}
-.obj-meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.obj-partner{font-size:11px;font-weight:600}
+.obj-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.obj-partner{font-size:11px;font-weight:700}
 .obj-partner.aziz{color:var(--aziz)}
 .obj-partner.redvan{color:var(--redvan)}
-.obj-date{font-size:11px;color:var(--muted)}
 .obj-addr{font-size:12px;color:var(--muted2);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.obj-card-bottom{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;background:var(--s2)}
+.obj-card-bot{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;background:var(--s2)}
 .obj-fin{display:flex;gap:16px}
 .obj-fin-item{display:flex;flex-direction:column;gap:1px}
 .obj-fin-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .obj-fin-v{font-size:12px;font-weight:700}
 .obj-fin-v.inc{color:var(--green)}
 .obj-fin-v.exp{color:var(--red)}
-.obj-fin-v.net{color:var(--text)}
-.obj-arrow{color:var(--muted);font-size:16px}
-.status-updated{font-size:10px;color:var(--muted);margin-top:6px}
+.lock-icon{font-size:14px;margin-left:4px}
+.status-ts{font-size:10px;color:var(--muted);margin-top:4px}
 
-/* OBJECT DETAIL */
-.detail-hdr{
-  background:var(--s1);border-bottom:1px solid var(--border);
-  padding:14px 16px;padding-top:calc(14px + var(--st));
-  flex-shrink:0;position:sticky;top:0;z-index:10
-}
+.detail-view{position:fixed;inset:0;background:var(--bg);z-index:50;display:none;flex-direction:column;overflow:hidden}
+.detail-hdr{background:var(--s1);border-bottom:1px solid var(--border);padding:14px 16px;padding-top:calc(14px + var(--st));flex-shrink:0}
 .detail-back{display:flex;align-items:center;gap:8px;margin-bottom:10px;cursor:pointer}
-.detail-back-ico{color:var(--aziz);font-size:18px;line-height:1}
+.detail-back-ico{color:var(--aziz);font-size:18px}
 .detail-back-lbl{font-size:13px;color:var(--aziz);font-weight:600}
-.detail-title{font-size:18px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
+.detail-title-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.detail-title{font-size:18px;font-weight:800;letter-spacing:-.4px;flex:1;min-width:0}
 .detail-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .detail-addr{font-size:12px;color:var(--muted2);margin-top:2px}
+.detail-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.detail-btn{padding:6px 12px;border-radius:var(--r-xs);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;transition:opacity .2s}
+.detail-btn:active{opacity:.7}
+.detail-btn.edit{background:var(--aziz-bg);color:var(--aziz);border-color:var(--aziz-b)}
+.detail-btn.lock{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow-b)}
+.detail-btn.unlock{background:var(--green-bg);color:var(--green);border-color:var(--green-b)}
+.detail-btn.del{background:var(--red-bg);color:var(--red);border-color:var(--red-b)}
 
-/* STATUS PICKER */
 .status-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px}
-.sp-btn{
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  padding:10px 4px;border-radius:var(--r-sm);border:1.5px solid var(--border);
-  background:transparent;cursor:pointer;transition:all .2s;font-family:inherit
-}
+.sp-btn{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 4px;border-radius:var(--r-sm);border:1.5px solid var(--border);background:transparent;cursor:pointer;transition:all .2s;font-family:inherit}
 .sp-dot{width:10px;height:10px;border-radius:50%}
 .sp-lbl{font-size:10px;font-weight:700;color:var(--muted);text-align:center;line-height:1.3}
 .sp-btn.cancelled.active{border-color:var(--red);background:var(--red-bg)}
@@ -163,8 +153,21 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .sp-btn.working .sp-dot{background:var(--green)}
 .sp-btn.done .sp-dot{background:var(--aziz)}
 
-/* TRANSACTION LIST */
-.tx-list{display:flex;flex-direction:column;gap:0;padding:0 16px}
+.fin-summary{display:grid;grid-template-columns:repeat(3,1fr);background:var(--s2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.fs-item{padding:12px;text-align:center;border-right:1px solid var(--border)}
+.fs-item:last-child{border-right:none}
+.fs-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.fs-v{font-size:14px;font-weight:800}
+.fs-v.inc{color:var(--green)}
+.fs-v.exp{color:var(--red)}
+
+.obj-photo{width:100%;max-height:220px;object-fit:cover;display:block}
+.photo-placeholder{width:100%;height:110px;background:var(--s2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;cursor:pointer}
+.photo-placeholder span{font-size:26px}
+.photo-placeholder p{font-size:12px;color:var(--muted)}
+.photo-input{display:none}
+
+.tx-list{display:flex;flex-direction:column;padding:0 16px}
 .tx{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
 .tx:last-child{border-bottom:none}
 .tx-ico{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
@@ -174,59 +177,40 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .tx-body{flex:1;min-width:0}
 .tx-desc{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tx-meta{font-size:11px;color:var(--muted);margin-top:2px}
-.tx-right{text-align:right;flex-shrink:0}
+.tx-right{text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .tx-amt{font-size:14px;font-weight:800}
 .tx-amt.income{color:var(--green)}
 .tx-amt.expense{color:var(--red)}
 .tx-amt.info{color:var(--muted)}
-.tx-ts{font-size:10px;color:var(--muted);margin-top:2px}
-.tx-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:4px;border-radius:4px;transition:color .2s;margin-top:-2px}
-.tx-del:active{color:var(--red)}
+.tx-lock{font-size:12px}
+.tx-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;padding:4px;border-radius:4px}
+.tx-btn:active{color:var(--aziz)}
+.tx-who{font-size:10px;font-weight:700;margin-top:1px}
+.tx-who.aziz{color:var(--aziz)}
+.tx-who.redvan{color:var(--redvan)}
 
-/* OBJ FINANCE SUMMARY */
-.obj-fin-summary{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-  padding:12px 16px;background:var(--s2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)
-}
-.ofs-item{text-align:center}
-.ofs-lbl{font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
-.ofs-v{font-size:15px;font-weight:800}
-.ofs-v.inc{color:var(--green)}
-.ofs-v.exp{color:var(--red)}
-.ofs-v.net{color:var(--text)}
-
-/* ADD TX MINI FORM */
-.add-tx-form{padding:12px 16px;background:var(--s1);border-top:1px solid var(--border);position:sticky;bottom:0}
-.atf-row1{display:flex;gap:8px;margin-bottom:8px}
+.add-tx-form{padding:12px 16px;background:var(--s1);border-top:1px solid var(--border);padding-bottom:calc(12px + var(--sb));flex-shrink:0}
+.atf-r1{display:flex;gap:8px;margin-bottom:8px}
 .atf-type{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);overflow:hidden;flex-shrink:0}
-.atf-tb{padding:9px 10px;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.atf-tb{padding:9px 10px;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s}
 .atf-tb.income.active{background:var(--green-bg);color:var(--green)}
 .atf-tb.expense.active{background:var(--red-bg);color:var(--red)}
 .atf-tb.info.active{background:var(--aziz-bg);color:var(--aziz)}
-.atf-input{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);padding:9px 12px;font-family:inherit;font-size:14px;outline:none;transition:border-color .2s}
-.atf-input:focus{border-color:var(--aziz)}
-.atf-input::placeholder{color:var(--muted)}
-.atf-row2{display:flex;gap:8px}
-.atf-amt{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);padding:9px 12px;font-family:inherit;font-size:14px;outline:none;transition:border-color .2s}
-.atf-amt:focus{border-color:var(--aziz)}
-.atf-amt::placeholder{color:var(--muted)}
-.atf-cat{background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);padding:9px 10px;font-family:inherit;font-size:13px;outline:none;-webkit-appearance:none;flex:1}
+.atf-i{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);padding:9px 12px;font-family:inherit;font-size:14px;outline:none;transition:border-color .2s;min-width:0}
+.atf-i:focus{border-color:var(--aziz)}
+.atf-i::placeholder{color:var(--muted)}
+.atf-r2{display:flex;gap:8px}
+.atf-cat{background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);padding:9px 10px;font-family:inherit;font-size:13px;outline:none;-webkit-appearance:none;flex:1;min-width:0}
 .atf-btn{background:var(--aziz);color:#fff;border:none;border-radius:var(--r-xs);padding:9px 16px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;transition:opacity .2s}
 .atf-btn:active{opacity:.8}
+.atf-btn:disabled{opacity:.4}
 
-/* CALENDAR */
 .cal-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
-.cal-nav-btn{background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);padding:7px 14px;font-family:inherit;font-size:14px;cursor:pointer;transition:background .2s}
-.cal-nav-btn:active{background:var(--s3)}
+.cal-nav-btn{background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);padding:7px 14px;font-family:inherit;font-size:14px;cursor:pointer}
 .cal-month{font-size:16px;font-weight:800;letter-spacing:-.3px}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:0 16px 16px}
 .cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--muted);padding:4px 0;text-transform:uppercase}
-.cal-day{
-  aspect-ratio:1;border-radius:var(--r-xs);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;cursor:pointer;
-  font-size:13px;font-weight:600;position:relative;transition:background .2s;
-  border:1px solid transparent
-}
+.cal-day{aspect-ratio:1;border-radius:var(--r-xs);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:13px;font-weight:600;position:relative;transition:background .2s;border:1px solid transparent}
 .cal-day.empty{cursor:default}
 .cal-day.today{border-color:var(--aziz);color:var(--aziz)}
 .cal-day.has-measure{background:var(--s2)}
@@ -241,16 +225,15 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .measures-list{display:flex;flex-direction:column;gap:8px;padding:0 16px}
 .measure-card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;display:flex;align-items:flex-start;gap:12px}
 .measure-left{flex:1;min-width:0}
-.measure-name{font-size:14px;font-weight:700;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.measure-name{font-size:14px;font-weight:700;margin-bottom:6px}
 .measure-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.measure-time{font-size:11px;color:var(--muted)}
 .measure-addr{font-size:12px;color:var(--muted2);margin-top:4px}
-.measure-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
-.measure-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;padding:2px}
-.measure-del:active{color:var(--red)}
-.status-ts{font-size:10px;color:var(--muted);margin-top:4px}
+.measure-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:2px}
+.meas-form{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin:0 16px 16px}
+.meas-form-t{font-size:13px;font-weight:800;margin-bottom:12px;color:var(--yellow)}
+.mf-row{display:flex;gap:8px;margin-bottom:8px}
+.mf-row:last-child{margin-bottom:0}
 
-/* CREATE FORM */
 .form-wrap{padding:16px;display:flex;flex-direction:column;gap:14px}
 .form-g{display:flex;flex-direction:column;gap:6px}
 .form-l{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -259,62 +242,54 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .form-i::placeholder{color:var(--muted)}
 .form-s option{background:var(--s2)}
 .form-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-
 .type-toggle{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
 .tt-btn{flex:1;padding:12px 4px;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;text-align:center}
 .tt-btn.measure.active{background:var(--yellow-bg);color:var(--yellow)}
 .tt-btn.project.active{background:var(--green-bg);color:var(--green)}
-
-.partner-toggle{display:grid;grid-template-columns:1fr 1fr;gap:0;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
+.partner-toggle{display:grid;grid-template-columns:1fr 1fr;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-sm);overflow:hidden}
 .pt-btn{padding:12px;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;color:var(--muted);transition:all .2s;text-align:center}
 .pt-btn.aziz.active{background:var(--aziz-bg);color:var(--aziz)}
 .pt-btn.redvan.active{background:var(--redvan-bg);color:var(--redvan)}
-
-.btn-main{background:linear-gradient(135deg,var(--aziz),#3570d4);color:#fff;border:none;border-radius:var(--r-sm);padding:15px;width:100%;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;transition:opacity .2s,transform .1s;letter-spacing:-.2px}
+.btn-main{background:linear-gradient(135deg,var(--aziz),#3570d4);color:#fff;border:none;border-radius:var(--r-sm);padding:15px;width:100%;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;transition:opacity .2s,transform .1s}
 .btn-main:active{opacity:.8;transform:scale(.98)}
+.btn-main:disabled{opacity:.4}
 
-/* EMPTY */
-.empty{padding:48px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px}
-.empty-ico{font-size:44px;margin-bottom:4px}
-.empty p{font-size:13px;line-height:1.5}
-.empty-btn{background:var(--aziz-bg);color:var(--aziz);border:1px solid var(--aziz-border);border-radius:var(--r-sm);padding:10px 20px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;transition:opacity .2s}
-.empty-btn:active{opacity:.7}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal.show{display:flex}
+.modal-box{background:var(--s1);border-top:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;padding:20px;padding-bottom:calc(20px + var(--sb));width:100%;max-width:500px;display:flex;flex-direction:column;gap:12px;max-height:85vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:800;margin-bottom:4px}
 
-/* SETTINGS */
+.filters{display:flex;gap:6px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;flex-shrink:0}
+.filters::-webkit-scrollbar{display:none}
+.f-btn{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s}
+.f-btn.active{border-color:var(--aziz);color:var(--aziz);background:var(--aziz-bg)}
+
 .settings-wrap{padding:16px;display:flex;flex-direction:column;gap:12px}
 .setting-block{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
-.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);gap:12px}
 .setting-row:last-child{border-bottom:none}
-.setting-l{font-size:14px;font-weight:500}
-.setting-s{font-size:11px;color:var(--muted);margin-top:2px}
-.setting-v{font-size:13px;color:var(--muted)}
-.cur-toggle{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);overflow:hidden}
+.setting-l{font-size:14px;font-weight:600}
+.setting-s{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.4}
+.cur-toggle{display:flex;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);overflow:hidden;flex-shrink:0}
 .cur-btn{padding:7px 14px;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s}
 .cur-btn.active{background:var(--aziz-bg);color:var(--aziz)}
-.n8n-block{background:var(--aziz-bg);border:1px solid var(--aziz-border);border-radius:var(--r);padding:16px}
-.n8n-t{font-size:13px;font-weight:800;color:var(--aziz);margin-bottom:6px}
-.n8n-d{font-size:12px;color:var(--muted2);margin-bottom:12px;line-height:1.5}
-.n8n-row{display:flex;gap:8px}
-.n8n-inp{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:var(--r-xs);color:var(--text);padding:10px 12px;font-family:inherit;font-size:12px;outline:none}
-.n8n-inp:focus{border-color:var(--aziz)}
-.n8n-inp::placeholder{color:var(--muted)}
-.n8n-save{background:var(--aziz);color:#fff;border:none;border-radius:var(--r-xs);padding:10px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
-.n8n-st{font-size:11px;color:var(--muted);margin-top:8px}
-.n8n-st.ok{color:var(--green)}
-.n8n-st.err{color:var(--red)}
-.danger-btn{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);border-radius:var(--r-sm);padding:13px;width:100%;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s}
-.danger-btn:active{opacity:.7}
-.export-btn{background:var(--s2);color:var(--text);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px;width:100%;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:background .2s}
-.export-btn:active{background:var(--s3)}
+.danger-btn{background:var(--red-bg);color:var(--red);border:1px solid var(--red-b);border-radius:var(--r-sm);padding:13px;width:100%;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.key-block{padding:16px;display:flex;flex-direction:column;gap:10px}
+.key-status{font-size:12px;font-weight:700;padding:8px 12px;border-radius:var(--r-xs)}
+.key-status.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-b)}
+.key-status.no{background:var(--yellow-bg);color:var(--yellow);border:1px solid var(--yellow-b)}
 
-/* TOAST */
-.toast{position:fixed;bottom:calc(20px + var(--sb));left:50%;transform:translateX(-50%) translateY(80px);background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 20px;font-size:13px;font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:1000;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap}
+.empty{padding:40px 16px;text-align:center;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty-ico{font-size:40px;margin-bottom:4px}
+.empty p{font-size:13px;line-height:1.5}
+.empty-btn{background:var(--aziz-bg);color:var(--aziz);border:1px solid var(--aziz-b);border-radius:var(--r-sm);padding:10px 20px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px}
+
+.toast{position:fixed;bottom:calc(20px + var(--sb));left:50%;transform:translateX(-50%) translateY(80px);background:var(--s1);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 20px;font-size:13px;font-weight:700;box-shadow:0 8px 32px rgba(0,0,0,.6);z-index:1000;opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 .toast.success{border-color:var(--green);color:var(--green)}
 .toast.error{border-color:var(--red);color:var(--red)}
 .toast.info{border-color:var(--aziz);color:var(--aziz)}
 
-/* OVERLAY */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center}
 .overlay.show{display:flex}
 .dialog{background:var(--s1);border-top:1px solid var(--border);border-radius:var(--r) var(--r) 0 0;padding:24px 20px;padding-bottom:calc(24px + var(--sb));width:100%;max-width:480px}
@@ -324,81 +299,76 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 .dlg-cancel{background:var(--s2);color:var(--text);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
 .dlg-ok{background:var(--red);color:#fff;border:none;border-radius:var(--r-sm);padding:13px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
 
-/* MEASURE ADD FORM */
-.meas-form{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin:0 16px 16px}
-.meas-form-t{font-size:13px;font-weight:800;margin-bottom:12px;color:var(--yellow)}
-.meas-row{display:flex;gap:8px;margin-bottom:8px}
-.meas-row:last-child{margin-bottom:0}
-
-@media(max-width:360px){.stats{grid-template-columns:1fr 1fr}.stat-v{font-size:17px}}
+.ai-wrap{display:flex;flex-direction:column;height:100%}
+.ai-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;-webkit-overflow-scrolling:touch}
+.ai-b{border-radius:var(--r);padding:14px;font-size:14px;line-height:1.6}
+.ai-b.ai{background:var(--purple-bg);border:1px solid var(--purple-b)}
+.ai-b.usr{background:var(--s2);border:1px solid var(--border);margin-left:28px}
+.ai-nm{font-size:11px;font-weight:800;margin-bottom:6px}
+.ai-nm.ai{color:var(--purple)}
+.ai-nm.usr{color:var(--muted2)}
+.ai-in{padding:12px 16px;padding-bottom:calc(12px + var(--sb));background:var(--s1);border-top:1px solid var(--border);flex-shrink:0}
+.ai-chips{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.ai-chips::-webkit-scrollbar{display:none}
+.chip{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:700;background:var(--s2);color:var(--muted2);border:1px solid var(--border2);cursor:pointer;white-space:nowrap;font-family:inherit}
 </style>
 </head>
 <body>
-<div class="app">
 
-<!-- HEADER -->
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-logo">АР</div>
+  <div class="loading-text" id="loading-text">Подключение к базе данных...</div>
+  <div class="loading-ver">v3.0 · Firebase + AI</div>
+</div>
+
+<div class="app" id="main-app" style="display:none">
+
 <header class="hdr">
   <div class="logo">
     <div class="logo-ico">АР</div>
     <div>
       <div class="logo-name">АР CRM</div>
-      <div class="logo-sub">Натяжные потолки</div>
+      <div class="logo-sub">Натяжные потолки · v3.0</div>
     </div>
   </div>
-  <div class="hdr-pills">
-    <div class="pill aziz active" id="pill-aziz" onclick="setPill('aziz')"><span class="pdot"></span>Азиз</div>
-    <div class="pill redvan" id="pill-redvan" onclick="setPill('redvan')"><span class="pdot"></span>Редван</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="sync-dot" id="sync-dot"></div>
+    <div class="hdr-pills">
+      <div class="pill aziz active" id="pill-aziz" onclick="setPill('aziz')"><span class="pdot"></span>Азиз</div>
+      <div class="pill redvan" id="pill-redvan" onclick="setPill('redvan')"><span class="pdot"></span>Редван</div>
+    </div>
   </div>
 </header>
 
-<!-- TABS -->
+<div class="conn-banner" id="conn-banner"></div>
+
 <nav class="tabs">
   <div class="tab active" onclick="goTab('dash',this)">📊 Сводка</div>
   <div class="tab" onclick="goTab('objects',this)">🏗 Объекты</div>
   <div class="tab" onclick="goTab('calendar',this)">📅 Замеры</div>
   <div class="tab" onclick="goTab('create',this)">➕ Создать</div>
-  <div class="tab" onclick="goTab('settings',this)">⚙️ Настройки</div>
+  <div class="tab" onclick="goTab('ai',this)">🤖 AI</div>
+  <div class="tab" onclick="goTab('settings',this)">⚙️</div>
 </nav>
 
-<!-- PAGES -->
 <div class="pages">
 
-<!-- ══ DASHBOARD ══ -->
 <div class="page active" id="page-dash">
   <div class="stats">
-    <div class="stat inc">
-      <div class="stat-l">Общий приход</div>
-      <div class="stat-v" id="ds-inc">0</div>
-      <div class="stat-s" id="ds-inc-cur">сўм</div>
-    </div>
-    <div class="stat exp">
-      <div class="stat-l">Общий расход</div>
-      <div class="stat-v" id="ds-exp">0</div>
-      <div class="stat-s" id="ds-exp-cur">сўм</div>
-    </div>
-    <div class="stat obj">
-      <div class="stat-l">Объектов</div>
-      <div class="stat-v" id="ds-obj">0</div>
-      <div class="stat-s">всего</div>
-    </div>
-    <div class="stat mea">
-      <div class="stat-l">Замеров</div>
-      <div class="stat-v" id="ds-mea">0</div>
-      <div class="stat-s">в календаре</div>
-    </div>
+    <div class="stat inc"><div class="stat-l">Общий приход</div><div class="stat-v" id="ds-inc">0</div><div class="stat-s" id="ds-inc-s">сўм</div></div>
+    <div class="stat exp"><div class="stat-l">Общий расход</div><div class="stat-v" id="ds-exp">0</div><div class="stat-s" id="ds-exp-s">сўм</div></div>
+    <div class="stat obj"><div class="stat-l">Объектов</div><div class="stat-v" id="ds-obj">0</div><div class="stat-s">всего</div></div>
+    <div class="stat mea"><div class="stat-l">Замеров</div><div class="stat-v" id="ds-mea">0</div><div class="stat-s">в календаре</div></div>
   </div>
-
-  <!-- Partner balance -->
-  <div class="sec"><div class="sec-t">По партнёрам</div></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px">
-    <div style="background:var(--s1);border:1px solid var(--aziz-border);border-radius:var(--r);padding:14px">
+    <div style="background:var(--s1);border:1px solid var(--aziz-b);border-radius:var(--r);padding:14px">
       <div style="font-size:12px;font-weight:800;color:var(--aziz);margin-bottom:10px">⬤ Азиз</div>
       <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--muted)">Приход</span><span style="font-size:12px;font-weight:700;color:var(--green)" id="pa-i">0</span></div>
       <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;color:var(--muted)">Расход</span><span style="font-size:12px;font-weight:700;color:var(--red)" id="pa-e">0</span></div>
       <div style="height:1px;background:var(--border);margin-bottom:8px"></div>
       <div style="display:flex;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:var(--muted)">Итог</span><span style="font-size:14px;font-weight:800" id="pa-n">0</span></div>
     </div>
-    <div style="background:var(--s1);border:1px solid var(--redvan-border);border-radius:var(--r);padding:14px">
+    <div style="background:var(--s1);border:1px solid var(--redvan-b);border-radius:var(--r);padding:14px">
       <div style="font-size:12px;font-weight:800;color:var(--redvan);margin-bottom:10px">⬤ Редван</div>
       <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--muted)">Приход</span><span style="font-size:12px;font-weight:700;color:var(--green)" id="pr-i">0</span></div>
       <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;color:var(--muted)">Расход</span><span style="font-size:12px;font-weight:700;color:var(--red)" id="pr-e">0</span></div>
@@ -406,65 +376,51 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       <div style="display:flex;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:var(--muted)">Итог</span><span style="font-size:14px;font-weight:800" id="pr-n">0</span></div>
     </div>
   </div>
-
-  <!-- Active objects -->
-  <div class="sec" style="margin-top:16px"><div class="sec-t">Активные объекты <span id="dash-active-count">0</span></div></div>
-  <div class="obj-list" id="dash-active-list"></div>
+  <div class="sec" style="margin-top:16px"><div class="sec-t">Активные объекты <span id="dash-cnt">0</span></div></div>
+  <div class="obj-list" id="dash-active"></div>
 </div>
 
-<!-- ══ OBJECTS ══ -->
 <div class="page" id="page-objects">
-  <div style="display:flex;gap:6px;padding:12px 16px;overflow-x:auto;scrollbar-width:none;flex-shrink:0">
-    <button class="f-btn active" onclick="setOF('all',this)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s">Все</button>
-    <button class="f-btn" onclick="setOF('waiting',this)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--yellow-border);background:var(--yellow-bg);color:var(--yellow);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">🟡 Ожидание</button>
-    <button class="f-btn" onclick="setOF('working',this)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--green-border);background:var(--green-bg);color:var(--green);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">🟢 В работе</button>
-    <button class="f-btn" onclick="setOF('done',this)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--aziz-border);background:var(--aziz-bg);color:var(--aziz);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">🔵 Сдан</button>
-    <button class="f-btn" onclick="setOF('cancelled',this)" style="padding:5px 12px;border-radius:20px;border:1px solid var(--red-border);background:var(--red-bg);color:var(--red);font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">🔴 Отменён</button>
+  <div class="filters">
+    <button class="f-btn active" onclick="setOF('all',this)">Все</button>
+    <button class="f-btn" onclick="setOF('waiting',this)">🟡 Ожидание</button>
+    <button class="f-btn" onclick="setOF('working',this)">🟢 В работе</button>
+    <button class="f-btn" onclick="setOF('done',this)">🔵 Сдан</button>
+    <button class="f-btn" onclick="setOF('cancelled',this)">🔴 Отменён</button>
   </div>
   <div class="obj-list" id="objects-list" style="padding-bottom:16px"></div>
 </div>
 
-<!-- ══ CALENDAR ══ -->
 <div class="page" id="page-calendar">
   <div class="cal-nav">
     <button class="cal-nav-btn" onclick="calPrev()">‹</button>
-    <div class="cal-month" id="cal-month-label"></div>
+    <div class="cal-month" id="cal-label"></div>
     <button class="cal-nav-btn" onclick="calNext()">›</button>
   </div>
   <div class="cal-grid" id="cal-grid"></div>
-
-  <div class="sec"><div class="sec-t" id="cal-day-label">Замеры</div></div>
-
-  <!-- Add measure form -->
+  <div class="sec"><div class="sec-t" id="cal-day-lbl">Замеры</div></div>
   <div class="meas-form">
     <div class="meas-form-t">📐 Добавить замер</div>
-    <div class="meas-row">
-      <input id="mf-name" class="form-i" style="flex:1" placeholder="Имя клиента *"/>
+    <div class="mf-row"><input id="mf-name" class="form-i" placeholder="Имя клиента *"/></div>
+    <div class="mf-row">
+      <input id="mf-addr" class="form-i" style="flex:1;min-width:0" placeholder="Адрес"/>
+      <input id="mf-time" class="form-i" style="width:110px;flex-shrink:0" type="time" value="10:00"/>
     </div>
-    <div class="meas-row">
-      <input id="mf-addr" class="form-i" style="flex:1" placeholder="Адрес"/>
-      <input id="mf-time" class="form-i" style="width:100px" type="time" value="10:00"/>
-    </div>
-    <div class="meas-row">
-      <select id="mf-partner" class="form-s" style="flex:1">
-        <option value="aziz">Азиз</option>
-        <option value="redvan">Редван</option>
-      </select>
-      <button class="atf-btn" style="flex:1" onclick="addMeasure()">Добавить</button>
+    <div class="mf-row">
+      <select id="mf-partner" class="form-s" style="flex:1;min-width:0"><option value="aziz">Азиз</option><option value="redvan">Редван</option></select>
+      <button class="atf-btn" style="flex:1" onclick="addMeasure()" id="mf-btn">Добавить</button>
     </div>
   </div>
-
   <div class="measures-list" id="measures-list"></div>
 </div>
 
-<!-- ══ CREATE ══ -->
 <div class="page" id="page-create">
   <div class="form-wrap">
     <div class="form-g">
       <div class="form-l">Тип события</div>
       <div class="type-toggle">
-        <button class="tt-btn measure active" id="tt-measure" onclick="setObjType('measure')">📐 Замер / Новый объект</button>
-        <button class="tt-btn project" id="tt-project" onclick="setObjType('project')">🏗 Начатый объект (с авансом)</button>
+        <button class="tt-btn measure active" id="tt-measure" onclick="setObjType('measure')">📐 Замер / Новый</button>
+        <button class="tt-btn project" id="tt-project" onclick="setObjType('project')">🏗 С авансом</button>
       </div>
     </div>
     <div class="form-g">
@@ -474,128 +430,169 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         <button class="pt-btn redvan" id="cpt-redvan" onclick="setCreatePartner('redvan')">⬤ Редван</button>
       </div>
     </div>
-    <div class="form-g">
-      <label class="form-l" for="c-name">Имя / название объекта *</label>
-      <input id="c-name" class="form-i" placeholder="Напр. Кв. Алиева, 3к"/>
-    </div>
-    <div class="form-g">
-      <label class="form-l" for="c-addr">Адрес</label>
-      <input id="c-addr" class="form-i" placeholder="ул. Чиланзар, д. 5"/>
-    </div>
+    <div class="form-g"><label class="form-l">Имя / название объекта *</label><input id="c-name" class="form-i" placeholder="Напр. Кв. Алиева, 3к"/></div>
+    <div class="form-g"><label class="form-l">Адрес</label><input id="c-addr" class="form-i" placeholder="ул. Чиланзар, д. 5"/></div>
     <div class="form-2">
-      <div class="form-g">
-        <label class="form-l" for="c-area">Площадь (м²)</label>
-        <input id="c-area" class="form-i" type="number" placeholder="0" inputmode="numeric"/>
-      </div>
-      <div class="form-g">
-        <label class="form-l" for="c-date">Дата</label>
-        <input id="c-date" class="form-i" type="date"/>
-      </div>
+      <div class="form-g"><label class="form-l">Площадь (м²)</label><input id="c-area" class="form-i" type="number" placeholder="0" inputmode="numeric"/></div>
+      <div class="form-g"><label class="form-l">Дата</label><input id="c-date" class="form-i" type="date"/></div>
     </div>
-    <div class="form-g" id="advance-block">
-      <label class="form-l" for="c-advance">Аванс (сўм) — открывает объект *</label>
-      <input id="c-advance" class="form-i" type="number" placeholder="0" inputmode="numeric"/>
-    </div>
-    <div class="form-g">
-      <label class="form-l" for="c-note">Заметка</label>
-      <input id="c-note" class="form-i" placeholder="Необязательно"/>
-    </div>
-    <button class="btn-main" onclick="createObject()">Создать объект</button>
+    <div class="form-g" id="advance-block"><label class="form-l">Аванс — открывает объект *</label><input id="c-advance" class="form-i" type="number" placeholder="0" inputmode="numeric"/></div>
+    <div class="form-g"><label class="form-l">Заметка</label><input id="c-note" class="form-i" placeholder="Необязательно"/></div>
+    <button class="btn-main" id="create-btn" onclick="createObject()">Создать объект</button>
   </div>
 </div>
 
-<!-- ══ SETTINGS ══ -->
+<div class="page" id="page-ai">
+  <div class="ai-wrap">
+    <div class="ai-msgs" id="ai-msgs">
+      <div class="ai-b ai">
+        <div class="ai-nm ai">🤖 АР Бухгалтер</div>
+        Привет! Я вижу все данные бизнеса в реальном времени — объекты, приход, расход, статусы.<br><br>Спрашивайте: сколько заработали, какой объект прибыльнее, как справедливо поделить прибыль.
+      </div>
+    </div>
+    <div class="ai-in">
+      <div style="display:flex;gap:8px">
+        <input id="ai-input" class="atf-i" placeholder="Спросите о бизнесе..." onkeydown="if(event.key==='Enter')sendAI()"/>
+        <button onclick="sendAI()" id="ai-btn" style="background:var(--purple);color:#fff;border:none;border-radius:var(--r-xs);padding:9px 18px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;flex-shrink:0">→</button>
+      </div>
+      <div class="ai-chips">
+        <button class="chip" onclick="quickAI('Сколько мы заработали за этот месяц?')">💰 Доход за месяц</button>
+        <button class="chip" onclick="quickAI('Какой объект самый прибыльный и почему?')">📈 Лучший объект</button>
+        <button class="chip" onclick="quickAI('Как справедливо разделить прибыль между Азизом и Редваном с учётом вложений?')">⚖️ Раздел прибыли</button>
+        <button class="chip" onclick="quickAI('Какие объекты сейчас в работе?')">🏗 В работе</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="page" id="page-settings">
   <div class="settings-wrap">
-    <div class="n8n-block">
-      <div class="n8n-t">🔗 n8n · Telegram уведомления</div>
-      <div class="n8n-d">Каждое новое событие и изменение статуса уходит в Telegram обоим партнёрам.</div>
-      <div class="n8n-row">
-        <input id="n8n-url" class="n8n-inp" placeholder="https://stiv122469.app.n8n.cloud/webhook/..."/>
-        <button class="n8n-save" onclick="saveN8n()">Сохранить</button>
-      </div>
-      <div id="n8n-status" class="n8n-st">Не настроено</div>
-    </div>
     <div class="setting-block">
       <div class="setting-row">
-        <div><div class="setting-l">Валюта</div><div class="setting-s">Выбери рабочую валюту</div></div>
+        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v3.0 — на GitHub старый файл</div></div>
+        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v3.0</div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-l">Синхронизация</div><div class="setting-s">Firebase Firestore · реальное время</div></div>
+        <div style="font-size:12px;font-weight:700;flex-shrink:0" id="sync-text">—</div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-l">Валюта</div></div>
         <div class="cur-toggle">
           <button id="cur-uzs" class="cur-btn active" onclick="setCurrency('UZS')">сўм</button>
           <button id="cur-usd" class="cur-btn" onclick="setCurrency('USD')">$</button>
         </div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-l">Объектов</div></div>
-        <div class="setting-v" id="s-objs">0</div>
-      </div>
-      <div class="setting-row">
-        <div><div class="setting-l">Замеров</div></div>
-        <div class="setting-v" id="s-meas">0</div>
+        <div><div class="setting-l">Объектов в базе</div></div>
+        <div style="font-size:13px;color:var(--muted)" id="s-objs">0</div>
       </div>
     </div>
-    <button class="export-btn" onclick="exportData()">📥 Экспорт данных (JSON)</button>
-    <button class="danger-btn" onclick="confirmClear()">🗑 Очистить все данные</button>
+
+    <div class="setting-block">
+      <div class="setting-row" style="border-bottom:1px solid var(--border)">
+        <div><div class="setting-l">🤖 Ключ OpenAI</div><div class="setting-s">Хранится только на этом телефоне. В коде приложения ключа нет — его нельзя украсть из GitHub.</div></div>
+      </div>
+      <div class="key-block">
+        <div class="key-status no" id="key-status">Ключ не введён — AI-чат не работает</div>
+        <input id="key-input" class="form-i" type="password" placeholder="sk-proj-..." autocomplete="off"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="dlg-cancel" onclick="clearKey()">Удалить</button>
+          <button class="btn-main" style="padding:12px;font-size:14px" onclick="saveKey()">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="danger-btn" onclick="confirmClear()">🗑 Удалить все объекты из базы</button>
   </div>
 </div>
 
-</div><!-- /pages -->
-</div><!-- /app -->
+</div>
+</div>
 
-<!-- OBJECT DETAIL (fullscreen overlay) -->
-<div id="detail-view" style="position:fixed;inset:0;background:var(--bg);z-index:50;display:none;flex-direction:column;overflow:hidden">
+<div class="detail-view" id="detail-view">
   <div class="detail-hdr">
     <div class="detail-back" onclick="closeDetail()">
-      <span class="detail-back-ico">←</span>
-      <span class="detail-back-lbl">Назад</span>
+      <span class="detail-back-ico">←</span><span class="detail-back-lbl">Назад</span>
     </div>
-    <div class="detail-title" id="dv-name">—</div>
+    <div class="detail-title-row">
+      <div class="detail-title" id="dv-name">—</div>
+      <span id="dv-lock-icon" style="font-size:18px"></span>
+    </div>
     <div class="detail-meta">
       <span id="dv-type" class="obj-type"></span>
       <span id="dv-partner" class="obj-partner"></span>
       <span id="dv-date" style="font-size:11px;color:var(--muted)"></span>
     </div>
     <div class="detail-addr" id="dv-addr"></div>
+    <div class="detail-actions" id="dv-actions"></div>
   </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:180px">
-    <!-- Status picker -->
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch" id="dv-scroll">
+    <div id="dv-photo-wrap"></div>
     <div class="sec" style="padding-top:12px"><div class="sec-t">Статус объекта</div></div>
     <div class="status-picker" id="dv-status-picker"></div>
     <div style="padding:0 16px 4px;font-size:11px;color:var(--muted)" id="dv-status-ts"></div>
-
-    <!-- Finance summary -->
-    <div class="obj-fin-summary">
-      <div class="ofs-item"><div class="ofs-lbl">Приход</div><div class="ofs-v inc" id="dv-inc">0</div></div>
-      <div class="ofs-item"><div class="ofs-lbl">Расход</div><div class="ofs-v exp" id="dv-exp">0</div></div>
-      <div class="ofs-item"><div class="ofs-lbl">Баланс</div><div class="ofs-v net" id="dv-net">0</div></div>
+    <div class="fin-summary">
+      <div class="fs-item"><div class="fs-lbl">Приход</div><div class="fs-v inc" id="dv-inc">0</div></div>
+      <div class="fs-item"><div class="fs-lbl">Расход</div><div class="fs-v exp" id="dv-exp">0</div></div>
+      <div class="fs-item"><div class="fs-lbl">Баланс</div><div class="fs-v" id="dv-net">0</div></div>
     </div>
-
-    <!-- Transactions -->
     <div class="sec" style="padding-top:12px"><div class="sec-t">Движение средств <span id="dv-tx-count">0</span></div></div>
-    <div class="tx-list" id="dv-tx-list"></div>
+    <div class="tx-list" id="dv-tx-list" style="padding-bottom:20px"></div>
   </div>
-
-  <!-- Add tx form (sticky bottom) -->
-  <div class="add-tx-form">
-    <div class="atf-row1">
+  <div class="add-tx-form" id="dv-add-form">
+    <div class="atf-r1">
       <div class="atf-type">
         <button class="atf-tb income active" id="atf-inc" onclick="setTxType('income')">+</button>
         <button class="atf-tb expense" id="atf-exp" onclick="setTxType('expense')">−</button>
         <button class="atf-tb info" id="atf-inf" onclick="setTxType('info')">ℹ</button>
       </div>
-      <input id="atf-desc" class="atf-input" placeholder="Описание..."/>
+      <input id="atf-desc" class="atf-i" placeholder="Описание..."/>
     </div>
-    <div class="atf-row2">
-      <input id="atf-amt" class="atf-amt" type="number" placeholder="Сумма" inputmode="numeric"/>
+    <div class="atf-r2">
+      <input id="atf-amt" class="atf-i" style="flex:1" type="number" placeholder="Сумма" inputmode="numeric"/>
       <select id="atf-cat" class="atf-cat">
-        <option>🔧 Монтаж</option>
-        <option>💰 Аванс</option>
-        <option>📦 Материал</option>
-        <option>🛒 Закуп</option>
-        <option>💵 Оплата</option>
-        <option>🚗 Транспорт</option>
-        <option>📝 Прочее</option>
+        <option>💰 Аванс</option><option>💵 Оплата</option><option>🔧 Монтаж</option>
+        <option>📦 Материал</option><option>🛒 Закуп</option><option>🚗 Транспорт</option><option>📝 Прочее</option>
       </select>
-      <button class="atf-btn" onclick="addTx()">Добавить</button>
+      <button class="atf-btn" id="atf-btn" onclick="addTx()">+</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="edit-obj-modal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Редактировать объект</div>
+    <div class="form-g"><label class="form-l">Название *</label><input id="eo-name" class="form-i"/></div>
+    <div class="form-g"><label class="form-l">Адрес</label><input id="eo-addr" class="form-i"/></div>
+    <div class="form-2">
+      <div class="form-g"><label class="form-l">Площадь (м²)</label><input id="eo-area" class="form-i" type="number" inputmode="numeric"/></div>
+      <div class="form-g"><label class="form-l">Дата</label><input id="eo-date" class="form-i" type="date"/></div>
+    </div>
+    <div class="form-g"><label class="form-l">Заметка</label><input id="eo-note" class="form-i"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+      <button class="dlg-cancel" onclick="closeEditObj()">Отмена</button>
+      <button class="btn-main" style="padding:13px" onclick="saveEditObj()">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="edit-tx-modal">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Редактировать запись</div>
+    <div class="form-g"><label class="form-l">Описание *</label><input id="et-desc" class="form-i"/></div>
+    <div class="form-2">
+      <div class="form-g"><label class="form-l">Сумма</label><input id="et-amt" class="form-i" type="number" inputmode="numeric"/></div>
+      <div class="form-g"><label class="form-l">Категория</label>
+        <select id="et-cat" class="form-s">
+          <option>💰 Аванс</option><option>💵 Оплата</option><option>🔧 Монтаж</option>
+          <option>📦 Материал</option><option>🛒 Закуп</option><option>🚗 Транспорт</option><option>📝 Прочее</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px">
+      <button class="dlg-cancel" onclick="closeEditTx()">Отмена</button>
+      <button class="btn-main" style="padding:13px" onclick="saveEditTx()">Сохранить</button>
     </div>
   </div>
 </div>
@@ -612,534 +609,640 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
-<script>
-// ═══════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════
-let objects = [];      // {id,ts,name,addr,area,type,partner,status,statusTs,date,note,transactions:[]}
-let measures = {};     // {dateStr: [{id,ts,name,addr,time,partner,status,statusTs}]}
-let currency = 'UZS';
-let n8nUrl = '';
-let activePill = 'aziz';
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, addDoc, updateDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDrnbfSNxy1FaUgzAeExe-pR0TbxkPt9vc",
+  authDomain: "ar-crm-c46c3.firebaseapp.com",
+  projectId: "ar-crm-c46c3",
+  storageBucket: "ar-crm-c46c3.firebasestorage.app",
+  messagingSenderId: "215893544524",
+  appId: "1:215893544524:web:d8b02a8d400bc4553e6ee9"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const APP_VERSION = 'v3.0';
+let objects = [], measures = {};
+let currency = localStorage.getItem('ar_cur') || 'UZS';
+let activePill = localStorage.getItem('ar_pill') || 'aziz';
 let objFilter = 'all';
 let calYear, calMonth, calSelectedDate;
-let detailId = null;
-let txType = 'income';
-let createType = 'measure';
-let createPartner = 'aziz';
+let detailId = null, txType = 'income', createType = 'measure', createPartner = 'aziz';
+let editingTxId = null, editingObjId = null;
+let firstLoad = true, connOk = false;
+let aiHistory = [];
 
-const SK = 'arcrm_v1';
-const MK = 'arcrm_meas_v1';
-const CK = 'arcrm_cur';
-const NK = 'arcrm_n8n';
+const SL = {cancelled:'Отменён',waiting:'Ожидание',working:'В работе',done:'Сдан'};
+const SI = {cancelled:'🔴',waiting:'🟡',working:'🟢',done:'🔵'};
 
-const STATUS_LABELS = {cancelled:'Отменён',waiting:'Ожидание',working:'В работе',done:'Сдан'};
-const STATUS_ICONS  = {cancelled:'🔴',waiting:'🟡',working:'🟢',done:'🔵'};
+const toDateStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const fmtDate = s => { if(!s) return '—'; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}`; };
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const pName = p => p==='aziz' ? 'Азиз' : 'Редван';
+function fmtTS(ts){ if(!ts) return ''; const d = ts.toDate ? ts.toDate() : new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${p(d.getDate())}.${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+function fmtM(n){
+  if(n===null||n===undefined||isNaN(n)) return '—';
+  if(currency==='USD') return '$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+  return new Intl.NumberFormat('ru-RU').format(Math.round(n))+' сўм';
+}
+function fmtShort(n){
+  if(currency==='USD'){ if(Math.abs(n)>=1e6) return '$'+(n/1e6).toFixed(1)+'M'; if(Math.abs(n)>=1e3) return '$'+(n/1e3).toFixed(0)+'K'; return '$'+n.toFixed(0); }
+  if(Math.abs(n)>=1e6) return (n/1e6).toFixed(1).replace('.0','')+'млн';
+  if(Math.abs(n)>=1e3) return Math.round(n/1e3)+'тыс';
+  return String(Math.round(n));
+}
+const badge = s => `<span class="status ${s}"><span class="status-dot"></span>${SL[s]||s}</span>`;
+const txOf = o => Array.isArray(o.transactions) ? o.transactions : [];
+const sumT = (txs,t) => txs.filter(x=>x.type===t).reduce((s,x)=>s+(Number(x.amount)||0),0);
 
-// ═══════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════
-function init() {
-  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
-  try { objects = JSON.parse(localStorage.getItem(SK)||'[]'); } catch(e){objects=[];}
-  try { measures = JSON.parse(localStorage.getItem(MK)||'{}'); } catch(e){measures={};}
-  currency = localStorage.getItem(CK)||'UZS';
-  n8nUrl   = localStorage.getItem(NK)||'';
-  if(n8nUrl){
-    document.getElementById('n8n-url').value = n8nUrl;
-    document.getElementById('n8n-status').textContent='✓ Webhook сохранён';
-    document.getElementById('n8n-status').className='n8n-st ok';
+// ── СОСТОЯНИЕ СВЯЗИ ──
+function setConn(state, msg){
+  const d = document.getElementById('sync-dot');
+  const t = document.getElementById('sync-text');
+  const b = document.getElementById('conn-banner');
+  d.className = 'sync-dot '+state;
+  if(state==='ok'){
+    connOk = true;
+    t.innerHTML = '<span style="color:var(--green)">🟢 Подключено</span>';
+    b.classList.remove('show');
+  } else if(state==='sync'){
+    t.innerHTML = '<span style="color:var(--yellow)">🟡 Синхронизация</span>';
+  } else {
+    connOk = false;
+    t.innerHTML = '<span style="color:var(--red)">🔴 Нет связи</span>';
+    b.textContent = msg || 'Нет связи с базой. Данные не сохраняются и партнёр их не увидит.';
+    b.classList.add('show');
   }
+  setBusy(!connOk && state==='err');
+}
+function setBusy(disabled){
+  ['create-btn','atf-btn','mf-btn'].forEach(id=>{ const e=document.getElementById(id); if(e) e.disabled = disabled; });
+}
+function diagnose(err){
+  const c = err && err.code ? err.code : '';
+  if(c==='permission-denied') return 'Firestore отклонил доступ. Firebase → Firestore → Rules → allow read, write → Publish.';
+  if(c==='failed-precondition') return 'База Firestore не создана. Firebase → Firestore Database → Создать базу.';
+  if(c==='unavailable') return 'Нет доступа к Firestore. Проверьте интернет. В превью Claude соединение блокируется — откройте приложение по ссылке GitHub Pages.';
+  return 'Ошибка базы: '+(c||'неизвестно');
+}
+
+// ── СЛУШАТЕЛИ FIRESTORE ──
+function startListeners(){
+  setConn('sync');
+  onSnapshot(query(collection(db,'objects'), orderBy('createdAt','desc')),
+    snap => {
+      objects = [];
+      snap.forEach(d => objects.push({id:d.id, ...d.data()}));
+      setConn('ok'); reveal(); renderAll();
+    },
+    err => { console.error('objects:', err); setConn('err', diagnose(err)); reveal(); }
+  );
+  onSnapshot(collection(db,'measures'),
+    snap => {
+      measures = {};
+      snap.forEach(d => { measures[d.id] = d.data().list || []; });
+      renderDash();
+      if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+    },
+    err => console.error('measures:', err)
+  );
+}
+function reveal(){
+  if(!firstLoad) return;
+  firstLoad = false;
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('main-app').style.display='flex';
+}
+
+// ── INIT ──
+function init(){
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
   const now = new Date();
   calYear = now.getFullYear(); calMonth = now.getMonth();
   calSelectedDate = toDateStr(now);
   document.getElementById('c-date').value = toDateStr(now);
+  createPartner = activePill;
   document.getElementById('mf-partner').value = activePill;
-  updateCurrencyUI();
-  render();
+  updatePillUI(); updateCurrencyUI(); setObjType('measure'); updateKeyUI();
+  startListeners();
+  setTimeout(()=>{ if(firstLoad){ setConn('err','База не отвечает. Откройте приложение по ссылке GitHub Pages, а не в превью.'); reveal(); } }, 8000);
 }
 
-// ═══════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════
-function toDateStr(d){ return d.toISOString().slice(0,10); }
-function fmtDate(s){ if(!s)return'—'; const[y,m,d]=s.split('-'); return`${d}.${m}.${y}`; }
-function fmtTS(ts){ const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return`${p(d.getDate())}.${p(d.getMonth()+1)} ${p(d.getHours())}:${p(d.getMinutes())}`; }
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtM(n){
-  if(!n&&n!==0)return'—';
-  if(currency==='USD') return'$'+new Intl.NumberFormat('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
-  return new Intl.NumberFormat('ru-RU').format(Math.round(n))+' сўм';
-}
-function fmtShort(n){
-  if(currency==='USD'){ if(n>=1e6)return'$'+(n/1e6).toFixed(1).replace('.0','')+'M'; if(n>=1e3)return'$'+(n/1e3).toFixed(0)+'K'; return'$'+n.toFixed(0); }
-  if(n>=1e6)return(n/1e6).toFixed(1).replace('.0','')+'млн';
-  if(n>=1e3)return Math.round(n/1e3)+'тыс';
-  return String(Math.round(n));
-}
-function save(){ localStorage.setItem(SK,JSON.stringify(objects)); }
-function saveMeas(){ localStorage.setItem(MK,JSON.stringify(measures)); }
-function pName(p){ return p==='aziz'?'Азиз':'Редван'; }
-function statusBadge(s){ return`<span class="status ${s}"><span class="status-dot"></span>${STATUS_LABELS[s]||s}</span>`; }
-
-// ═══════════════════════════════════════
-// NAV
-// ═══════════════════════════════════════
-function goTab(id,el){
+// ── НАВИГАЦИЯ ──
+window.goTab = (id, el) => {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(id==='calendar') renderCalendar();
-  if(id==='objects') renderObjects();
-  if(id==='dash') renderDash();
-}
-function setPill(p){
-  activePill=p;
-  document.getElementById('pill-aziz').classList.toggle('active',p==='aziz');
-  document.getElementById('pill-redvan').classList.toggle('active',p==='redvan');
-  document.getElementById('mf-partner').value=p;
-  setCreatePartner(p);
+};
+window.setPill = p => {
+  activePill = p; localStorage.setItem('ar_pill', p);
+  createPartner = p;
+  document.getElementById('mf-partner').value = p;
+  updatePillUI(); setCreatePartner(p);
+};
+function updatePillUI(){
+  document.getElementById('pill-aziz').classList.toggle('active', activePill==='aziz');
+  document.getElementById('pill-redvan').classList.toggle('active', activePill==='redvan');
 }
 function setCreatePartner(p){
-  createPartner=p;
-  document.getElementById('cpt-aziz').classList.toggle('active',p==='aziz');
-  document.getElementById('cpt-redvan').classList.toggle('active',p==='redvan');
+  createPartner = p;
+  document.getElementById('cpt-aziz').classList.toggle('active', p==='aziz');
+  document.getElementById('cpt-redvan').classList.toggle('active', p==='redvan');
 }
-function setObjType(t){
-  createType=t;
-  document.getElementById('tt-measure').classList.toggle('active',t==='measure');
-  document.getElementById('tt-project').classList.toggle('active',t==='project');
-  document.getElementById('advance-block').style.display=t==='project'?'flex':'none';
-}
-function setOF(f,el){
-  objFilter=f;
+window.setCreatePartner = setCreatePartner;
+window.setObjType = t => {
+  createType = t;
+  document.getElementById('tt-measure').classList.toggle('active', t==='measure');
+  document.getElementById('tt-project').classList.toggle('active', t==='project');
+  document.getElementById('advance-block').style.display = t==='project' ? 'flex' : 'none';
+};
+window.setOF = (f, el) => {
+  objFilter = f;
   document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('active'));
-  el.classList.add('active');
-  renderObjects();
-}
-function setTxType(t){
-  txType=t;
-  ['income','expense','info'].forEach(x=>document.getElementById('atf-'+x.slice(0,3)).classList.toggle('active',x===t));
-}
+  el.classList.add('active'); renderObjects();
+};
+window.setTxType = t => {
+  txType = t;
+  document.getElementById('atf-inc').classList.toggle('active', t==='income');
+  document.getElementById('atf-exp').classList.toggle('active', t==='expense');
+  document.getElementById('atf-inf').classList.toggle('active', t==='info');
+};
 
-// ═══════════════════════════════════════
-// CREATE OBJECT
-// ═══════════════════════════════════════
-function createObject(){
+// ── СОЗДАНИЕ ──
+window.createObject = async () => {
+  if(!connOk){ toast('Нет связи с базой','error'); return; }
   const name = document.getElementById('c-name').value.trim();
   if(!name){ toast('Введите название','error'); return; }
   const adv = parseFloat(document.getElementById('c-advance').value)||0;
-  if(createType==='project'&&adv<=0){ toast('Введите аванс для открытия объекта','error'); return; }
+  if(createType==='project' && adv<=0){ toast('Введите аванс','error'); return; }
+  const btn = document.getElementById('create-btn'); btn.disabled = true;
+  try {
+    const obj = {
+      name, createdBy: activePill,
+      addr: document.getElementById('c-addr').value.trim(),
+      area: parseFloat(document.getElementById('c-area').value)||0,
+      date: document.getElementById('c-date').value,
+      note: document.getElementById('c-note').value.trim(),
+      type: createType, partner: createPartner,
+      status: createType==='project' ? 'working' : 'waiting',
+      statusTs: serverTimestamp(), locked:false, photo:'',
+      createdAt: serverTimestamp(), transactions: []
+    };
+    if(createType==='project') obj.transactions = [{id:Date.now(),ts:Date.now(),desc:'Аванс',amount:adv,type:'income',cat:'💰 Аванс',createdBy:activePill,locked:false}];
+    await addDoc(collection(db,'objects'), obj);
+    toast('Объект создан ✓','success');
+    ['c-name','c-addr','c-area','c-advance','c-note'].forEach(id=>document.getElementById(id).value='');
+  } catch(e){ console.error(e); toast('Не сохранилось: '+(e.code||e.message),'error'); }
+  btn.disabled = false;
+};
 
-  const obj = {
-    id: Date.now(),
-    ts: Date.now(),
-    name,
-    addr: document.getElementById('c-addr').value.trim(),
-    area: parseFloat(document.getElementById('c-area').value)||0,
-    date: document.getElementById('c-date').value,
-    note: document.getElementById('c-note').value.trim(),
-    type: createType,
-    partner: createPartner,
-    status: createType==='project' ? 'working' : 'waiting',
-    statusTs: Date.now(),
-    transactions: []
-  };
+// ── СТАТУС / ЗАМОК ──
+window.setStatus = async (id, s) => {
+  const o = objects.find(x=>x.id===id); if(!o) return;
+  if(o.locked){ toast('🔐 Объект заблокирован','error'); return; }
+  try { await updateDoc(doc(db,'objects',id), {status:s, statusTs:serverTimestamp()}); toast(`${SI[s]} ${SL[s]}`,'info'); }
+  catch(e){ toast('Ошибка: '+(e.code||''),'error'); }
+};
+window.toggleLockObj = async id => {
+  const o = objects.find(x=>x.id===id); if(!o) return;
+  if(o.locked && o.lockedBy && o.lockedBy!==activePill){ toast(`🔐 Заблокировал ${pName(o.lockedBy)}`,'error'); return; }
+  const nl = !o.locked;
+  try { await updateDoc(doc(db,'objects',id), {locked:nl, lockedBy: nl?activePill:null}); toast(nl?'🔐 Заблокировано':'🔓 Разблокировано','info'); }
+  catch(e){ toast('Ошибка: '+(e.code||''),'error'); }
+};
 
-  if(createType==='project'&&adv>0){
-    obj.transactions.push({id:Date.now()+1,ts:Date.now(),desc:'Аванс',amount:adv,type:'income',cat:'💰 Аванс'});
-  }
-
-  objects.unshift(obj);
-  save();
-  sendN8n({event:'new_object',name:obj.name,partner:pName(obj.partner),type:obj.type==='project'?'Объект':'Замер',status:STATUS_LABELS[obj.status]});
-  render();
-  toast('Объект создан ✓','success');
-
-  // Reset
-  document.getElementById('c-name').value='';
-  document.getElementById('c-addr').value='';
-  document.getElementById('c-area').value='';
-  document.getElementById('c-advance').value='';
-  document.getElementById('c-note').value='';
-}
-
-// ═══════════════════════════════════════
-// STATUS
-// ═══════════════════════════════════════
-function setStatus(objId, s){
-  const obj = objects.find(o=>o.id===objId);
-  if(!obj) return;
-  obj.status=s; obj.statusTs=Date.now();
-  save(); renderDetail(objId); renderDash(); renderObjects();
-  sendN8n({event:'status_change',name:obj.name,partner:pName(obj.partner),status:STATUS_LABELS[s],icon:STATUS_ICONS[s]});
-  toast(`${STATUS_ICONS[s]} ${STATUS_LABELS[s]}`,'info');
-}
-function setMeasureStatus(dateStr, measId, s){
-  const list = measures[dateStr]||[];
-  const m = list.find(x=>x.id===measId);
-  if(!m) return;
-  m.status=s; m.statusTs=Date.now();
-  saveMeas(); renderCalendarDay(dateStr); renderCalendar();
-  toast(`${STATUS_ICONS[s]} ${STATUS_LABELS[s]}`,'info');
-}
-
-// ═══════════════════════════════════════
-// TRANSACTIONS
-// ═══════════════════════════════════════
-function addTx(){
-  if(detailId===null) return;
-  const obj = objects.find(o=>o.id===detailId);
-  if(!obj) return;
+// ── ТРАНЗАКЦИИ ──
+window.addTx = async () => {
+  if(!detailId || !connOk){ toast('Нет связи с базой','error'); return; }
+  const o = objects.find(x=>x.id===detailId); if(!o) return;
+  if(o.locked){ toast('🔐 Объект заблокирован','error'); return; }
   const desc = document.getElementById('atf-desc').value.trim();
-  const amt  = parseFloat(document.getElementById('atf-amt').value)||0;
-  const cat  = document.getElementById('atf-cat').value;
+  const amt = parseFloat(document.getElementById('atf-amt').value)||0;
   if(!desc){ toast('Введите описание','error'); return; }
-  if(txType!=='info'&&amt<=0){ toast('Введите сумму','error'); return; }
-  obj.transactions.unshift({id:Date.now(),ts:Date.now(),desc,amount:txType==='info'?0:amt,type:txType,cat});
-  save(); renderDetail(detailId);
-  document.getElementById('atf-desc').value='';
-  document.getElementById('atf-amt').value='';
-  toast('Запись добавлена ✓','success');
-}
-function deleteTx(objId,txId){
-  const obj=objects.find(o=>o.id===objId); if(!obj) return;
-  obj.transactions=obj.transactions.filter(t=>t.id!==txId);
-  save(); renderDetail(objId);
-  toast('Удалено','error');
+  if(txType!=='info' && amt<=0){ toast('Введите сумму','error'); return; }
+  const tx = {id:Date.now(), ts:Date.now(), desc, amount: txType==='info'?0:amt, type:txType, cat:document.getElementById('atf-cat').value, createdBy:activePill, locked:false};
+  try {
+    await updateDoc(doc(db,'objects',detailId), {transactions:[tx, ...txOf(o)]});
+    document.getElementById('atf-desc').value=''; document.getElementById('atf-amt').value='';
+    toast('Запись добавлена ✓','success');
+  } catch(e){ toast('Не сохранилось: '+(e.code||''),'error'); }
+};
+window.toggleLockTx = async (oid, txId) => {
+  const o = objects.find(x=>x.id===oid); if(!o || o.locked) return;
+  const txs = txOf(o).map(t => t.id===txId ? {...t, locked:!t.locked, lockedBy: !t.locked?activePill:null} : t);
+  try { await updateDoc(doc(db,'objects',oid), {transactions:txs}); } catch(e){ toast('Ошибка','error'); }
+};
+async function deleteTx(oid, txId){
+  const o = objects.find(x=>x.id===oid); if(!o) return;
+  const tx = txOf(o).find(t=>t.id===txId);
+  if(!tx || tx.locked || o.locked){ toast('🔐 Заблокировано','error'); return; }
+  try { await updateDoc(doc(db,'objects',oid), {transactions: txOf(o).filter(t=>t.id!==txId)}); toast('Удалено','error'); }
+  catch(e){ toast('Ошибка','error'); }
 }
 
-// ═══════════════════════════════════════
-// DETAIL VIEW
-// ═══════════════════════════════════════
-function openDetail(id){
-  detailId=id;
-  const dv=document.getElementById('detail-view');
-  dv.style.display='flex';
-  renderDetail(id);
-  setTxType('income');
+// ── РЕДАКТИРОВАНИЕ ──
+window.openEditObj = id => {
+  const o = objects.find(x=>x.id===id); if(!o) return;
+  if(o.locked){ toast('🔐 Объект заблокирован','error'); return; }
+  editingObjId = id;
+  document.getElementById('eo-name').value = o.name||'';
+  document.getElementById('eo-addr').value = o.addr||'';
+  document.getElementById('eo-area').value = o.area||'';
+  document.getElementById('eo-date').value = o.date||'';
+  document.getElementById('eo-note').value = o.note||'';
+  document.getElementById('edit-obj-modal').classList.add('show');
+};
+window.closeEditObj = () => { document.getElementById('edit-obj-modal').classList.remove('show'); editingObjId=null; };
+window.saveEditObj = async () => {
+  if(!editingObjId) return;
+  const name = document.getElementById('eo-name').value.trim();
+  if(!name){ toast('Введите название','error'); return; }
+  try {
+    await updateDoc(doc(db,'objects',editingObjId), {
+      name, addr: document.getElementById('eo-addr').value.trim(),
+      area: parseFloat(document.getElementById('eo-area').value)||0,
+      date: document.getElementById('eo-date').value,
+      note: document.getElementById('eo-note').value.trim()
+    });
+    window.closeEditObj(); toast('Сохранено ✓','success');
+  } catch(e){ toast('Ошибка: '+(e.code||''),'error'); }
+};
+window.openEditTx = (oid, txId) => {
+  const o = objects.find(x=>x.id===oid); if(!o || o.locked) return;
+  const tx = txOf(o).find(t=>t.id===txId);
+  if(!tx || tx.locked){ toast('🔐 Запись заблокирована','error'); return; }
+  editingObjId = oid; editingTxId = txId;
+  document.getElementById('et-desc').value = tx.desc||'';
+  document.getElementById('et-amt').value = tx.amount||'';
+  document.getElementById('et-cat').value = tx.cat||'📝 Прочее';
+  document.getElementById('edit-tx-modal').classList.add('show');
+};
+window.closeEditTx = () => { document.getElementById('edit-tx-modal').classList.remove('show'); editingTxId=null; editingObjId=null; };
+window.saveEditTx = async () => {
+  if(!editingObjId || !editingTxId) return;
+  const o = objects.find(x=>x.id===editingObjId); if(!o) return;
+  const desc = document.getElementById('et-desc').value.trim();
+  if(!desc){ toast('Введите описание','error'); return; }
+  const txs = txOf(o).map(t => t.id===editingTxId
+    ? {...t, desc, amount: parseFloat(document.getElementById('et-amt').value)||0, cat: document.getElementById('et-cat').value, editedBy: activePill, editedTs: Date.now()}
+    : t);
+  try { await updateDoc(doc(db,'objects',editingObjId), {transactions:txs}); window.closeEditTx(); toast('Сохранено ✓','success'); }
+  catch(e){ toast('Ошибка: '+(e.code||''),'error'); }
+};
+
+// ── ФОТО (сжатие в base64, без платного Storage) ──
+window.pickPhoto = async (id, file) => {
+  if(!file) return;
+  toast('Сжимаю фото...','info');
+  try {
+    const dataUrl = await compress(file, 1000, 0.55);
+    if(dataUrl.length > 700000){ toast('Фото слишком тяжёлое','error'); return; }
+    await updateDoc(doc(db,'objects',id), {photo:dataUrl});
+    toast('Фото сохранено ✓','success');
+  } catch(e){ console.error(e); toast('Ошибка фото','error'); }
+};
+function compress(file, maxSide, q){
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const sc = Math.min(1, maxSide/Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width*sc); c.height = Math.round(img.height*sc);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/jpeg', q));
+      };
+      img.onerror = rej; img.src = r.result;
+    };
+    r.onerror = rej; r.readAsDataURL(file);
+  });
 }
-function closeDetail(){
-  document.getElementById('detail-view').style.display='none';
-  detailId=null;
-  render();
-}
+
+// ── ДЕТАЛИ ──
+window.openDetail = id => { detailId = id; document.getElementById('detail-view').style.display='flex'; renderDetail(id); window.setTxType('income'); };
+window.closeDetail = () => { document.getElementById('detail-view').style.display='none'; detailId=null; };
+
 function renderDetail(id){
-  const obj=objects.find(o=>o.id===id); if(!obj) return;
-  document.getElementById('dv-name').textContent=obj.name;
-  const tEl=document.getElementById('dv-type');
-  tEl.className='obj-type '+(obj.type==='project'?'project':'measure');
-  tEl.textContent=obj.type==='project'?'🏗 Объект':'📐 Замер';
-  const pEl=document.getElementById('dv-partner');
-  pEl.className='obj-partner '+obj.partner;
-  pEl.textContent=pName(obj.partner);
-  document.getElementById('dv-date').textContent=fmtDate(obj.date);
-  document.getElementById('dv-addr').textContent=obj.addr||'';
+  const o = objects.find(x=>x.id===id);
+  if(!o){ window.closeDetail(); return; }
+  document.getElementById('dv-name').textContent = o.name;
+  document.getElementById('dv-lock-icon').textContent = o.locked ? '🔐' : '';
+  const t = document.getElementById('dv-type');
+  t.className = 'obj-type '+(o.type==='project'?'project':'measure');
+  t.textContent = o.type==='project' ? '🏗 Объект' : '📐 Замер';
+  const p = document.getElementById('dv-partner');
+  p.className = 'obj-partner '+o.partner; p.textContent = pName(o.partner);
+  document.getElementById('dv-date').textContent = fmtDate(o.date);
+  document.getElementById('dv-addr').textContent = o.addr||'';
 
-  // Status picker
-  const sp=document.getElementById('dv-status-picker');
-  sp.innerHTML=['cancelled','waiting','working','done'].map(s=>`
-    <button class="sp-btn ${s}${obj.status===s?' active':''}" onclick="setStatus(${obj.id},'${s}')">
-      <span class="sp-dot"></span>
-      <span class="sp-lbl">${STATUS_LABELS[s]}</span>
-    </button>`).join('');
-  document.getElementById('dv-status-ts').textContent = obj.statusTs
-    ? `Обновлён: ${fmtTS(obj.statusTs)}` : '';
+  const L = o.locked;
+  document.getElementById('dv-actions').innerHTML = `
+    ${!L?`<button class="detail-btn edit" onclick="openEditObj('${id}')">✏️ Изменить</button>`:''}
+    <button class="detail-btn ${L?'unlock':'lock'}" onclick="toggleLockObj('${id}')">${L?'🔓 Снять замок':'🔐 Заблокировать'}</button>
+    ${!L?`<button class="detail-btn del" onclick="confirmDeleteObj('${id}')">🗑 Удалить</button>`:''}`;
 
-  // Finance
-  const inc=obj.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=obj.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const net=inc-exp;
-  document.getElementById('dv-inc').textContent=fmtM(inc);
-  document.getElementById('dv-exp').textContent=fmtM(exp);
-  const nEl=document.getElementById('dv-net');
-  nEl.textContent=(net>=0?'+':'')+fmtM(net);
-  nEl.style.color=net>=0?'var(--green)':'var(--red)';
-  document.getElementById('dv-tx-count').textContent=obj.transactions.length;
+  const pw = document.getElementById('dv-photo-wrap');
+  const inp = `<input type="file" id="ph-${id}" class="photo-input" accept="image/*" onchange="pickPhoto('${id}',this.files[0])">`;
+  if(o.photo) pw.innerHTML = `<img class="obj-photo" src="${o.photo}" ${L?'':`onclick="document.getElementById('ph-${id}').click()"`}>`+(L?'':inp);
+  else if(!L) pw.innerHTML = `<div class="photo-placeholder" onclick="document.getElementById('ph-${id}').click()"><span>📷</span><p>Добавить фото объекта</p></div>`+inp;
+  else pw.innerHTML = '';
 
-  // Transactions
-  const tl=document.getElementById('dv-tx-list');
-  if(!obj.transactions.length){
-    tl.innerHTML='<div class="empty" style="padding:24px 0"><div class="empty-ico">💸</div><p>Добавьте первую запись</p></div>';
-    return;
-  }
-  const icons={income:'💰',expense:'📤',info:'📝'};
-  tl.innerHTML=obj.transactions.map(t=>`
+  document.getElementById('dv-status-picker').innerHTML = ['cancelled','waiting','working','done'].map(s=>
+    `<button class="sp-btn ${s}${o.status===s?' active':''}" onclick="setStatus('${id}','${s}')"><span class="sp-dot"></span><span class="sp-lbl">${SL[s]}</span></button>`).join('');
+  document.getElementById('dv-status-ts').textContent = o.statusTs ? 'Обновлён: '+fmtTS(o.statusTs) : '';
+
+  const txs = txOf(o), inc = sumT(txs,'income'), exp = sumT(txs,'expense'), net = inc-exp;
+  document.getElementById('dv-inc').textContent = fmtM(inc);
+  document.getElementById('dv-exp').textContent = fmtM(exp);
+  const n = document.getElementById('dv-net');
+  n.textContent = (net>=0?'+':'')+fmtM(net);
+  n.style.color = net>=0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('dv-tx-count').textContent = txs.length;
+  document.getElementById('dv-add-form').style.display = L ? 'none' : 'block';
+
+  const tl = document.getElementById('dv-tx-list');
+  if(!txs.length){ tl.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-ico">💸</div><p>Добавьте первую запись</p></div>'; return; }
+  const ic = {income:'💰', expense:'📤', info:'📝'};
+  tl.innerHTML = txs.map(x=>`
     <div class="tx">
-      <div class="tx-ico ${t.type}">${icons[t.type]||'📝'}</div>
+      <div class="tx-ico ${x.type}">${ic[x.type]||'📝'}</div>
       <div class="tx-body">
-        <div class="tx-desc">${esc(t.desc)}</div>
-        <div class="tx-meta">${esc(t.cat)} · ${fmtTS(t.ts)}</div>
+        <div class="tx-desc">${esc(x.desc)}</div>
+        <div class="tx-meta">${esc(x.cat)}</div>
+        <div class="tx-who ${x.createdBy||'aziz'}">${pName(x.createdBy||'aziz')}${x.ts?' · '+new Date(x.ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}${x.editedBy?' · ✏️'+pName(x.editedBy):''}</div>
       </div>
       <div class="tx-right">
-        <div class="tx-amt ${t.type}">${t.type==='info'?'—':(t.type==='income'?'+':'-')+fmtM(t.amount)}</div>
+        <div class="tx-amt ${x.type}">${x.type==='info'?'—':(x.type==='income'?'+':'-')+fmtM(x.amount)}</div>
+        ${!L && !x.locked ? `<div style="display:flex;gap:1px">
+          <button class="tx-btn" onclick="openEditTx('${id}',${x.id})">✏️</button>
+          <button class="tx-btn" onclick="confirmDeleteTx('${id}',${x.id})">✕</button>
+          <button class="tx-btn" onclick="toggleLockTx('${id}',${x.id})">🔓</button></div>`
+        : x.locked ? `<span class="tx-lock">🔐</span><button class="tx-btn" onclick="toggleLockTx('${id}',${x.id})" style="font-size:10px">снять</button>` : ''}
       </div>
-      <button class="tx-del" onclick="deleteTx(${id},${t.id})">✕</button>
     </div>`).join('');
 }
 
-// ═══════════════════════════════════════
-// MEASURES
-// ═══════════════════════════════════════
-function addMeasure(){
-  const name=document.getElementById('mf-name').value.trim();
+// ── ЗАМЕРЫ ──
+window.addMeasure = async () => {
+  if(!connOk){ toast('Нет связи с базой','error'); return; }
+  const name = document.getElementById('mf-name').value.trim();
   if(!name){ toast('Введите имя клиента','error'); return; }
-  const m={
-    id:Date.now(),ts:Date.now(),
-    name,
-    addr:document.getElementById('mf-addr').value.trim(),
-    time:document.getElementById('mf-time').value||'10:00',
-    partner:document.getElementById('mf-partner').value,
-    status:'waiting',statusTs:Date.now()
-  };
-  if(!measures[calSelectedDate]) measures[calSelectedDate]=[];
-  measures[calSelectedDate].unshift(m);
-  saveMeas(); renderCalendar(); renderCalendarDay(calSelectedDate);
-  document.getElementById('mf-name').value='';
-  document.getElementById('mf-addr').value='';
-  toast('Замер добавлен ✓','success');
-  sendN8n({event:'new_measure',name:m.name,partner:pName(m.partner),date:fmtDate(calSelectedDate),time:m.time});
-}
-function deleteMeasure(dateStr,id){
-  measures[dateStr]=(measures[dateStr]||[]).filter(m=>m.id!==id);
-  saveMeas(); renderCalendar(); renderCalendarDay(dateStr);
-  toast('Замер удалён','error');
-}
+  const m = {id:Date.now(), ts:Date.now(), name,
+    addr: document.getElementById('mf-addr').value.trim(),
+    time: document.getElementById('mf-time').value||'10:00',
+    partner: document.getElementById('mf-partner').value,
+    status:'waiting', statusTs:Date.now()};
+  try {
+    await setDoc(doc(db,'measures',calSelectedDate), {list:[m, ...(measures[calSelectedDate]||[])]}, {merge:true});
+    document.getElementById('mf-name').value=''; document.getElementById('mf-addr').value='';
+    toast('Замер добавлен ✓','success');
+  } catch(e){ console.error(e); toast('Не сохранилось: '+(e.code||''),'error'); }
+};
+window.deleteMeasure = async (ds, id) => {
+  try { await setDoc(doc(db,'measures',ds), {list:(measures[ds]||[]).filter(m=>m.id!==id)}, {merge:true}); toast('Удалено','error'); }
+  catch(e){ toast('Ошибка','error'); }
+};
+window.setMeasureStatus = async (ds, id, s) => {
+  const list = (measures[ds]||[]).map(m => m.id===id ? {...m, status:s, statusTs:Date.now()} : m);
+  try { await setDoc(doc(db,'measures',ds), {list}, {merge:true}); toast(`${SI[s]} ${SL[s]}`,'info'); }
+  catch(e){ toast('Ошибка','error'); }
+};
 
-// ═══════════════════════════════════════
-// CALENDAR
-// ═══════════════════════════════════════
-const MONTHS=['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-const DOWS=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-function calPrev(){ calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); }
-function calNext(){ calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); }
+// ── КАЛЕНДАРЬ ──
+const MO = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const DW = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+window.calPrev = () => { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); };
+window.calNext = () => { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendar(); };
+window.selectCalDay = ds => { calSelectedDate = ds; renderCalendar(); };
+
 function renderCalendar(){
-  document.getElementById('cal-month-label').textContent=MONTHS[calMonth]+' '+calYear;
-  const grid=document.getElementById('cal-grid');
-  const today=toDateStr(new Date());
-  const firstDay=new Date(calYear,calMonth,1).getDay();
-  const offset=(firstDay===0?6:firstDay-1);
-  const days=new Date(calYear,calMonth+1,0).getDate();
-  let html=DOWS.map(d=>`<div class="cal-dow">${d}</div>`).join('');
-  for(let i=0;i<offset;i++) html+=`<div class="cal-day empty"></div>`;
+  document.getElementById('cal-label').textContent = MO[calMonth]+' '+calYear;
+  const today = toDateStr(new Date());
+  const fd = new Date(calYear, calMonth, 1).getDay();
+  const off = fd===0 ? 6 : fd-1;
+  const days = new Date(calYear, calMonth+1, 0).getDate();
+  let h = DW.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<off;i++) h += '<div class="cal-day empty"></div>';
   for(let d=1;d<=days;d++){
-    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const mlist=measures[ds]||[];
-    const isToday=ds===today;
-    const isSel=ds===calSelectedDate;
-    const hasMeas=mlist.length>0;
-    let cls='cal-day'+(isToday?' today':'')+(hasMeas?' has-measure':'')+(isSel?' selected':'');
-    const dots=mlist.slice(0,3).map(m=>`<span class="cal-dot ${m.status}"></span>`).join('');
-    html+=`<div class="${cls}" onclick="selectCalDay('${ds}')">${d}${dots?`<div class="cal-dots">${dots}</div>`:''}</div>`;
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ml = measures[ds]||[];
+    const cls = 'cal-day'+(ds===today?' today':'')+(ml.length?' has-measure':'')+(ds===calSelectedDate?' selected':'');
+    const dots = ml.slice(0,3).map(m=>`<span class="cal-dot ${m.status}"></span>`).join('');
+    h += `<div class="${cls}" onclick="selectCalDay('${ds}')">${d}${dots?`<div class="cal-dots">${dots}</div>`:''}</div>`;
   }
-  grid.innerHTML=html;
-  renderCalendarDay(calSelectedDate);
+  document.getElementById('cal-grid').innerHTML = h;
+  renderCalDay(calSelectedDate);
 }
-function selectCalDay(ds){
-  calSelectedDate=ds;
-  renderCalendar();
-}
-function renderCalendarDay(ds){
-  const lbl=document.getElementById('cal-day-label');
-  lbl.textContent=`Замеры · ${fmtDate(ds)}`;
-  const list=document.getElementById('measures-list');
-  const mlist=measures[ds]||[];
-  if(!mlist.length){
-    list.innerHTML=`<div class="empty" style="padding:20px 0"><p>Нет замеров на этот день</p></div>`;
-    return;
-  }
-  list.innerHTML=mlist.map(m=>`
+function renderCalDay(ds){
+  document.getElementById('cal-day-lbl').textContent = 'Замеры · '+fmtDate(ds);
+  const ml = measures[ds]||[];
+  const el = document.getElementById('measures-list');
+  if(!ml.length){ el.innerHTML = '<div class="empty" style="padding:20px 0"><p>Нет замеров на этот день</p></div>'; return; }
+  el.innerHTML = ml.map(m=>`
     <div class="measure-card">
       <div class="measure-left">
         <div class="measure-name">${esc(m.name)}</div>
-        <div class="measure-meta">
-          ${statusBadge(m.status)}
-          <span class="measure-time">🕐 ${m.time||''}</span>
-          <span class="obj-partner ${m.partner}" style="font-size:11px;font-weight:700">${pName(m.partner)}</span>
-        </div>
+        <div class="measure-meta">${badge(m.status)}
+          <span style="font-size:11px;color:var(--muted)">🕐 ${esc(m.time)}</span>
+          <span class="obj-partner ${m.partner}" style="font-size:11px">${pName(m.partner)}</span></div>
         ${m.addr?`<div class="measure-addr">📍 ${esc(m.addr)}</div>`:''}
-        ${m.statusTs?`<div class="status-ts">Обновлён: ${fmtTS(m.statusTs)}</div>`:''}
-        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-          ${['cancelled','waiting','working','done'].map(s=>`
-            <button onclick="setMeasureStatus('${ds}',${m.id},'${s}')"
-              style="padding:4px 10px;border-radius:12px;font-size:10px;font-weight:700;cursor:pointer;border:1px solid;font-family:inherit;transition:all .2s;
-              ${m.status===s?`background:var(--${s==='done'?'blue':s==='working'?'green':s==='waiting'?'yellow':'red'}-bg,var(--aziz-bg));color:var(--${s==='done'?'aziz':s==='working'?'green':s==='waiting'?'yellow':'red'});border-color:var(--${s==='done'?'aziz':s==='working'?'green':s==='waiting'?'yellow':'red'})`:'background:transparent;color:var(--muted);border-color:var(--border)'}">
-              ${STATUS_ICONS[s]}
-            </button>`).join('')}
+        <div style="display:flex;gap:6px;margin-top:10px">
+          ${['cancelled','waiting','working','done'].map(s=>`<button onclick="setMeasureStatus('${ds}',${m.id},'${s}')" style="padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer;font-family:inherit;border:1px solid ${m.status===s?'var(--border2)':'var(--border)'};background:${m.status===s?'var(--s3)':'transparent'}">${SI[s]}</button>`).join('')}
         </div>
       </div>
       <button class="measure-del" onclick="deleteMeasure('${ds}',${m.id})">✕</button>
     </div>`).join('');
 }
 
-// ═══════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════
-function render(){ renderDash(); renderObjects(); }
+// ── РЕНДЕР ──
+function renderAll(){ renderDash(); renderObjects(); if(detailId) renderDetail(detailId); }
 
 function renderDash(){
-  const allTx=objects.flatMap(o=>o.transactions);
-  const inc=allTx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=allTx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  document.getElementById('ds-inc').textContent=fmtShort(inc);
-  document.getElementById('ds-exp').textContent=fmtShort(exp);
-  document.getElementById('ds-obj').textContent=objects.length;
-  document.getElementById('ds-mea').textContent=Object.values(measures).flat().length;
-  document.getElementById('ds-inc-cur').textContent=currency==='USD'?'USD $':'сўм';
-  document.getElementById('ds-exp-cur').textContent=currency==='USD'?'USD $':'сўм';
+  const all = objects.flatMap(txOf);
+  const inc = sumT(all,'income'), exp = sumT(all,'expense');
+  document.getElementById('ds-inc').textContent = fmtShort(inc);
+  document.getElementById('ds-exp').textContent = fmtShort(exp);
+  document.getElementById('ds-obj').textContent = objects.length;
+  document.getElementById('ds-mea').textContent = Object.values(measures).flat().length;
+  document.getElementById('ds-inc-s').textContent = currency==='USD'?'USD':'сўм';
+  document.getElementById('ds-exp-s').textContent = currency==='USD'?'USD':'сўм';
+  document.getElementById('s-objs').textContent = objects.length;
 
-  ['aziz','redvan'].forEach(p=>{
-    const tx=objects.filter(o=>o.partner===p).flatMap(o=>o.transactions);
-    const pi=tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-    const pe=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-    const pn=pi-pe;
-    const pfx=p==='aziz'?'a':'r';
-    document.getElementById('p'+pfx+'-i').textContent=fmtM(pi);
-    document.getElementById('p'+pfx+'-e').textContent=fmtM(pe);
-    const nEl=document.getElementById('p'+pfx+'-n');
-    nEl.textContent=(pn>=0?'+':'')+fmtM(pn);
-    nEl.style.color=pn>=0?'var(--green)':'var(--red)';
+  [['aziz','a'],['redvan','r']].forEach(([p,k])=>{
+    const tx = objects.filter(o=>o.partner===p).flatMap(txOf);
+    const i = sumT(tx,'income'), e = sumT(tx,'expense'), n = i-e;
+    document.getElementById('p'+k+'-i').textContent = fmtM(i);
+    document.getElementById('p'+k+'-e').textContent = fmtM(e);
+    const ne = document.getElementById('p'+k+'-n');
+    ne.textContent = (n>=0?'+':'')+fmtM(n);
+    ne.style.color = n>=0 ? 'var(--green)' : 'var(--red)';
   });
 
-  const active=objects.filter(o=>o.status==='working');
-  document.getElementById('dash-active-count').textContent=active.length;
-  const dal=document.getElementById('dash-active-list');
-  if(!active.length){
-    dal.innerHTML=`<div class="empty" style="padding:20px 0"><p>Нет активных объектов</p></div>`;
-  } else {
-    dal.innerHTML=active.map(o=>objCardHTML(o)).join('');
-  }
-
-  document.getElementById('s-objs').textContent=objects.length;
-  document.getElementById('s-meas').textContent=Object.values(measures).flat().length;
+  const act = objects.filter(o=>o.status==='working');
+  document.getElementById('dash-cnt').textContent = act.length;
+  document.getElementById('dash-active').innerHTML = act.length
+    ? act.map(objCard).join('')
+    : '<div class="empty" style="padding:20px 0"><p>Нет активных объектов</p></div>';
 }
 
-function objCardHTML(o){
-  const inc=o.transactions.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const exp=o.transactions.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  const net=inc-exp;
-  return`<div class="obj-card" onclick="openDetail(${o.id})">
+function objCard(o){
+  const txs = txOf(o), inc = sumT(txs,'income'), exp = sumT(txs,'expense'), net = inc-exp;
+  return `<div class="obj-card" onclick="openDetail('${o.id}')">
     <div class="obj-card-top">
-      <div class="obj-card-row1">
-        <div class="obj-name">${esc(o.name)}</div>
-        ${statusBadge(o.status)}
+      <div class="obj-card-r1">
+        <div class="obj-name">${esc(o.name)}${o.locked?'<span class="lock-icon">🔐</span>':''}</div>
+        ${badge(o.status)}
       </div>
       <div class="obj-meta">
         <span class="obj-type ${o.type}">${o.type==='project'?'🏗 Объект':'📐 Замер'}</span>
         <span class="obj-partner ${o.partner}">${pName(o.partner)}</span>
-        <span class="obj-date">${fmtDate(o.date)}</span>
+        <span style="font-size:11px;color:var(--muted)">${fmtDate(o.date)}</span>
       </div>
       ${o.addr?`<div class="obj-addr">📍 ${esc(o.addr)}</div>`:''}
-      ${o.statusTs?`<div class="status-updated">Обновлён: ${fmtTS(o.statusTs)}</div>`:''}
+      ${o.statusTs?`<div class="status-ts">Обновлён: ${fmtTS(o.statusTs)}</div>`:''}
     </div>
-    <div class="obj-card-bottom">
+    <div class="obj-card-bot">
       <div class="obj-fin">
         <div class="obj-fin-item"><div class="obj-fin-lbl">Приход</div><div class="obj-fin-v inc">${fmtShort(inc)}</div></div>
         <div class="obj-fin-item"><div class="obj-fin-lbl">Расход</div><div class="obj-fin-v exp">${fmtShort(exp)}</div></div>
-        <div class="obj-fin-item"><div class="obj-fin-lbl">Баланс</div><div class="obj-fin-v net" style="color:${net>=0?'var(--green)':'var(--red)'}">${(net>=0?'+':'')+fmtShort(net)}</div></div>
+        <div class="obj-fin-item"><div class="obj-fin-lbl">Баланс</div><div class="obj-fin-v" style="color:${net>=0?'var(--green)':'var(--red)'}">${(net>=0?'+':'')+fmtShort(net)}</div></div>
       </div>
-      <div class="obj-arrow">›</div>
+      <span style="color:var(--muted);font-size:18px">›</span>
     </div>
   </div>`;
 }
 
 function renderObjects(){
-  const list=document.getElementById('objects-list');
-  let filtered=objects;
-  if(objFilter!=='all') filtered=objects.filter(o=>o.status===objFilter);
-  if(!filtered.length){
-    list.innerHTML=`<div class="empty"><div class="empty-ico">🏗</div><p>Нет объектов</p><button class="empty-btn" onclick="goTab('create',document.querySelectorAll('.tab')[3])">+ Создать</button></div>`;
-    return;
-  }
-  list.innerHTML=filtered.map(o=>objCardHTML(o)).join('');
+  const list = objFilter==='all' ? objects : objects.filter(o=>o.status===objFilter);
+  document.getElementById('objects-list').innerHTML = list.length
+    ? list.map(objCard).join('')
+    : `<div class="empty"><div class="empty-ico">🏗</div><p>Нет объектов</p><button class="empty-btn" onclick="goTab('create',document.querySelectorAll('.tab')[3])">+ Создать</button></div>`;
 }
 
-// ═══════════════════════════════════════
-// CURRENCY
-// ═══════════════════════════════════════
-function setCurrency(c){
-  currency=c;
-  localStorage.setItem(CK,c);
-  updateCurrencyUI();
-  render();
-  if(detailId!==null) renderDetail(detailId);
-  toast('Валюта: '+(c==='USD'?'Доллар $':'Сўм'),'info');
-}
+// ── УДАЛЕНИЕ ──
+window.confirmDeleteObj = id => showDialog('Удалить объект?','Все данные объекта будут удалены безвозвратно.', async ()=>{
+  try { await deleteDoc(doc(db,'objects',id)); window.closeDetail(); toast('Объект удалён','error'); }
+  catch(e){ toast('Ошибка','error'); }
+});
+window.confirmDeleteTx = (oid, txId) => showDialog('Удалить запись?','Это действие нельзя отменить.', ()=>deleteTx(oid, txId));
+window.confirmClear = () => showDialog('Удалить все объекты?','Удалит объекты у обоих партнёров. Отменить нельзя.', async ()=>{
+  for(const o of [...objects]) { try { await deleteDoc(doc(db,'objects',o.id)); } catch(e){} }
+  toast('База очищена','error');
+});
+
+// ── ВАЛЮТА ──
+window.setCurrency = c => {
+  currency = c; localStorage.setItem('ar_cur', c);
+  updateCurrencyUI(); renderAll();
+  toast('Валюта: '+(c==='USD'?'$ USD':'сўм'),'info');
+};
 function updateCurrencyUI(){
-  document.getElementById('cur-uzs').classList.toggle('active',currency==='UZS');
-  document.getElementById('cur-usd').classList.toggle('active',currency==='USD');
+  document.getElementById('cur-uzs').classList.toggle('active', currency==='UZS');
+  document.getElementById('cur-usd').classList.toggle('active', currency==='USD');
 }
 
-// ═══════════════════════════════════════
-// N8N
-// ═══════════════════════════════════════
-function saveN8n(){
-  const v=document.getElementById('n8n-url').value.trim();
-  if(!v.startsWith('http')){ toast('Некорректный URL','error'); return; }
-  n8nUrl=v; localStorage.setItem(NK,v);
-  document.getElementById('n8n-status').textContent='✓ Webhook сохранён';
-  document.getElementById('n8n-status').className='n8n-st ok';
-  toast('Webhook сохранён ✓','success');
+// ── КЛЮЧ OPENAI (только localStorage, не в коде) ──
+const getKey = () => localStorage.getItem('ar_oai') || '';
+function updateKeyUI(){
+  const k = getKey(), el = document.getElementById('key-status');
+  if(k){ el.className='key-status ok'; el.textContent = 'Ключ сохранён: '+k.slice(0,10)+'...'+k.slice(-4); }
+  else { el.className='key-status no'; el.textContent = 'Ключ не введён — AI-чат не работает'; }
 }
-async function sendN8n(data){
-  if(!n8nUrl) return;
-  const msgs={
-    new_object:`🏗 Новый объект создан\n*${data.name}*\n${data.type} · ${pName?pName(data.partner):data.partner}\nСтатус: ${data.status}`,
-    status_change:`${data.icon} Статус изменён\n*${data.name}*\n→ ${data.status}\nПартнёр: ${data.partner}`,
-    new_measure:`📐 Новый замер\n*${data.name}*\n📅 ${data.date} 🕐 ${data.time}\nПартнёр: ${data.partner}`
-  };
+window.saveKey = () => {
+  const v = document.getElementById('key-input').value.trim();
+  if(!v.startsWith('sk-')){ toast('Ключ должен начинаться с sk-','error'); return; }
+  localStorage.setItem('ar_oai', v);
+  document.getElementById('key-input').value='';
+  updateKeyUI(); toast('Ключ сохранён ✓','success');
+};
+window.clearKey = () => { localStorage.removeItem('ar_oai'); updateKeyUI(); toast('Ключ удалён','info'); };
+
+// ── AI ЧАТ ──
+function aiContext(){
+  const all = objects.flatMap(txOf);
+  const inc = sumT(all,'income'), exp = sumT(all,'expense');
+  const per = p => { const t = objects.filter(o=>o.partner===p).flatMap(txOf); return {i:sumT(t,'income'), e:sumT(t,'expense')}; };
+  const a = per('aziz'), r = per('redvan');
+  const lines = objects.map(o=>{
+    const t = txOf(o), i = sumT(t,'income'), e = sumT(t,'expense');
+    const det = t.map(x=>`${x.type==='income'?'+':'-'}${x.amount} ${x.cat} (${pName(x.createdBy||'aziz')})`).join('; ');
+    return `- "${o.name}" | ${pName(o.partner)} | ${SL[o.status]} | приход ${i} | расход ${e} | баланс ${i-e} | ${o.date||'без даты'}${o.area?` | ${o.area} м²`:''}${det?` | записи: ${det}`:''}`;
+  }).join('\n');
+  return `Ты AI-бухгалтер партнёрского бизнеса по натяжным потолкам в Ташкенте.
+Партнёры: Азиз и Редван. Валюта: ${currency}. Сегодня: ${new Date().toLocaleDateString('ru-RU')}.
+
+ИТОГИ: объектов ${objects.length}, приход ${inc}, расход ${exp}, чистая прибыль ${inc-exp}.
+АЗИЗ: приход ${a.i}, расход ${a.e}, итог ${a.i-a.e}
+РЕДВАН: приход ${r.i}, расход ${r.e}, итог ${r.i-r.e}
+
+ОБЪЕКТЫ:
+${lines || 'Объектов пока нет — так и скажи, не придумывай цифры.'}
+
+Правила: отвечай кратко по-русски, только по этим данным. Не выдумывай суммы. Если данных нет — скажи прямо. При делении прибыли учитывай кто сколько вложил.`;
+}
+function aiMsg(text, role){
+  const m = document.getElementById('ai-msgs');
+  const d = document.createElement('div');
+  d.className = 'ai-b '+(role==='ai'?'ai':'usr');
+  d.innerHTML = `<div class="ai-nm ${role==='ai'?'ai':'usr'}">${role==='ai'?'🤖 АР Бухгалтер':'👤 '+pName(activePill)}</div><div style="white-space:pre-wrap">${esc(text)}</div>`;
+  m.appendChild(d); m.scrollTop = m.scrollHeight;
+  return d;
+}
+window.sendAI = async () => {
+  const inp = document.getElementById('ai-input');
+  const q = inp.value.trim(); if(!q) return;
+  const key = getKey();
+  if(!key){ aiMsg('Ключ OpenAI не введён. Откройте ⚙️ Настройки → Ключ OpenAI и вставьте свой ключ. Он сохранится только на этом телефоне.','ai'); inp.value=''; return; }
+  inp.value = '';
+  const btn = document.getElementById('ai-btn'); btn.disabled = true;
+  aiMsg(q,'usr');
+  aiHistory.push({role:'user', content:q});
+  const wait = aiMsg('⏳ Считаю по данным...','ai');
   try {
-    await fetch(n8nUrl,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...data,message:msgs[data.event]||JSON.stringify(data),source:'ar_crm'})});
-  } catch(e){}
-}
+    const res = await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body: JSON.stringify({model:'gpt-4o-mini', max_tokens:800,
+        messages:[{role:'system',content:aiContext()}, ...aiHistory.slice(-10)]})
+    });
+    const data = await res.json();
+    wait.remove();
+    if(data.choices && data.choices[0]){
+      const a = data.choices[0].message.content;
+      aiHistory.push({role:'assistant', content:a});
+      aiMsg(a,'ai');
+    } else {
+      const em = data.error ? data.error.message : 'неизвестная ошибка';
+      aiMsg('Ошибка OpenAI: '+em+(String(em).toLowerCase().includes('key')?'\n\nПроверьте ключ в ⚙️ Настройках.':''),'ai');
+    }
+  } catch(e){ wait.remove(); aiMsg('Нет связи с OpenAI. Проверьте интернет.','ai'); }
+  btn.disabled = false;
+};
+window.quickAI = q => { document.getElementById('ai-input').value = q; window.sendAI(); };
 
-// ═══════════════════════════════════════
-// EXPORT / CLEAR
-// ═══════════════════════════════════════
-function exportData(){
-  const blob=new Blob([JSON.stringify({objects,measures},null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`ar-crm-${toDateStr(new Date())}.json`;
-  a.click();
-  toast('Экспорт скачан ✓','success');
-}
-function confirmClear(){
-  showDialog('Очистить все данные?','Все объекты, замеры и транзакции будут удалены.',()=>{
-    objects=[]; measures={};
-    save(); saveMeas(); render();
-    toast('Данные очищены','error');
-  });
-}
-
-// ═══════════════════════════════════════
-// DIALOG
-// ═══════════════════════════════════════
-function showDialog(t,d,fn){
-  document.getElementById('dlg-t').textContent=t;
-  document.getElementById('dlg-d').textContent=d;
-  document.getElementById('dlg-ok').onclick=()=>{closeDialog();fn();};
+// ── ДИАЛОГ / ТОСТ ──
+function showDialog(t, d, fn){
+  document.getElementById('dlg-t').textContent = t;
+  document.getElementById('dlg-d').textContent = d;
+  document.getElementById('dlg-ok').onclick = () => { window.closeDialog(); fn(); };
   document.getElementById('overlay').classList.add('show');
 }
-function closeDialog(){ document.getElementById('overlay').classList.remove('show'); }
-
-// ═══════════════════════════════════════
-// TOAST
-// ═══════════════════════════════════════
-let toastT;
-function toast(msg,type='success'){
-  const el=document.getElementById('toast');
-  el.textContent=msg;
-  el.className='toast show '+type;
-  clearTimeout(toastT);
-  toastT=setTimeout(()=>el.className='toast',3000);
+window.closeDialog = () => document.getElementById('overlay').classList.remove('show');
+let tt;
+function toast(msg, type='success'){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast show '+type;
+  clearTimeout(tt); tt = setTimeout(()=>el.className='toast', 3200);
 }
 
-// START
 init();
-// Hide advance block by default
-document.getElementById('advance-block').style.display='none';
 </script>
 </body>
 </html>
