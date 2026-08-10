@@ -347,7 +347,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 <div class="loading-screen" id="loading-screen">
   <div class="loading-logo">АР</div>
   <div class="loading-text" id="loading-text">Подключение к базе данных...</div>
-  <div class="loading-ver">v3.0 · Firebase + AI</div>
+  <div class="loading-ver">v3.1 · Firebase + AI</div>
 </div>
 
 <div class="app" id="main-app" style="display:none">
@@ -357,7 +357,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <div class="logo-ico">АР</div>
     <div>
       <div class="logo-name">АР CRM</div>
-      <div class="logo-sub">Натяжные потолки · v3.0</div>
+      <div class="logo-sub">Натяжные потолки · v3.1</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
@@ -498,8 +498,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <div class="settings-wrap">
     <div class="setting-block">
       <div class="setting-row">
-        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v3.0 — на GitHub старый файл</div></div>
-        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v3.0</div>
+        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v3.1 — на GitHub старый файл</div></div>
+        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v3.1</div>
       </div>
       <div class="setting-row">
         <div><div class="setting-l">Синхронизация</div><div class="setting-s">Firebase Firestore · реальное время</div></div>
@@ -644,7 +644,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, addDoc, updateDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
+import { getFirestore, initializeFirestore, collection, doc, addDoc, updateDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -656,9 +656,15 @@ const firebaseConfig = {
   appId: "1:215893544524:web:d8b02a8d400bc4553e6ee9"
 };
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+let db;
+try {
+  db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+} catch (e) {
+  db = getFirestore(app);
+}
+const INSIDE_FRAME = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
 
-const APP_VERSION = 'v3.0';
+const APP_VERSION = 'v3.1';
 
 // ── PIN-ЭКРАН (защита от чужих глаз на устройстве) ──
 let pinBuf = '', pinMode = 'enter', pinFirst = '';
@@ -773,9 +779,10 @@ function setBusy(disabled){
 }
 function diagnose(err){
   const c = err && err.code ? err.code : '';
+  if(INSIDE_FRAME) return 'Это предпросмотр — здесь база всегда недоступна. Откройте приложение по ссылке azimus122469-sketch.github.io/ar-crm — там связь работает.';
   if(c==='permission-denied') return 'Firestore отклонил доступ. Firebase → Firestore → Rules → allow read, write → Publish.';
   if(c==='failed-precondition') return 'База Firestore не создана. Firebase → Firestore Database → Создать базу.';
-  if(c==='unavailable') return 'Нет доступа к Firestore. Проверьте интернет. В превью Claude соединение блокируется — откройте приложение по ссылке GitHub Pages.';
+  if(c==='unavailable') return 'Нет доступа к Firestore. Проверьте интернет или переключитесь с Wi-Fi на мобильный.';
   return 'Ошибка базы: '+(c||'неизвестно');
 }
 
