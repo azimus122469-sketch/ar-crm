@@ -347,7 +347,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 <div class="loading-screen" id="loading-screen">
   <div class="loading-logo">АР</div>
   <div class="loading-text" id="loading-text">Подключение к базе данных...</div>
-  <div class="loading-ver">v3.3 · Firebase + AI</div>
+  <div class="loading-ver">v4.0 · Firebase + AI</div>
 </div>
 
 <div class="app" id="main-app" style="display:none">
@@ -357,7 +357,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <div class="logo-ico">АР</div>
     <div>
       <div class="logo-name">АР CRM</div>
-      <div class="logo-sub">Натяжные потолки · v3.3</div>
+      <div class="logo-sub">Натяжные потолки · v4.0</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
@@ -376,6 +376,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <div class="tab" onclick="goTab('objects',this)">🏗 Объекты</div>
   <div class="tab" onclick="goTab('calendar',this)">📅 Замеры</div>
   <div class="tab" onclick="goTab('create',this)">➕ Создать</div>
+  <div class="tab" onclick="goTab('cash',this)">💰 Касса</div>
   <div class="tab" onclick="goTab('ai',this)">🤖 AI</div>
   <div class="tab" onclick="goTab('settings',this)">⚙️</div>
 </nav>
@@ -471,6 +472,90 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   </div>
 </div>
 
+<div class="page" id="page-cash">
+  <div style="padding:16px 16px 0">
+    <div style="background:var(--s1);border:1px solid var(--border2);border-radius:var(--r);padding:18px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--green),var(--aziz))"></div>
+      <div style="font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Остаток в общаке</div>
+      <div style="font-size:30px;font-weight:800;letter-spacing:-1.2px;line-height:1" id="cash-left">0</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px" id="cash-left-hint">свободные деньги бизнеса</div>
+    </div>
+  </div>
+
+  <div class="sec"><div class="sec-t">Из чего складывается</div></div>
+  <div style="padding:0 16px">
+    <div class="setting-block">
+      <div class="setting-row"><div class="setting-l" style="font-size:13px">Приход от клиентов</div><div style="font-weight:800;color:var(--green)" id="cf-clients">0</div></div>
+      <div class="setting-row"><div class="setting-l" style="font-size:13px">Вложили партнёры</div><div style="font-weight:800;color:var(--aziz)" id="cf-contrib">0</div></div>
+      <div class="setting-row"><div class="setting-l" style="font-size:13px">Расходы по объектам</div><div style="font-weight:800;color:var(--red)" id="cf-objexp">0</div></div>
+      <div class="setting-row"><div class="setting-l" style="font-size:13px">Общие расходы</div><div style="font-weight:800;color:var(--red)" id="cf-overhead">0</div></div>
+      <div class="setting-row"><div class="setting-l" style="font-size:13px">Взяли себе</div><div style="font-weight:800;color:var(--redvan)" id="cf-draws">0</div></div>
+    </div>
+  </div>
+
+  <div class="sec"><div class="sec-t">Чистая прибыль и доли</div></div>
+  <div style="padding:0 16px">
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span style="font-size:12px;color:var(--muted2);font-weight:600">Чистая прибыль</span>
+        <span style="font-size:18px;font-weight:800" id="cf-profit">0</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">приходы минус все расходы · делится 50/50</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px">
+    <div style="background:var(--s1);border:1px solid var(--aziz-b);border-radius:var(--r);padding:14px">
+      <div style="font-size:12px;font-weight:800;color:var(--aziz);margin-bottom:10px">⬤ Азиз</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;color:var(--muted)">Доля 50%</span><span style="font-size:11px;font-weight:700" id="pa-share">0</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;color:var(--muted)">Вложил свои</span><span style="font-size:11px;font-weight:700;color:var(--aziz)" id="pa-contrib">0</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;color:var(--muted)">Взял себе</span><span style="font-size:11px;font-weight:700;color:var(--redvan)" id="pa-draw">0</span></div>
+      <div style="height:1px;background:var(--border);margin-bottom:8px"></div>
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;font-weight:700;color:var(--muted)">Причитается</span><span style="font-size:14px;font-weight:800" id="pa-owed">0</span></div>
+    </div>
+    <div style="background:var(--s1);border:1px solid var(--redvan-b);border-radius:var(--r);padding:14px">
+      <div style="font-size:12px;font-weight:800;color:var(--redvan);margin-bottom:10px">⬤ Редван</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;color:var(--muted)">Доля 50%</span><span style="font-size:11px;font-weight:700" id="pr-share">0</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;color:var(--muted)">Вложил свои</span><span style="font-size:11px;font-weight:700;color:var(--aziz)" id="pr-contrib">0</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="font-size:11px;color:var(--muted)">Взял себе</span><span style="font-size:11px;font-weight:700;color:var(--redvan)" id="pr-draw">0</span></div>
+      <div style="height:1px;background:var(--border);margin-bottom:8px"></div>
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;font-weight:700;color:var(--muted)">Причитается</span><span style="font-size:14px;font-weight:800" id="pr-owed">0</span></div>
+    </div>
+  </div>
+
+  <div class="sec"><div class="sec-t">Добавить движение</div></div>
+  <div style="padding:0 16px">
+    <div style="background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:14px">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+        <button class="tt-btn" id="ck-contribution" onclick="setCashType('contribution')" style="border:1.5px solid var(--border);border-radius:var(--r-xs);padding:10px 4px;font-size:11px">💵 Вложил свои</button>
+        <button class="tt-btn" id="ck-draw" onclick="setCashType('draw')" style="border:1.5px solid var(--border);border-radius:var(--r-xs);padding:10px 4px;font-size:11px">🤝 Взял себе</button>
+        <button class="tt-btn" id="ck-overhead" onclick="setCashType('overhead')" style="border:1.5px solid var(--border);border-radius:var(--r-xs);padding:10px 4px;font-size:11px">📣 Общий расход</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <input id="ck-desc" class="form-i" placeholder="Описание *"/>
+        <div style="display:flex;gap:8px">
+          <input id="ck-amt" class="form-i" style="flex:1;min-width:0" type="number" placeholder="Сумма *" inputmode="numeric"/>
+          <select id="ck-partner" class="form-s" style="width:130px;flex-shrink:0"><option value="aziz">Азиз</option><option value="redvan">Редван</option></select>
+        </div>
+        <select id="ck-cat" class="form-s">
+          <option>📣 Реклама Instagram</option>
+          <option>🎯 Таргет / продвижение</option>
+          <option>📸 Съёмка / контент</option>
+          <option>🛠 Инструмент</option>
+          <option>🚗 Машина / бензин</option>
+          <option>📱 Связь / интернет</option>
+          <option>🏢 Аренда / склад</option>
+          <option>📄 Налоги / документы</option>
+          <option>📝 Прочее</option>
+        </select>
+        <button class="btn-main" id="ck-btn" style="padding:13px;font-size:15px" onclick="addCash()">Добавить</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec"><div class="sec-t">История кассы <span id="cash-count">0</span></div></div>
+  <div class="tx-list" id="cash-list" style="padding-bottom:20px"></div>
+</div>
+
 <div class="page" id="page-ai">
   <div class="ai-wrap">
     <div class="ai-msgs" id="ai-msgs">
@@ -498,8 +583,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <div class="settings-wrap">
     <div class="setting-block">
       <div class="setting-row">
-        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v3.3 — на GitHub старый файл</div></div>
-        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v3.3</div>
+        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v4.0 — на GitHub старый файл</div></div>
+        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v4.0</div>
       </div>
       <div class="setting-row">
         <div><div class="setting-l">Синхронизация</div><div class="setting-s">Firebase Firestore · реальное время</div></div>
@@ -671,7 +756,7 @@ try {
 }
 const INSIDE_FRAME = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
 
-const APP_VERSION = 'v3.3';
+const APP_VERSION = 'v4.0';
 
 // ── PIN-ЭКРАН (защита от чужих глаз на устройстве) ──
 let pinBuf = '', pinMode = 'enter', pinFirst = '';
@@ -728,7 +813,10 @@ function showPinGate(){
   document.getElementById('loading-screen').style.display='none';
   document.getElementById('pin-screen').style.display='flex';
 }
-let objects = [], measures = {};
+let objects = [], measures = {}, cashbox = [];
+let cashType = 'contribution';
+const CASH_LABEL = { contribution:'Вложил свои', draw:'Взял себе', overhead:'Общий расход' };
+const CASH_ICON  = { contribution:'💵', draw:'🤝', overhead:'📣' };
 let currency = localStorage.getItem('ar_cur') || 'UZS';
 let activePill = localStorage.getItem('ar_pill') || 'aziz';
 let objFilter = 'all';
@@ -802,6 +890,14 @@ function startListeners(){
     },
     err => { console.error('objects:', err); setConn('err', diagnose(err)); reveal(); }
   );
+  onSnapshot(query(collection(db,'cashbox'), orderBy('ts','desc')),
+    snap => {
+      cashbox = [];
+      snap.forEach(d => cashbox.push({id:d.id, ...d.data()}));
+      renderCash(); renderDash();
+    },
+    err => console.error('cashbox:', err)
+  );
   onSnapshot(collection(db,'measures'),
     snap => {
       measures = {};
@@ -828,7 +924,7 @@ function bootApp(){
   document.getElementById('c-date').value = toDateStr(now);
   createPartner = activePill;
   document.getElementById('mf-partner').value = activePill;
-  updatePillUI(); updateCurrencyUI(); setObjType('measure'); updateKeyUI();
+  updatePillUI(); updateCurrencyUI(); setObjType('measure'); updateKeyUI(); setCashType('contribution');
   startListeners();
   setTimeout(()=>{ if(firstLoad){ setConn('err','База не отвечает. Откройте приложение по ссылке GitHub Pages, а не в превью.'); reveal(); } }, 8000);
 }
@@ -1176,7 +1272,7 @@ function renderCalDay(ds){
 }
 
 // ── РЕНДЕР ──
-function renderAll(){ renderDash(); renderObjects(); if(detailId) renderDetail(detailId); }
+function renderAll(){ renderDash(); renderObjects(); renderCash(); if(detailId) renderDetail(detailId); }
 
 function renderDash(){
   const all = objects.flatMap(txOf);
@@ -1288,7 +1384,12 @@ function aiContext(){
   return `Ты AI-бухгалтер партнёрского бизнеса по натяжным потолкам в Ташкенте.
 Партнёры: Азиз и Редван. Валюта: ${currency}. Сегодня: ${new Date().toLocaleDateString('ru-RU')}.
 
-ИТОГИ: объектов ${objects.length}, приход ${inc}, расход ${exp}, чистая прибыль ${inc-exp}.
+ИТОГИ: объектов ${objects.length}, приход от клиентов ${inc}, расходы по объектам ${exp}.
+КАССА: вложили партнёры ${money().contrib}, общие расходы (реклама и пр.) ${money().overhead}, взяли себе ${money().draws}.
+ЧИСТАЯ ПРИБЫЛЬ (приходы минус объектные минус общие): ${money().profit}. Делится 50/50.
+ОСТАТОК В ОБЩАКЕ: ${money().left}.
+ПРИЧИТАЕТСЯ: Азизу ${money().profit/2 + cashSum('contribution','aziz') - cashSum('draw','aziz')}, Редвану ${money().profit/2 + cashSum('contribution','redvan') - cashSum('draw','redvan')}.
+ВАЖНО: «взял себе» — это не расход бизнеса, прибыль он не уменьшает. «вложил свои» — не доход, это долг бизнеса партнёру.
 АЗИЗ: приход ${a.i}, расход ${a.e}, итог ${a.i-a.e}
 РЕДВАН: приход ${r.i}, расход ${r.e}, итог ${r.i-r.e}
 
@@ -1374,6 +1475,117 @@ window.downloadBackup = () => {
     toast('Копия скачана ✓','success');
   } catch(e){ console.error(e); toast('Не удалось скачать','error'); }
 };
+
+// ── КАССА / ОБЩАК ──
+function cashSum(type, partner){
+  return cashbox
+    .filter(c => c.type === type && (!partner || c.partner === partner))
+    .reduce((s,c) => s + (Number(c.amount)||0), 0);
+}
+function money(){
+  const all = objects.flatMap(txOf);
+  const clients  = sumT(all,'income');            // приход от клиентов
+  const objExp   = sumT(all,'expense');           // расходы по объектам
+  const contrib  = cashSum('contribution');       // вложили партнёры
+  const overhead = cashSum('overhead');           // реклама и прочее общее
+  const draws    = cashSum('draw');               // взяли себе
+  const profit   = clients - objExp - overhead;   // чистая прибыль
+  const left     = clients + contrib - objExp - overhead - draws; // остаток в общаке
+  return { clients, objExp, contrib, overhead, draws, profit, left };
+}
+window.setCashType = t => {
+  cashType = t;
+  ['contribution','draw','overhead'].forEach(x => {
+    const el = document.getElementById('ck-'+x);
+    const on = x === t;
+    el.style.borderColor = on ? (x==='overhead'?'var(--red)':x==='draw'?'var(--redvan)':'var(--aziz)') : 'var(--border)';
+    el.style.background  = on ? (x==='overhead'?'var(--red-bg)':x==='draw'?'var(--redvan-bg)':'var(--aziz-bg)') : 'transparent';
+    el.style.color       = on ? (x==='overhead'?'var(--red)':x==='draw'?'var(--redvan)':'var(--aziz)') : 'var(--muted)';
+  });
+  document.getElementById('ck-cat').style.display = t === 'overhead' ? 'block' : 'none';
+  const d = document.getElementById('ck-desc');
+  d.placeholder = t === 'overhead' ? 'На что потратили *' : t === 'draw' ? 'За что взял *' : 'Откуда деньги *';
+};
+window.addCash = async () => {
+  if(!connOk){ toast('Нет связи с базой','error'); return; }
+  const desc = document.getElementById('ck-desc').value.trim();
+  const amt = parseFloat(document.getElementById('ck-amt').value)||0;
+  if(!desc){ toast('Введите описание','error'); return; }
+  if(!(amt>0) || amt>1e15){ toast('Введите корректную сумму','error'); return; }
+  const rec = {
+    type: cashType, desc, amount: amt,
+    partner: document.getElementById('ck-partner').value,
+    cat: cashType === 'overhead' ? document.getElementById('ck-cat').value : '',
+    createdBy: activePill, ts: Date.now(), createdAt: serverTimestamp()
+  };
+  const btn = document.getElementById('ck-btn'); btn.disabled = true;
+  try {
+    await addDoc(collection(db,'cashbox'), rec);
+    document.getElementById('ck-desc').value = '';
+    document.getElementById('ck-amt').value = '';
+    toast('Записано ✓','success');
+  } catch(e){ console.error(e); toast('Не сохранилось: '+(e.code||''),'error'); }
+  btn.disabled = false;
+};
+window.confirmDeleteCash = id => showDialog('Удалить запись кассы?','Пересчитает остаток и доли.', async () => {
+  try { await deleteDoc(doc(db,'cashbox',id)); toast('Удалено','error'); }
+  catch(e){ toast('Правила базы запрещают удаление','error'); }
+});
+
+function renderCash(){
+  const m = money();
+  const L = document.getElementById('cash-left');
+  L.textContent = fmtM(m.left);
+  L.style.color = m.left >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('cash-left-hint').textContent = m.left < 0
+    ? 'минус — взяли больше, чем есть в кассе'
+    : 'свободные деньги бизнеса';
+
+  document.getElementById('cf-clients').textContent  = fmtM(m.clients);
+  document.getElementById('cf-contrib').textContent  = fmtM(m.contrib);
+  document.getElementById('cf-objexp').textContent   = '−' + fmtM(m.objExp);
+  document.getElementById('cf-overhead').textContent = '−' + fmtM(m.overhead);
+  document.getElementById('cf-draws').textContent    = '−' + fmtM(m.draws);
+
+  const P = document.getElementById('cf-profit');
+  P.textContent = (m.profit>=0?'+':'') + fmtM(m.profit);
+  P.style.color = m.profit >= 0 ? 'var(--green)' : 'var(--red)';
+
+  [['aziz','a'],['redvan','r']].forEach(([p,k]) => {
+    const c = cashSum('contribution', p), d = cashSum('draw', p);
+    const share = m.profit / 2;
+    const owed = share + c - d;
+    document.getElementById('p'+k+'-share').textContent   = fmtM(share);
+    document.getElementById('p'+k+'-contrib').textContent = fmtM(c);
+    document.getElementById('p'+k+'-draw').textContent    = fmtM(d);
+    const o = document.getElementById('p'+k+'-owed');
+    o.textContent = (owed>=0?'+':'') + fmtM(owed);
+    o.style.color = owed >= 0 ? 'var(--green)' : 'var(--red)';
+  });
+
+  document.getElementById('cash-count').textContent = cashbox.length;
+  const list = document.getElementById('cash-list');
+  if(!cashbox.length){
+    list.innerHTML = '<div class="empty" style="padding:24px 0"><div class="empty-ico">💰</div><p>Пока нет движений по кассе</p></div>';
+    return;
+  }
+  list.innerHTML = cashbox.map(c => {
+    const plus = c.type === 'contribution';
+    const col = c.type === 'overhead' ? 'var(--red)' : c.type === 'draw' ? 'var(--redvan)' : 'var(--green)';
+    return `<div class="tx">
+      <div class="tx-ico ${plus?'income':'expense'}">${CASH_ICON[c.type]||'📝'}</div>
+      <div class="tx-body">
+        <div class="tx-desc">${esc(c.desc)}</div>
+        <div class="tx-meta">${CASH_LABEL[c.type]||''}${c.cat?' · '+esc(c.cat):''}</div>
+        <div class="tx-who ${c.partner||'aziz'}">${pName(c.partner)}${c.ts?' · '+new Date(c.ts).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):''}</div>
+      </div>
+      <div class="tx-right">
+        <div class="tx-amt" style="color:${col}">${plus?'+':'−'}${fmtM(c.amount)}</div>
+        <button class="tx-btn" onclick="confirmDeleteCash('${c.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
 
 window.changePin = () => {
   localStorage.removeItem('ar_pin');
