@@ -347,7 +347,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 <div class="loading-screen" id="loading-screen">
   <div class="loading-logo">АР</div>
   <div class="loading-text" id="loading-text">Подключение к базе данных...</div>
-  <div class="loading-ver">v3.1 · Firebase + AI</div>
+  <div class="loading-ver">v3.3 · Firebase + AI</div>
 </div>
 
 <div class="app" id="main-app" style="display:none">
@@ -357,7 +357,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <div class="logo-ico">АР</div>
     <div>
       <div class="logo-name">АР CRM</div>
-      <div class="logo-sub">Натяжные потолки · v3.1</div>
+      <div class="logo-sub">Натяжные потолки · v3.3</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
@@ -498,8 +498,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <div class="settings-wrap">
     <div class="setting-block">
       <div class="setting-row">
-        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v3.1 — на GitHub старый файл</div></div>
-        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v3.1</div>
+        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v3.3 — на GitHub старый файл</div></div>
+        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v3.3</div>
       </div>
       <div class="setting-row">
         <div><div class="setting-l">Синхронизация</div><div class="setting-s">Firebase Firestore · реальное время</div></div>
@@ -520,6 +520,10 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
         <div><div class="setting-l">🔒 Код доступа</div><div class="setting-s">Спрашивается при каждом открытии</div></div>
         <button class="cur-btn" style="border:1px solid var(--border2);border-radius:var(--r-xs);background:var(--s2)" onclick="changePin()">Сменить</button>
       </div>
+      <div class="setting-row">
+        <div><div class="setting-l">💾 Резервная копия</div><div class="setting-s">Скачать все объекты и записи одним файлом</div></div>
+        <button class="cur-btn" style="border:1px solid var(--green-b);border-radius:var(--r-xs);background:var(--green-bg);color:var(--green)" onclick="downloadBackup()">Скачать</button>
+      </div>
     </div>
 
     <div class="setting-block">
@@ -536,7 +540,6 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
       </div>
     </div>
 
-    <button class="danger-btn" onclick="confirmClear()">🗑 Удалить все объекты из базы</button>
   </div>
 </div>
 
@@ -644,7 +647,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, initializeFirestore, collection, doc, addDoc, updateDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp }
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, addDoc, updateDoc, setDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp, arrayUnion, arrayRemove }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -658,13 +661,17 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 let db;
 try {
-  db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  db = initializeFirestore(app, {
+    experimentalAutoDetectLongPolling: true,
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
 } catch (e) {
-  db = getFirestore(app);
+  try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
+  catch (e2) { db = getFirestore(app); }
 }
 const INSIDE_FRAME = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
 
-const APP_VERSION = 'v3.1';
+const APP_VERSION = 'v3.3';
 
 // ── PIN-ЭКРАН (защита от чужих глаз на устройстве) ──
 let pinBuf = '', pinMode = 'enter', pinFirst = '';
@@ -730,6 +737,7 @@ let detailId = null, txType = 'income', createType = 'measure', createPartner = 
 let editingTxId = null, editingObjId = null;
 let firstLoad = true, connOk = false;
 let aiHistory = [];
+const photoCache = {};
 
 const SL = {cancelled:'Отменён',waiting:'Ожидание',working:'В работе',done:'Сдан'};
 const SI = {cancelled:'🔴',waiting:'🟡',working:'🟢',done:'🔵'};
@@ -751,7 +759,8 @@ function fmtShort(n){
   return String(Math.round(n));
 }
 const badge = s => `<span class="status ${s}"><span class="status-dot"></span>${SL[s]||s}</span>`;
-const txOf = o => Array.isArray(o.transactions) ? o.transactions : [];
+const txOf = o => Array.isArray(o.transactions) ? o.transactions.slice().sort((a,b)=>(Number(b.ts)||0)-(Number(a.ts)||0)) : [];
+const safePhoto = s => (typeof s === 'string' && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(s)) ? s : '';
 const sumT = (txs,t) => txs.filter(x=>x.type===t).reduce((s,x)=>s+(Number(x.amount)||0),0);
 
 // ── СОСТОЯНИЕ СВЯЗИ ──
@@ -769,13 +778,9 @@ function setConn(state, msg){
   } else {
     connOk = false;
     t.innerHTML = '<span style="color:var(--red)">🔴 Нет связи</span>';
-    b.textContent = msg || 'Нет связи с базой. Данные не сохраняются и партнёр их не увидит.';
+    b.textContent = msg || 'Офлайн. Записи сохраняются на телефоне и уйдут в базу, когда появится сеть.';
     b.classList.add('show');
   }
-  setBusy(!connOk && state==='err');
-}
-function setBusy(disabled){
-  ['create-btn','atf-btn','mf-btn'].forEach(id=>{ const e=document.getElementById(id); if(e) e.disabled = disabled; });
 }
 function diagnose(err){
   const c = err && err.code ? err.code : '';
@@ -872,7 +877,6 @@ window.setTxType = t => {
 
 // ── СОЗДАНИЕ ──
 window.createObject = async () => {
-  if(!connOk){ toast('Нет связи с базой','error'); return; }
   const name = document.getElementById('c-name').value.trim();
   if(!name){ toast('Введите название','error'); return; }
   const adv = parseFloat(document.getElementById('c-advance').value)||0;
@@ -891,8 +895,9 @@ window.createObject = async () => {
       createdAt: serverTimestamp(), transactions: []
     };
     if(createType==='project') obj.transactions = [{id:Date.now(),ts:Date.now(),desc:'Аванс',amount:adv,type:'income',cat:'💰 Аванс',createdBy:activePill,locked:false}];
-    await addDoc(collection(db,'objects'), obj);
-    toast('Объект создан ✓','success');
+    addDoc(collection(db,'objects'), obj)
+      .catch(e => { console.error(e); toast('Не сохранилось: '+(e.code||e.message),'error'); });
+    toast(connOk ? 'Объект создан ✓' : 'Создано, уйдёт в базу при сети','success');
     ['c-name','c-addr','c-area','c-advance','c-note'].forEach(id=>document.getElementById(id).value='');
   } catch(e){ console.error(e); toast('Не сохранилось: '+(e.code||e.message),'error'); }
   btn.disabled = false;
@@ -914,32 +919,32 @@ window.toggleLockObj = async id => {
 };
 
 // ── ТРАНЗАКЦИИ ──
-window.addTx = async () => {
-  if(!detailId || !connOk){ toast('Нет связи с базой','error'); return; }
+window.addTx = () => {
+  if(!detailId) return;
   const o = objects.find(x=>x.id===detailId); if(!o) return;
   if(o.locked){ toast('🔐 Объект заблокирован','error'); return; }
   const desc = document.getElementById('atf-desc').value.trim();
   const amt = parseFloat(document.getElementById('atf-amt').value)||0;
   if(!desc){ toast('Введите описание','error'); return; }
-  if(txType!=='info' && amt<=0){ toast('Введите сумму','error'); return; }
-  const tx = {id:Date.now(), ts:Date.now(), desc, amount: txType==='info'?0:amt, type:txType, cat:document.getElementById('atf-cat').value, createdBy:activePill, locked:false};
-  try {
-    await updateDoc(doc(db,'objects',detailId), {transactions:[tx, ...txOf(o)]});
-    document.getElementById('atf-desc').value=''; document.getElementById('atf-amt').value='';
-    toast('Запись добавлена ✓','success');
-  } catch(e){ toast('Не сохранилось: '+(e.code||''),'error'); }
+  if(txType!=='info' && (!(amt>0) || amt>1e15)){ toast('Введите корректную сумму','error'); return; }
+  const tx = {id:Date.now()+Math.floor(Math.random()*1000), ts:Date.now(), desc, amount: txType==='info'?0:amt, type:txType, cat:document.getElementById('atf-cat').value, createdBy:activePill, locked:false};
+  document.getElementById('atf-desc').value=''; document.getElementById('atf-amt').value='';
+  updateDoc(doc(db,'objects',detailId), {transactions: arrayUnion(tx)})
+    .catch(e => { console.error(e); toast('Не сохранилось: '+(e.code||e.message),'error'); });
+  toast(connOk ? 'Запись добавлена ✓' : 'Записано, уйдёт в базу при сети','success');
 };
 window.toggleLockTx = async (oid, txId) => {
   const o = objects.find(x=>x.id===oid); if(!o || o.locked) return;
   const txs = txOf(o).map(t => t.id===txId ? {...t, locked:!t.locked, lockedBy: !t.locked?activePill:null} : t);
   try { await updateDoc(doc(db,'objects',oid), {transactions:txs}); } catch(e){ toast('Ошибка','error'); }
 };
-async function deleteTx(oid, txId){
+function deleteTx(oid, txId){
   const o = objects.find(x=>x.id===oid); if(!o) return;
   const tx = txOf(o).find(t=>t.id===txId);
   if(!tx || tx.locked || o.locked){ toast('🔐 Заблокировано','error'); return; }
-  try { await updateDoc(doc(db,'objects',oid), {transactions: txOf(o).filter(t=>t.id!==txId)}); toast('Удалено','error'); }
-  catch(e){ toast('Ошибка','error'); }
+  updateDoc(doc(db,'objects',oid), {transactions: arrayRemove(tx)})
+    .catch(e => { console.error(e); toast('Ошибка удаления','error'); });
+  toast('Удалено','error');
 }
 
 // ── РЕДАКТИРОВАНИЕ ──
@@ -992,14 +997,27 @@ window.saveEditTx = async () => {
   catch(e){ toast('Ошибка: '+(e.code||''),'error'); }
 };
 
-// ── ФОТО (сжатие в base64, без платного Storage) ──
+// ── ФОТО (сжатие в base64 в отдельной коллекции, без платного Storage) ──
+async function loadPhoto(id){
+  photoCache[id] = null;
+  try {
+    const snap = await getDoc(doc(db,'photos',id));
+    if(snap.exists() && snap.data().data){
+      photoCache[id] = snap.data().data;
+      if(detailId === id) renderDetail(id);
+    }
+  } catch(e){ /* фото нет или нет связи — не критично */ }
+}
+
 window.pickPhoto = async (id, file) => {
   if(!file) return;
   toast('Сжимаю фото...','info');
   try {
-    const dataUrl = await compress(file, 1000, 0.55);
-    if(dataUrl.length > 700000){ toast('Фото слишком тяжёлое','error'); return; }
-    await updateDoc(doc(db,'objects',id), {photo:dataUrl});
+    let dataUrl = await compress(file, 900, 0.5);
+    if(dataUrl.length > 340000) dataUrl = await compress(file, 700, 0.4);
+    if(dataUrl.length > 340000){ toast('Фото слишком тяжёлое, сделайте проще кадр','error'); return; }
+    await setDoc(doc(db,'photos',id), {data:dataUrl, by:activePill, ts:Date.now()});
+    photoCache[id] = dataUrl;
     toast('Фото сохранено ✓','success');
   } catch(e){ console.error(e); toast('Ошибка фото','error'); }
 };
@@ -1046,9 +1064,11 @@ function renderDetail(id){
 
   const pw = document.getElementById('dv-photo-wrap');
   const inp = `<input type="file" id="ph-${id}" class="photo-input" accept="image/*" onchange="pickPhoto('${id}',this.files[0])">`;
-  if(o.photo) pw.innerHTML = `<img class="obj-photo" src="${o.photo}" ${L?'':`onclick="document.getElementById('ph-${id}').click()"`}>`+(L?'':inp);
+  const cached = safePhoto(photoCache[id]);
+  if(cached) pw.innerHTML = `<img class="obj-photo" src="${cached}" ${L?'':`onclick="document.getElementById('ph-${id}').click()"`}>`+(L?'':inp);
   else if(!L) pw.innerHTML = `<div class="photo-placeholder" onclick="document.getElementById('ph-${id}').click()"><span>📷</span><p>Добавить фото объекта</p></div>`+inp;
   else pw.innerHTML = '';
+  if(cached === undefined) loadPhoto(id);
 
   document.getElementById('dv-status-picker').innerHTML = ['cancelled','waiting','working','done'].map(s=>
     `<button class="sp-btn ${s}${o.status===s?' active':''}" onclick="setStatus('${id}','${s}')"><span class="sp-dot"></span><span class="sp-lbl">${SL[s]}</span></button>`).join('');
@@ -1086,20 +1106,18 @@ function renderDetail(id){
 }
 
 // ── ЗАМЕРЫ ──
-window.addMeasure = async () => {
-  if(!connOk){ toast('Нет связи с базой','error'); return; }
+window.addMeasure = () => {
   const name = document.getElementById('mf-name').value.trim();
   if(!name){ toast('Введите имя клиента','error'); return; }
-  const m = {id:Date.now(), ts:Date.now(), name,
+  const m = {id:Date.now()+Math.floor(Math.random()*1000), ts:Date.now(), name,
     addr: document.getElementById('mf-addr').value.trim(),
     time: document.getElementById('mf-time').value||'10:00',
     partner: document.getElementById('mf-partner').value,
     status:'waiting', statusTs:Date.now()};
-  try {
-    await setDoc(doc(db,'measures',calSelectedDate), {list:[m, ...(measures[calSelectedDate]||[])]}, {merge:true});
-    document.getElementById('mf-name').value=''; document.getElementById('mf-addr').value='';
-    toast('Замер добавлен ✓','success');
-  } catch(e){ console.error(e); toast('Не сохранилось: '+(e.code||''),'error'); }
+  document.getElementById('mf-name').value=''; document.getElementById('mf-addr').value='';
+  setDoc(doc(db,'measures',calSelectedDate), {list: arrayUnion(m)}, {merge:true})
+    .catch(e => { console.error(e); toast('Не сохранилось: '+(e.code||e.message),'error'); });
+  toast(connOk ? 'Замер добавлен ✓' : 'Записано, уйдёт в базу при сети','success');
 };
 window.deleteMeasure = async (ds, id) => {
   try { await setDoc(doc(db,'measures',ds), {list:(measures[ds]||[]).filter(m=>m.id!==id)}, {merge:true}); toast('Удалено','error'); }
@@ -1138,7 +1156,7 @@ function renderCalendar(){
 }
 function renderCalDay(ds){
   document.getElementById('cal-day-lbl').textContent = 'Замеры · '+fmtDate(ds);
-  const ml = measures[ds]||[];
+  const ml = (measures[ds]||[]).slice().sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));
   const el = document.getElementById('measures-list');
   if(!ml.length){ el.innerHTML = '<div class="empty" style="padding:20px 0"><p>Нет замеров на этот день</p></div>'; return; }
   el.innerHTML = ml.map(m=>`
@@ -1224,14 +1242,10 @@ function renderObjects(){
 
 // ── УДАЛЕНИЕ ──
 window.confirmDeleteObj = id => showDialog('Удалить объект?','Все данные объекта будут удалены безвозвратно.', async ()=>{
-  try { await deleteDoc(doc(db,'objects',id)); window.closeDetail(); toast('Объект удалён','error'); }
+  try { await deleteDoc(doc(db,'objects',id)); deleteDoc(doc(db,'photos',id)).catch(()=>{}); delete photoCache[id]; window.closeDetail(); toast('Объект удалён','error'); }
   catch(e){ toast('Ошибка','error'); }
 });
 window.confirmDeleteTx = (oid, txId) => showDialog('Удалить запись?','Это действие нельзя отменить.', ()=>deleteTx(oid, txId));
-window.confirmClear = () => showDialog('Удалить все объекты?','Удалит объекты у обоих партнёров. Отменить нельзя.', async ()=>{
-  for(const o of [...objects]) { try { await deleteDoc(doc(db,'objects',o.id)); } catch(e){} }
-  toast('База очищена','error');
-});
 
 // ── ВАЛЮТА ──
 window.setCurrency = c => {
@@ -1337,6 +1351,29 @@ function toast(msg, type='success'){
   el.textContent = msg; el.className = 'toast show '+type;
   clearTimeout(tt); tt = setTimeout(()=>el.className='toast', 3200);
 }
+
+window.downloadBackup = () => {
+  try {
+    const stamp = new Date().toISOString().slice(0,10);
+    const payload = {
+      version: APP_VERSION,
+      snapshot: new Date().toISOString(),
+      objectsCount: objects.length,
+      objects: objects,
+      measures: measures
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'ar-crm-backup-' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    toast('Копия скачана ✓','success');
+  } catch(e){ console.error(e); toast('Не удалось скачать','error'); }
+};
 
 window.changePin = () => {
   localStorage.removeItem('ar_pin');
