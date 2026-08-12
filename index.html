@@ -347,7 +347,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
 <div class="loading-screen" id="loading-screen">
   <div class="loading-logo">АР</div>
   <div class="loading-text" id="loading-text">Подключение к базе данных...</div>
-  <div class="loading-ver">v4.0 · Firebase + AI</div>
+  <div class="loading-ver">v4.1 · Firebase + AI</div>
 </div>
 
 <div class="app" id="main-app" style="display:none">
@@ -357,7 +357,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <div class="logo-ico">АР</div>
     <div>
       <div class="logo-name">АР CRM</div>
-      <div class="logo-sub">Натяжные потолки · v4.0</div>
+      <div class="logo-sub">Натяжные потолки · v4.1</div>
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:10px">
@@ -417,6 +417,7 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
     <button class="f-btn" onclick="setOF('working',this)">🟢 В работе</button>
     <button class="f-btn" onclick="setOF('done',this)">🔵 Сдан</button>
     <button class="f-btn" onclick="setOF('cancelled',this)">🔴 Отменён</button>
+    <button class="f-btn" onclick="setOF('sandbox',this)">🧪 Песочница</button>
   </div>
   <div class="obj-list" id="objects-list" style="padding-bottom:16px"></div>
 </div>
@@ -583,8 +584,8 @@ html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:
   <div class="settings-wrap">
     <div class="setting-block">
       <div class="setting-row">
-        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v4.0 — на GitHub старый файл</div></div>
-        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v4.0</div>
+        <div><div class="setting-l">Версия приложения</div><div class="setting-s">Если здесь не v4.1 — на GitHub старый файл</div></div>
+        <div style="font-size:14px;font-weight:800;color:var(--green);flex-shrink:0">v4.1</div>
       </div>
       <div class="setting-row">
         <div><div class="setting-l">Синхронизация</div><div class="setting-s">Firebase Firestore · реальное время</div></div>
@@ -756,7 +757,7 @@ try {
 }
 const INSIDE_FRAME = (function(){ try { return window.self !== window.top; } catch(e){ return true; } })();
 
-const APP_VERSION = 'v4.0';
+const APP_VERSION = 'v4.1';
 
 // ── PIN-ЭКРАН (защита от чужих глаз на устройстве) ──
 let pinBuf = '', pinMode = 'enter', pinFirst = '';
@@ -848,6 +849,8 @@ function fmtShort(n){
 }
 const badge = s => `<span class="status ${s}"><span class="status-dot"></span>${SL[s]||s}</span>`;
 const txOf = o => Array.isArray(o.transactions) ? o.transactions.slice().sort((a,b)=>(Number(b.ts)||0)-(Number(a.ts)||0)) : [];
+const isSandbox = o => o && o.sandbox === true;
+const realObjects = () => objects.filter(o => !isSandbox(o));
 const safePhoto = s => (typeof s === 'string' && /^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(s)) ? s : '';
 const sumT = (txs,t) => txs.filter(x=>x.type===t).reduce((s,x)=>s+(Number(x.amount)||0),0);
 
@@ -1143,7 +1146,7 @@ function renderDetail(id){
   const o = objects.find(x=>x.id===id);
   if(!o){ window.closeDetail(); return; }
   document.getElementById('dv-name').textContent = o.name;
-  document.getElementById('dv-lock-icon').textContent = o.locked ? '🔐' : '';
+  document.getElementById('dv-lock-icon').textContent = (o.locked ? '🔐' : '') + (isSandbox(o) ? ' 🧪' : '');
   const t = document.getElementById('dv-type');
   t.className = 'obj-type '+(o.type==='project'?'project':'measure');
   t.textContent = o.type==='project' ? '🏗 Объект' : '📐 Замер';
@@ -1153,9 +1156,11 @@ function renderDetail(id){
   document.getElementById('dv-addr').textContent = o.addr||'';
 
   const L = o.locked;
+  const sb = isSandbox(o);
   document.getElementById('dv-actions').innerHTML = `
     ${!L?`<button class="detail-btn edit" onclick="openEditObj('${id}')">✏️ Изменить</button>`:''}
     <button class="detail-btn ${L?'unlock':'lock'}" onclick="toggleLockObj('${id}')">${L?'🔓 Снять замок':'🔐 Заблокировать'}</button>
+    <button class="detail-btn" style="background:${sb?'var(--green-bg)':'var(--s2)'};color:${sb?'var(--green)':'var(--muted2)'};border-color:${sb?'var(--green-b)':'var(--border2)'}" onclick="toggleSandbox('${id}')">${sb?'✅ В реальный учёт':'🧪 В песочницу'}</button>
     ${!L?`<button class="detail-btn del" onclick="confirmDeleteObj('${id}')">🗑 Удалить</button>`:''}`;
 
   const pw = document.getElementById('dv-photo-wrap');
@@ -1275,18 +1280,19 @@ function renderCalDay(ds){
 function renderAll(){ renderDash(); renderObjects(); renderCash(); if(detailId) renderDetail(detailId); }
 
 function renderDash(){
-  const all = objects.flatMap(txOf);
+  const real = realObjects();
+  const all = real.flatMap(txOf);
   const inc = sumT(all,'income'), exp = sumT(all,'expense');
   document.getElementById('ds-inc').textContent = fmtShort(inc);
   document.getElementById('ds-exp').textContent = fmtShort(exp);
-  document.getElementById('ds-obj').textContent = objects.length;
+  document.getElementById('ds-obj').textContent = real.length;
   document.getElementById('ds-mea').textContent = Object.values(measures).flat().length;
   document.getElementById('ds-inc-s').textContent = currency==='USD'?'USD':'сўм';
   document.getElementById('ds-exp-s').textContent = currency==='USD'?'USD':'сўм';
-  document.getElementById('s-objs').textContent = objects.length;
+  document.getElementById('s-objs').textContent = real.length + (objects.length>real.length?(' (+'+(objects.length-real.length)+' 🧪)'):'');
 
   [['aziz','a'],['redvan','r']].forEach(([p,k])=>{
-    const tx = objects.filter(o=>o.partner===p).flatMap(txOf);
+    const tx = real.filter(o=>o.partner===p).flatMap(txOf);
     const i = sumT(tx,'income'), e = sumT(tx,'expense'), n = i-e;
     document.getElementById('p'+k+'-i').textContent = fmtM(i);
     document.getElementById('p'+k+'-e').textContent = fmtM(e);
@@ -1295,7 +1301,7 @@ function renderDash(){
     ne.style.color = n>=0 ? 'var(--green)' : 'var(--red)';
   });
 
-  const act = objects.filter(o=>o.status==='working');
+  const act = realObjects().filter(o=>o.status==='working');
   document.getElementById('dash-cnt').textContent = act.length;
   document.getElementById('dash-active').innerHTML = act.length
     ? act.map(objCard).join('')
@@ -1307,7 +1313,7 @@ function objCard(o){
   return `<div class="obj-card" onclick="openDetail('${o.id}')">
     <div class="obj-card-top">
       <div class="obj-card-r1">
-        <div class="obj-name">${esc(o.name)}${o.locked?'<span class="lock-icon">🔐</span>':''}</div>
+        <div class="obj-name">${isSandbox(o)?'<span title="Тестовый — не в учёте">🧪 </span>':''}${esc(o.name)}${o.locked?'<span class="lock-icon">🔐</span>':''}</div>
         ${badge(o.status)}
       </div>
       <div class="obj-meta">
@@ -1330,13 +1336,26 @@ function objCard(o){
 }
 
 function renderObjects(){
-  const list = objFilter==='all' ? objects : objects.filter(o=>o.status===objFilter);
-  document.getElementById('objects-list').innerHTML = list.length
-    ? list.map(objCard).join('')
-    : `<div class="empty"><div class="empty-ico">🏗</div><p>Нет объектов</p><button class="empty-btn" onclick="goTab('create',document.querySelectorAll('.tab')[3])">+ Создать</button></div>`;
+  let base = objFilter==='sandbox'
+    ? objects.filter(isSandbox)
+    : (objFilter==='all' ? realObjects() : realObjects().filter(o=>o.status===objFilter));
+  document.getElementById('objects-list').innerHTML = base.length
+    ? base.map(objCard).join('')
+    : `<div class="empty"><div class="empty-ico">${objFilter==='sandbox'?'🧪':'🏗'}</div><p>${objFilter==='sandbox'?'Нет тестовых объектов':'Нет объектов'}</p>${objFilter==='sandbox'?'':`<button class="empty-btn" onclick="goTab('create',document.querySelectorAll('.tab')[3])">+ Создать</button>`}</div>`;
 }
 
 // ── УДАЛЕНИЕ ──
+window.toggleSandbox = async id => {
+  const o = objects.find(x=>x.id===id); if(!o) return;
+  if(o.locked){ toast('🔐 Сначала снимите замок','error'); return; }
+  const to = !isSandbox(o);
+  try {
+    await updateDoc(doc(db,'objects',id), { sandbox: to });
+    toast(to ? '🧪 Объект в песочнице — не в учёте' : '✅ Объект вернулся в учёт', to?'info':'success');
+    if(detailId===id) renderDetail(id);
+  } catch(e){ toast('Ошибка: '+(e.code||''),'error'); }
+};
+
 window.confirmDeleteObj = id => showDialog('Удалить объект?','Все данные объекта будут удалены безвозвратно.', async ()=>{
   try { await deleteDoc(doc(db,'objects',id)); deleteDoc(doc(db,'photos',id)).catch(()=>{}); delete photoCache[id]; window.closeDetail(); toast('Объект удалён','error'); }
   catch(e){ toast('Ошибка','error'); }
@@ -1372,11 +1391,11 @@ window.clearKey = () => { localStorage.removeItem('ar_oai'); updateKeyUI(); toas
 
 // ── AI ЧАТ ──
 function aiContext(){
-  const all = objects.flatMap(txOf);
+  const all = realObjects().flatMap(txOf);
   const inc = sumT(all,'income'), exp = sumT(all,'expense');
   const per = p => { const t = objects.filter(o=>o.partner===p).flatMap(txOf); return {i:sumT(t,'income'), e:sumT(t,'expense')}; };
   const a = per('aziz'), r = per('redvan');
-  const lines = objects.map(o=>{
+  const lines = realObjects().map(o=>{
     const t = txOf(o), i = sumT(t,'income'), e = sumT(t,'expense');
     const det = t.map(x=>`${x.type==='income'?'+':'-'}${x.amount} ${x.cat} (${pName(x.createdBy||'aziz')})`).join('; ');
     return `- "${o.name}" | ${pName(o.partner)} | ${SL[o.status]} | приход ${i} | расход ${e} | баланс ${i-e} | ${o.date||'без даты'}${o.area?` | ${o.area} м²`:''}${det?` | записи: ${det}`:''}`;
@@ -1384,7 +1403,7 @@ function aiContext(){
   return `Ты AI-бухгалтер партнёрского бизнеса по натяжным потолкам в Ташкенте.
 Партнёры: Азиз и Редван. Валюта: ${currency}. Сегодня: ${new Date().toLocaleDateString('ru-RU')}.
 
-ИТОГИ: объектов ${objects.length}, приход от клиентов ${inc}, расходы по объектам ${exp}.
+ИТОГИ: объектов ${realObjects().length}, приход от клиентов ${inc}, расходы по объектам ${exp}.
 КАССА: вложили партнёры ${money().contrib}, общие расходы (реклама и пр.) ${money().overhead}, взяли себе ${money().draws}.
 ЧИСТАЯ ПРИБЫЛЬ (приходы минус объектные минус общие): ${money().profit}. Делится 50/50.
 ОСТАТОК В ОБЩАКЕ: ${money().left}.
@@ -1483,7 +1502,7 @@ function cashSum(type, partner){
     .reduce((s,c) => s + (Number(c.amount)||0), 0);
 }
 function money(){
-  const all = objects.flatMap(txOf);
+  const all = realObjects().flatMap(txOf);
   const clients  = sumT(all,'income');            // приход от клиентов
   const objExp   = sumT(all,'expense');           // расходы по объектам
   const contrib  = cashSum('contribution');       // вложили партнёры
