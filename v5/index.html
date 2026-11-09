@@ -1,0 +1,808 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>АР · Тетрадь</title>
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#FBF9F3">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="АР Тетрадь">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --paper:#FBF9F3; --paper2:#F3F0E7; --card:#FFFEFA; --grid:#DCE5EE; --edge:#E2DDD1;
+  --ink:#16202B; --soft:#4A5663; --faint:#8A939E; --blue:#1F3A93; --red:#B23A32;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+  --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.4;-webkit-text-size-adjust:100%}
+body{min-height:100vh;min-height:100dvh}
+button,input,select,textarea{font:inherit;color:inherit}
+input,select,textarea{font-size:16px}
+button{cursor:pointer}
+[hidden]{display:none!important}
+
+#app{max-width:640px;margin:0 auto;padding-bottom:calc(84px + var(--sb))}
+.top{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--edge);
+  padding:calc(10px + var(--st)) 16px 10px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+.lbl{font-size:12px;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+.bal{font-family:var(--serif);font-size:32px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.bal.neg{color:var(--red)}
+.bal small{font-family:var(--sans);font-size:14px;font-weight:400;color:var(--soft)}
+.me{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.conn{font-size:12px;color:var(--soft)}
+.conn.err{color:var(--red)}
+.bd{flex:none;width:34px;height:34px;border:2px solid var(--ink);border-radius:8px;display:grid;place-items:center;
+  font-family:var(--serif);font-weight:700;font-size:17px;background:transparent;padding:0}
+.banner{margin:12px 16px 0;padding:10px 12px;border:1px solid var(--ink);border-radius:10px;background:var(--paper2);font-size:14px}
+.banner.err{border-color:var(--red);color:var(--red)}
+
+.tab{display:none;padding:14px 16px}
+.tab.on{display:block}
+h2.h{font-family:var(--serif);font-size:22px;margin:0 0 10px}
+.card{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:14px}
+.col{display:flex;flex-direction:column;gap:10px}
+.rowf{display:flex;gap:10px;align-items:center}
+.sp{flex:1}
+.hint{font-size:14px;color:var(--soft)}
+.warn{font-size:14px;color:var(--red)}
+
+.pt{display:flex;gap:8px}
+.pt button{width:48px;height:48px;border:2px solid var(--ink);border-radius:10px;background:transparent;
+  font-family:var(--serif);font-size:22px;font-weight:700}
+.pt button.on{background:var(--ink);color:var(--paper)}
+.seg{display:flex;border:1px solid var(--ink);border-radius:10px;overflow:hidden;flex:1}
+.seg button{flex:1;padding:10px 4px;background:transparent;border:0;border-right:1px solid var(--ink);font-size:14px;min-width:0}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--paper)}
+.seg.dis{opacity:.4;pointer-events:none}
+.in{width:100%;border:2px solid var(--ink);border-radius:10px;background:var(--card);padding:12px 14px;outline:none}
+.in:focus{border-color:var(--blue)}
+select.in{appearance:none;-webkit-appearance:none;padding-right:40px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M2 2l6 6 6-6' fill='none' stroke='%2316202B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center}
+.btn{width:100%;background:var(--blue);color:var(--paper);border:0;border-radius:10px;padding:14px;font-weight:600}
+.btn:disabled{opacity:.35}
+.btn2{width:100%;background:transparent;border:2px solid var(--ink);border-radius:10px;padding:12px;font-weight:600}
+.btn3{background:transparent;border:0;color:var(--blue);padding:8px 0;font-weight:600;text-align:left}
+.prev{min-height:44px;padding:8px 0;font-size:15px}
+.prev b{font-weight:600}
+
+.day{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 4px;padding-bottom:4px;border-bottom:2px solid var(--ink);font-family:var(--serif);font-weight:700;font-size:18px}
+.day span{font-family:var(--sans);font-weight:400;font-size:13px;color:var(--faint)}
+.row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--grid)}
+.rb{flex:1;min-width:0}
+.rd{overflow-wrap:anywhere}
+.rt{font-size:13px;color:var(--soft)}
+.ra{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .acts{display:none;margin-top:6px}
+.row.open .acts{display:block}
+.link-del{background:transparent;border:0;color:var(--red);padding:4px 0;font-size:14px;font-weight:600}
+.empty{padding:28px 0;text-align:center;color:var(--soft)}
+
+.obj{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.obj .ot{display:flex;justify-content:space-between;gap:10px;font-weight:600}
+.obj .om{font-size:13px;color:var(--soft);margin-top:2px}
+.obj .ob{font-size:14px;margin-top:6px;font-variant-numeric:tabular-nums}
+.st{font-size:12px;border:1px solid var(--ink);border-radius:20px;padding:1px 10px;white-space:nowrap;font-weight:400}
+
+table.t{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.t td,table.t th{padding:9px 0;border-bottom:1px solid var(--grid);text-align:left;font-weight:400}
+table.t td:last-child,table.t th:last-child{text-align:right}
+table.t th{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
+table.t tr.tot td{border-bottom:2px solid var(--ink);font-weight:700}
+table.t .neg{color:var(--red)}
+
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--paper2);border-top:1px solid var(--edge);padding-bottom:var(--sb)}
+.tabbar .in-bar{max-width:640px;margin:0 auto;display:flex}
+.tabbar button{flex:1;background:transparent;border:0;padding:9px 0 8px;color:var(--faint);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.tabbar button.on{color:var(--ink);font-weight:600}
+.tabbar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(22,32,43,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheet-box{background:var(--paper);width:100%;max-width:640px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(20px + var(--sb))}
+.sheet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.sheet-h h3{font-family:var(--serif);font-size:22px;margin:0}
+.x{background:transparent;border:2px solid var(--ink);border-radius:8px;width:36px;height:36px;font-size:18px;line-height:1;flex:none}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--grid);font-size:15px}
+.kv span:first-child{color:var(--soft)}
+.kv span:last-child{text-align:right;overflow-wrap:anywhere}
+
+#lock{position:fixed;inset:0;z-index:100;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px}
+#lock h1{font-family:var(--serif);font-size:24px;margin:0;text-align:center}
+.dots{display:flex;gap:14px}
+.dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink)}
+.dot.on{background:var(--ink)}
+.dot.err{border-color:var(--red);background:var(--red)}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
+.pad button{width:72px;height:72px;border-radius:50%;border:2px solid var(--ink);background:transparent;font-family:var(--serif);font-size:26px;font-weight:700}
+.pad button:active{background:var(--paper2)}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + var(--sb));z-index:80;background:var(--ink);color:var(--paper);
+  padding:10px 16px;border-radius:10px;font-size:14px;max-width:90vw;text-align:center}
+.demo-tag{border:1px solid var(--ink);border-radius:20px;padding:0 8px;font-size:12px}
+</style>
+</head>
+<body>
+
+<div id="lock" hidden>
+  <h1 id="lock-title">Введите код</h1>
+  <div class="hint" id="lock-sub" style="text-align:center;max-width:280px"></div>
+  <div class="dots" id="lock-dots"></div>
+  <div class="pad" id="lock-pad"></div>
+</div>
+
+<div id="app" hidden>
+  <header class="top">
+    <div>
+      <div class="lbl">Остаток в кассе</div>
+      <div class="bal" id="bal">—</div>
+    </div>
+    <div class="me">
+      <button class="bd" id="meBtn" data-act="goMore" aria-label="Кто работает"></button>
+      <div class="conn" id="conn"></div>
+    </div>
+  </header>
+  <div class="banner" id="banner" hidden></div>
+
+  <main>
+    <section class="tab on" id="tab-book">
+      <div class="card col" id="entry">
+        <div class="rowf">
+          <div class="pt" id="entry-pt"></div>
+          <div class="seg" id="entry-kind">
+            <button data-act="kind" data-k="overhead">Расход</button>
+            <button data-act="kind" data-k="draw">Забрал себе</button>
+            <button data-act="kind" data-k="contribution">Вложил</button>
+          </div>
+        </div>
+        <input class="in" id="entry-text" placeholder="425 тыс материалы" autocomplete="off" autocapitalize="sentences" enterkeyhint="done">
+        <div class="prev" id="preview"></div>
+        <select class="in" id="entry-obj" aria-label="К объекту"></select>
+        <button class="btn" id="entry-go" data-act="entryGo" disabled>Записать</button>
+      </div>
+      <div id="feed"></div>
+    </section>
+
+    <section class="tab" id="tab-obj">
+      <div class="rowf" style="margin-bottom:12px">
+        <div class="seg" id="obj-filter">
+          <button data-act="filter" data-f="all" class="on">Все</button>
+          <button data-act="filter" data-f="working">В работе</button>
+          <button data-act="filter" data-f="waiting">Ожидание</button>
+          <button data-act="filter" data-f="done">Сдан</button>
+        </div>
+      </div>
+      <button class="btn2" data-act="newObj" style="margin-bottom:12px">Новый объект</button>
+      <div id="objlist"></div>
+    </section>
+
+    <section class="tab" id="tab-sum">
+      <h2 class="h">Итоги</h2>
+      <div id="sums"></div>
+    </section>
+
+    <section class="tab" id="tab-more">
+      <h2 class="h">Ещё</h2>
+      <div class="col">
+        <div class="card col">
+          <div class="lbl">Кто работает с этого телефона</div>
+          <div class="rowf"><div class="pt" id="me-pt"></div><div class="hint" id="me-name"></div></div>
+        </div>
+        <div class="card col">
+          <div class="lbl">Режим</div>
+          <div id="mode-info" class="hint"></div>
+          <a class="btn3" id="mode-link" href="?demo=1">Открыть демо без записи в базу</a>
+        </div>
+        <div class="card col">
+          <div class="lbl">Код доступа</div>
+          <div class="hint">Один код на двоих, 4 цифры. Хранится на этом телефоне.</div>
+          <button class="btn2" data-act="changePin">Сменить код</button>
+        </div>
+        <div class="card col">
+          <div class="lbl">Пока в старой версии</div>
+          <div class="hint">Замеры по календарю, ИИ-помощник, фото объектов, выгрузка копии.</div>
+          <a class="btn3" href="../">Открыть старую CRM</a>
+        </div>
+        <div class="card col">
+          <div class="lbl">Установка на телефон</div>
+          <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
+        </div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.0</div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar"><div class="in-bar">
+    <button data-act="tab" data-t="book" class="on"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Тетрадь</button>
+    <button data-act="tab" data-t="obj"><svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/></svg>Объекты</button>
+    <button data-act="tab" data-t="sum"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Итоги</button>
+    <button data-act="tab" data-t="more"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>Ещё</button>
+  </div></nav>
+</div>
+
+<div class="sheet" id="sheet" hidden><div class="sheet-box" id="sheet-box"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+// ───────────── общие мелочи ─────────────
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const LS = {
+  get(k, d = null){ try { const v = localStorage.getItem(k); return v === null ? d : v; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, v); } catch(e){} },
+  del(k){ try { localStorage.removeItem(k); } catch(e){} }
+};
+const DEMO = new URLSearchParams(location.search).has('demo') || window.__AR_DEMO__ === true;
+const NAMES = { aziz: 'Азиз', redvan: 'Редван' };
+const LET = { aziz: 'А', redvan: 'Р' };
+const STATUS = { waiting: 'Ожидание', working: 'В работе', done: 'Сдан', cancelled: 'Отменён' };
+const KIND_LABEL = { overhead: 'общий расход', draw: 'забрал себе', contribution: 'вложил' };
+const nf = new Intl.NumberFormat('ru-RU');
+const fmt = n => nf.format(Math.round(Number(n) || 0));
+const money = n => fmt(n) + ' сум';
+const signed = (n, plus) => (plus ? '+' : '−') + fmt(Math.abs(n));
+const pad2 = n => String(n).padStart(2, '0');
+const stripEmoji = s => String(s || '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+const dayKey = ts => { const d = new Date(ts); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+const dayTitle = ts => { const d = new Date(ts); return d.getDate() + '.' + pad2(d.getMonth() + 1) + '.' + d.getFullYear(); };
+const weekday = ts => new Date(ts).toLocaleDateString('ru-RU', { weekday: 'long' });
+
+// <parse>
+// Разбор строки «как в тетради»: «425 тыс материалы», «180т профиля», «1 000 000 забрал себе».
+function parseLine(raw){
+  const text = String(raw == null ? '' : raw).replace(/ /g, ' ').trim();
+  if(!text) return null;
+  const out = { amount: null, desc: '', kind: 'overhead', cat: '📝 Прочее', warn: [], dollars: false };
+  const spaced = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  if(/\$|usd|доллар/i.test(text)){ out.dollars = true; out.warn.push('Доллары пока не поддерживаются: впиши сумму в сумах'); }
+  const re = /(\d{1,3}(?:\s\d{3})+|\d+)(?:[.,](\d+))?(?:\s*(тысяч|тыс\.?|т\.?|млн\.?))?(?![\p{L}\d])/iu;
+  const m = re.exec(text);
+  let rest = text;
+  if(m){
+    const suf = (m[3] || '').toLowerCase().replace('.', '');
+    let n = parseFloat(m[1].replace(/\s/g, '') + (m[2] ? '.' + m[2] : ''));
+    let mult = 1;
+    if(suf === 'тыс' || suf === 'тысяч' || suf === 'т') mult = 1000;
+    else if(suf === 'млн') mult = 1e6;
+    n = Math.round(n * mult);
+    if(isFinite(n) && n > 0 && n <= 1e15 && !out.dollars) out.amount = n;
+    if(out.amount && !suf && out.amount < 1000) out.warn.push('Это ' + spaced(out.amount) + ' сум. Если тысячи, допиши «тыс»');
+    rest = text.slice(0, m.index) + ' ' + text.slice(m.index + m[0].length);
+  } else {
+    out.warn.push('Не вижу суммы');
+  }
+  out.desc = rest.replace(/\s+/g, ' ').replace(/^[\s\-–—.,:;·]+|[\s\-–—.,:;·]+$/g, '').trim();
+  const low = ' ' + text.toLowerCase() + ' ';
+  if(/(?:^|[^\p{L}])(?:забра\p{L}*|взял\p{L}*|себе)(?:[^\p{L}]|$)/u.test(low)) out.kind = 'draw';
+  else if(/(?:^|[^\p{L}])(?:вложи\p{L}*|внёс|внес|внесла)(?:[^\p{L}]|$)/u.test(low)) out.kind = 'contribution';
+  const catRules = [
+    [/бензин|заправ|мойк/, '🚗 Машина / бензин'],
+    [/реклам|таргет|продвиж/, '🎯 Таргет / продвижение'],
+    [/связь|интернет|телефон/, '📱 Связь / интернет'],
+    [/аренд|склад/, '🏢 Аренда / склад'],
+    [/налог|документ/, '📄 Налоги / документы'],
+    [/инструмент|перфоратор|бур\b|дрель/, '🛠 Инструмент']
+  ];
+  for(const [r, c] of catRules){ if(r.test(low)){ out.cat = c; break; } }
+  return out;
+}
+function guessTxCat(type, desc){
+  const d = String(desc || '').toLowerCase();
+  if(type === 'income') return /аванс|предоплат/.test(d) ? '💰 Аванс' : '💵 Оплата';
+  if(/материал|профил|полотн|светиль|строител|саморез|анкер/.test(d)) return '📦 Материал';
+  if(/закуп|магаз/.test(d)) return '🛒 Закуп';
+  if(/монтаж|бригад|ребят/.test(d)) return '🔧 Монтаж';
+  if(/бензин|такси|достав|транспорт/.test(d)) return '🚗 Транспорт';
+  return '📝 Прочее';
+}
+// </parse>
+
+// ───────────── данные ─────────────
+const S = {
+  objects: [], cashbox: [], tab: 'book', conn: 'sync', connMsg: '',
+  me: LS.get('ar_pill') === 'redvan' ? 'redvan' : 'aziz',
+  filter: 'all', openRow: null, sheet: null,
+  entry: { partner: null, kind: null, objectId: '' },
+  sheetTx: { type: 'expense' }
+};
+let adapter = null;
+const realObjects = () => S.objects.filter(o => o.sandbox !== true);
+const txOf = o => Array.isArray(o.transactions) ? o.transactions : [];
+const sumT = (txs, t) => txs.filter(x => x.type === t).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+const cashSum = (type, partner) => S.cashbox.filter(c => c.type === type && (!partner || c.partner === partner)).reduce((s, c) => s + (Number(c.amount) || 0), 0);
+// Те же формулы, что в рабочей CRM: остаток = клиенты + вложения − расходы по объектам − общие расходы − взято себе
+function calc(){
+  const all = realObjects().flatMap(txOf);
+  const clients = sumT(all, 'income'), objExp = sumT(all, 'expense');
+  const contrib = cashSum('contribution'), overhead = cashSum('overhead'), draws = cashSum('draw');
+  const profit = clients - objExp - overhead;
+  const left = clients + contrib - objExp - overhead - draws;
+  return { clients, objExp, contrib, overhead, draws, profit, left };
+}
+window.__calc = calc; window.__parse = parseLine; window.__S = S;
+
+const FB_CFG = {
+  apiKey: "AIzaSyDrnbfSNxy1FaUgzAeExe-pR0TbxkPt9vc",
+  authDomain: "ar-crm-c46c3.firebaseapp.com",
+  projectId: "ar-crm-c46c3",
+  storageBucket: "ar-crm-c46c3.firebasestorage.app",
+  messagingSenderId: "215893544524",
+  appId: "1:215893544524:web:d8b02a8d400bc4553e6ee9"
+};
+function diagnose(err){
+  const c = err && err.code ? err.code : '';
+  if(c === 'permission-denied') return 'База отклонила доступ (правила Firestore).';
+  if(c === 'failed-precondition') return 'База Firestore не создана.';
+  if(c === 'unavailable') return 'Нет доступа к базе. Проверь интернет.';
+  return 'Ошибка базы: ' + (c || 'неизвестно');
+}
+async function liveAdapter(){
+  const V = '10.12.0';
+  const [{ initializeApp }, fs] = await Promise.all([
+    import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),
+    import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)
+  ]);
+  const app = initializeApp(FB_CFG);
+  let db;
+  try { db = fs.initializeFirestore(app, { experimentalAutoDetectLongPolling: true, localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) }); }
+  catch(e){ try { db = fs.initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); } catch(e2){ db = fs.getFirestore(app); } }
+  return {
+    mode: 'live',
+    subscribe(on){
+      on.conn('sync');
+      fs.onSnapshot(fs.query(fs.collection(db, 'objects'), fs.orderBy('createdAt', 'desc')),
+        snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.objects(a); on.conn(navigator.onLine === false ? 'off' : 'ok'); },
+        err => { console.error('objects', err); on.conn('err', diagnose(err)); });
+      fs.onSnapshot(fs.query(fs.collection(db, 'cashbox'), fs.orderBy('ts', 'desc')),
+        snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.cash(a); },
+        err => console.error('cashbox', err));
+    },
+    addCash: rec => fs.addDoc(fs.collection(db, 'cashbox'), { ...rec, createdAt: fs.serverTimestamp() }),
+    deleteCash: id => fs.deleteDoc(fs.doc(db, 'cashbox', id)),
+    addObject: obj => fs.addDoc(fs.collection(db, 'objects'), { ...obj, statusTs: fs.serverTimestamp(), createdAt: fs.serverTimestamp() }),
+    addTx: (oid, tx) => fs.updateDoc(fs.doc(db, 'objects', oid), { transactions: fs.arrayUnion(tx) }),
+    removeTx: (oid, tx) => fs.updateDoc(fs.doc(db, 'objects', oid), { transactions: fs.arrayRemove(tx) }),
+    setStatus: (oid, s) => fs.updateDoc(fs.doc(db, 'objects', oid), { status: s, statusTs: fs.serverTimestamp() })
+  };
+}
+function offlineAdapter(e){
+  const fail = () => Promise.reject(new Error('нет связи с базой'));
+  return { mode: 'live', subscribe(on){ on.conn('err', 'Не удалось загрузить базу. Проверь интернет и открой приложение заново.'); },
+    addCash: fail, deleteCash: fail, addObject: fail, addTx: fail, removeTx: fail, setStatus: fail };
+}
+// Демо: всё в памяти, в базу ничего не пишется
+function demoAdapter(){
+  const now = Date.now(), D = 86400000;
+  let n = 0; const uid = () => 'demo' + (++n);
+  let objects = [
+    { id: 'o1', name: 'Квартира, Чиланзар (демо)', type: 'project', partner: 'aziz', status: 'working', addr: 'ул. Пример, 12', area: 24, date: dayKey(now - 3 * D), note: 'Парящий профиль', locked: false, createdBy: 'aziz', transactions: [
+      { id: 1, ts: now - 3 * D, desc: 'Аванс', amount: 1000000, type: 'income', cat: '💰 Аванс', createdBy: 'aziz', locked: false },
+      { id: 2, ts: now - 3 * D + 3600000, desc: 'Профиль', amount: 180000, type: 'expense', cat: '📦 Материал', createdBy: 'aziz', locked: false },
+      { id: 3, ts: now - 1 * D, desc: 'Монтаж, бригада', amount: 205000, type: 'expense', cat: '🔧 Монтаж', createdBy: 'aziz', locked: false } ] },
+    { id: 'o2', name: 'Офис, Юнусабад (демо)', type: 'project', partner: 'redvan', status: 'working', addr: 'пр. Пример, 5', area: 60, date: dayKey(now - 2 * D), note: '', locked: false, createdBy: 'redvan', transactions: [
+      { id: 4, ts: now - 2 * D, desc: 'Аванс', amount: 600000, type: 'income', cat: '💰 Аванс', createdBy: 'redvan', locked: false },
+      { id: 5, ts: now - 2 * D + 7200000, desc: 'Светильники', amount: 138000, type: 'expense', cat: '📦 Материал', createdBy: 'redvan', locked: false } ] },
+    { id: 'o3', name: 'Замер, Сергели (демо)', type: 'measure', partner: 'aziz', status: 'waiting', addr: 'ул. Пример, 30', area: 0, date: dayKey(now + D), note: '', locked: false, createdBy: 'aziz', transactions: [] }
+  ];
+  let cash = [
+    { id: 'c1', type: 'overhead', desc: 'Бензин', amount: 100000, partner: 'aziz', cat: '🚗 Машина / бензин', createdBy: 'aziz', ts: now - 1 * D + 5000 },
+    { id: 'c2', type: 'draw', desc: 'Забрал себе', amount: 100000, partner: 'redvan', cat: '', createdBy: 'redvan', ts: now - 1 * D },
+    { id: 'c3', type: 'overhead', desc: 'Обед на троих', amount: 149000, partner: 'redvan', cat: '📝 Прочее', createdBy: 'redvan', ts: now - 2 * D + 9000 },
+    { id: 'c4', type: 'contribution', desc: 'Вложил на закупку', amount: 500000, partner: 'aziz', cat: '', createdBy: 'aziz', ts: now - 4 * D }
+  ];
+  let sub = null;
+  const emit = () => { if(!sub) return; sub.objects(JSON.parse(JSON.stringify(objects))); sub.cash(JSON.parse(JSON.stringify(cash))); };
+  const ok = () => { emit(); return Promise.resolve(); };
+  return {
+    mode: 'demo',
+    subscribe(on){ sub = on; on.conn('demo'); emit(); },
+    addCash(rec){ cash.unshift({ id: uid(), ...rec }); cash.sort((a, b) => b.ts - a.ts); return ok(); },
+    deleteCash(id){ cash = cash.filter(c => c.id !== id); return ok(); },
+    addObject(obj){ objects.unshift({ id: uid(), ...obj }); return ok(); },
+    addTx(oid, tx){ const o = objects.find(x => x.id === oid); if(o) o.transactions.push(tx); return ok(); },
+    removeTx(oid, tx){ const o = objects.find(x => x.id === oid); if(o) o.transactions = o.transactions.filter(t => t.id !== tx.id); return ok(); },
+    setStatus(oid, s){ const o = objects.find(x => x.id === oid); if(o) o.status = s; return ok(); }
+  };
+}
+
+// ───────────── интерфейс ─────────────
+let toastTimer = null;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+}
+const partnerOf = x => (x === 'redvan' ? 'redvan' : 'aziz');
+
+function renderPT(el, value, act){
+  el.innerHTML = ['aziz', 'redvan'].map(p => `<button data-act="${act}" data-p="${p}" class="${value === p ? 'on' : ''}" aria-label="${NAMES[p]}">${LET[p]}</button>`).join('');
+}
+function setTab(t){
+  S.tab = t;
+  $$('.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
+  $$('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+  window.scrollTo(0, 0);
+}
+function updateHeader(){
+  const m = calc();
+  const b = $('#bal');
+  const noData = S.conn === 'err' && !S.objects.length && !S.cashbox.length;
+  b.innerHTML = noData ? '—' : fmt(m.left) + ' <small>сум</small>';
+  b.classList.toggle('neg', !noData && m.left < 0);
+  $('#meBtn').textContent = LET[S.me];
+  $('#meBtn').title = NAMES[S.me];
+  const c = $('#conn');
+  c.className = 'conn' + (S.conn === 'err' || S.conn === 'off' ? ' err' : '');
+  c.innerHTML = S.conn === 'demo' ? '<span class="demo-tag">демо</span>' : S.conn === 'ok' ? 'связь есть' : S.conn === 'off' ? 'офлайн' : S.conn === 'err' ? 'нет связи' : 'загрузка…';
+  const bn = $('#banner');
+  if(S.conn === 'demo'){ bn.hidden = false; bn.className = 'banner'; bn.textContent = 'Демо: данные для примера. В базу ничего не записывается.'; }
+  else if(S.conn === 'err'){ bn.hidden = false; bn.className = 'banner err'; bn.textContent = S.connMsg || 'Нет связи с базой.'; }
+  else if(S.conn === 'off'){ bn.hidden = false; bn.className = 'banner'; bn.textContent = 'Офлайн. Записи сохраняются на телефоне и уйдут в базу, когда появится сеть.'; }
+  else bn.hidden = true;
+}
+
+// Единая лента: записи кассы и движения по объектам
+function feedItems(){
+  const items = [];
+  S.cashbox.forEach(c => {
+    if(!c.ts) return;
+    const plus = c.type === 'contribution';
+    items.push({ key: 'c:' + c.id, ts: c.ts, partner: partnerOf(c.partner), desc: c.desc, amount: Number(c.amount) || 0, plus,
+      tag: (KIND_LABEL[c.type] || '') + (c.cat ? ' · ' + stripEmoji(c.cat) : ''), src: 'cash', id: c.id, rec: c });
+  });
+  realObjects().forEach(o => txOf(o).forEach(t => {
+    if(t.type === 'info' || !t.ts) return;
+    const plus = t.type === 'income';
+    items.push({ key: 'o:' + o.id + ':' + t.id, ts: Number(t.ts), partner: partnerOf(t.createdBy || o.partner), desc: t.desc, amount: Number(t.amount) || 0, plus,
+      tag: (plus ? 'приход' : 'расход') + ' · ' + o.name, src: 'tx', id: t.id, oid: o.id, rec: t, locked: !!(t.locked || o.locked) });
+  }));
+  items.sort((a, b) => b.ts - a.ts);
+  return items;
+}
+function updateFeed(){
+  const el = $('#feed');
+  const items = feedItems();
+  if(!items.length){ el.innerHTML = '<div class="empty">Пока пусто. Первая запись — в строке выше.</div>'; return; }
+  let html = '', last = '';
+  items.forEach(it => {
+    const k = dayKey(it.ts);
+    if(k !== last){ html += `<div class="day">${dayTitle(it.ts)}<span>${weekday(it.ts)}</span></div>`; last = k; }
+    const open = S.openRow === it.key;
+    html += `<div class="row ${open ? 'open' : ''}" data-act="row" data-key="${esc(it.key)}">
+      <div class="bd">${LET[it.partner]}</div>
+      <div class="rb"><div class="rd">${esc(it.desc)}</div><div class="rt">${esc(it.tag)}</div>
+        <div class="acts">${it.locked ? '<span class="rt">Заблокировано</span>' : `<button class="link-del" data-act="delItem" data-key="${esc(it.key)}">Удалить запись</button>`}</div></div>
+      <div class="ra">${signed(it.amount, it.plus)}</div></div>`;
+  });
+  el.innerHTML = html;
+}
+function updateObjOptions(){
+  const sel = $('#entry-obj'); const cur = S.entry.objectId;
+  const opts = ['<option value="">Общий расход, без объекта</option>'].concat(
+    realObjects().filter(o => o.status !== 'cancelled' && o.status !== 'done').map(o => `<option value="${esc(o.id)}">${esc(o.name)}</option>`));
+  sel.innerHTML = opts.join('');
+  sel.value = realObjects().some(o => o.id === cur) ? cur : '';
+  S.entry.objectId = sel.value;
+}
+function entryState(){
+  const p = parseLine($('#entry-text').value);
+  const kind = S.entry.kind || (p ? p.kind : 'overhead');
+  const partner = S.entry.partner || S.me;
+  return { p, kind, partner };
+}
+function updateEntry(){
+  const { p, kind, partner } = entryState();
+  renderPT($('#entry-pt'), partner, 'ept');
+  $$('#entry-kind button').forEach(b => b.classList.toggle('on', b.dataset.k === kind));
+  $('#entry-obj').hidden = kind !== 'overhead';
+  const prev = $('#preview'), go = $('#entry-go');
+  if(!p){
+    prev.innerHTML = '<span class="hint">Пиши как в тетради: сумма и за что. Например: «425 тыс материалы»</span>';
+    go.disabled = true; return;
+  }
+  const bits = [];
+  bits.push(`<b>${LET[partner]}</b>`);
+  bits.push(p.amount ? money(p.amount) : '<span class="warn">сумма?</span>');
+  bits.push(p.desc ? esc(p.desc) : '<span class="warn">за что?</span>');
+  bits.push(KIND_LABEL[kind]);
+  prev.innerHTML = bits.join(' · ') + p.warn.map(w => `<div class="warn">${esc(w)}</div>`).join('');
+  go.disabled = !(p.amount && p.desc);
+}
+function updateObjects(){
+  $$('#obj-filter button').forEach(b => b.classList.toggle('on', b.dataset.f === S.filter));
+  let list = realObjects();
+  if(S.filter !== 'all') list = list.filter(o => o.status === S.filter);
+  const el = $('#objlist');
+  if(!list.length){ el.innerHTML = '<div class="empty">Нет объектов</div>'; return; }
+  el.innerHTML = list.map(o => {
+    const txs = txOf(o);
+    return `<button class="obj" data-act="openObj" data-id="${esc(o.id)}">
+      <div class="ot"><span>${esc(o.name)}</span><span class="st">${STATUS[o.status] || esc(o.status)}</span></div>
+      <div class="om">${o.type === 'project' ? 'Проект' : 'Замер'}${o.addr ? ' · ' + esc(o.addr) : ''} · ${LET[partnerOf(o.partner)]}</div>
+      <div class="ob">Приход ${fmt(sumT(txs, 'income'))} · Расход ${fmt(sumT(txs, 'expense'))}</div></button>`;
+  }).join('');
+}
+function updateSums(){
+  const m = calc();
+  const row = (a, b, cls = '') => `<tr class="${cls}"><td>${a}</td><td>${b}</td></tr>`;
+  let html = `<div class="card" style="margin-bottom:14px"><table class="t">
+    ${row('Приход от клиентов', fmt(m.clients))}
+    ${row('Вложили партнёры', fmt(m.contrib))}
+    ${row('Расходы по объектам', '−' + fmt(m.objExp))}
+    ${row('Общие расходы', '−' + fmt(m.overhead))}
+    ${row('Взяли себе', '−' + fmt(m.draws))}
+    ${row('Остаток в кассе', `<span class="${m.left < 0 ? 'neg' : ''}">${fmt(m.left)}</span>`, 'tot')}
+  </table></div>
+  <div class="card" style="margin-bottom:14px"><table class="t">
+    ${row('Прибыль (приход − расходы)', `<span class="${m.profit < 0 ? 'neg' : ''}">${fmt(m.profit)}</span>`, 'tot')}
+  </table>${m.left < 0 ? '<div class="warn" style="margin-top:8px">Минус: взяли больше, чем есть в кассе</div>' : ''}</div>`;
+  html += `<div class="card"><table class="t"><tr><th></th><th style="text-align:right">Азиз</th><th style="text-align:right">Редван</th></tr>`;
+  const cols = ['aziz', 'redvan'].map(p => { const c = cashSum('contribution', p), d = cashSum('draw', p), share = m.profit / 2; return { c, d, share, owed: share + c - d }; });
+  const r3 = (a, f, cls = '') => `<tr class="${cls}"><td>${a}</td><td style="text-align:right">${f(cols[0])}</td><td style="text-align:right">${f(cols[1])}</td></tr>`;
+  html += r3('Доля прибыли', x => fmt(x.share)) + r3('Вложил', x => fmt(x.c)) + r3('Взял себе', x => '−' + fmt(x.d))
+       + r3('К получению', x => `<span class="${x.owed < 0 ? 'neg' : ''}">${fmt(x.owed)}</span>`, 'tot') + '</table></div>';
+  $('#sums').innerHTML = html;
+}
+function updateMore(){
+  renderPT($('#me-pt'), S.me, 'mep');
+  $('#me-name').textContent = NAMES[S.me];
+  const live = adapter && adapter.mode === 'live';
+  $('#mode-info').textContent = live ? 'Рабочая база. Записи видят оба партнёра и старая CRM.' : 'Демо. Записи живут только пока открыта страница.';
+  $('#mode-link').hidden = !live;
+}
+function updateAll(){
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive();
+}
+
+// ───────────── записи ─────────────
+function newId(){ return Date.now() + Math.floor(Math.random() * 1000); }
+async function guard(promiseFn, okMsg){
+  try { const p = promiseFn(); if(okMsg) toast(okMsg); await p; }
+  catch(e){ console.error(e); toast('Не сохранилось: ' + (e.code || e.message || 'ошибка')); }
+}
+function entryGo(){
+  const { p, kind, partner } = entryState();
+  if(!p || !p.amount || !p.desc) return;
+  const oid = S.entry.objectId;
+  let job;
+  if(kind === 'overhead' && oid){
+    const tx = { id: newId(), ts: Date.now(), desc: p.desc, amount: p.amount, type: 'expense', cat: guessTxCat('expense', p.desc), createdBy: partner, locked: false };
+    job = () => adapter.addTx(oid, tx);
+  } else {
+    const rec = { type: kind, desc: p.desc, amount: p.amount, partner, cat: kind === 'overhead' ? p.cat : '', createdBy: S.me, ts: Date.now() };
+    job = () => adapter.addCash(rec);
+  }
+  $('#entry-text').value = ''; S.entry.kind = null;
+  guard(job, 'Записано');
+  updateEntry();
+}
+function findItem(key){ return feedItems().find(i => i.key === key); }
+function delItem(key){
+  const it = findItem(key); if(!it) return;
+  if(it.locked){ toast('Запись заблокирована'); return; }
+  if(!confirm('Удалить запись «' + it.desc + '»? Остаток и доли пересчитаются.')) return;
+  S.openRow = null;
+  if(it.src === 'cash') guard(() => adapter.deleteCash(it.id), 'Удалено');
+  else guard(() => adapter.removeTx(it.oid, it.rec), 'Удалено');
+}
+
+// ───────────── окно объекта ─────────────
+function openSheet(html){ $('#sheet-box').innerHTML = html; $('#sheet').hidden = false; }
+function closeSheet(){ $('#sheet').hidden = true; S.sheet = null; $('#sheet-box').innerHTML = ''; }
+function openObj(id){
+  const o = S.objects.find(x => x.id === id); if(!o) return;
+  S.sheet = { kind: 'obj', id }; S.sheetTx.type = 'expense';
+  openSheet(`<div class="sheet-h"><h3>${esc(o.name)}</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+    <div class="col">
+      <div class="seg" id="sh-status">${['waiting', 'working', 'done', 'cancelled'].map(s => `<button data-act="setStatus" data-s="${s}">${STATUS[s]}</button>`).join('')}</div>
+      <div id="sh-info"></div>
+      <div id="sh-add"></div>
+      <div id="sh-tx"></div>
+    </div>`);
+  renderObjSheet();
+}
+function renderObjSheet(){
+  const o = S.objects.find(x => x.id === (S.sheet && S.sheet.id)); if(!o){ closeSheet(); return; }
+  $$('#sh-status button').forEach(b => b.classList.toggle('on', b.dataset.s === o.status));
+  $('#sh-status').classList.toggle('dis', !!o.locked);
+  const txs = txOf(o);
+  const inc = sumT(txs, 'income'), exp = sumT(txs, 'expense');
+  $('#sh-info').innerHTML = [
+    ['Тип', o.type === 'project' ? 'Проект' : 'Замер'],
+    ['Партнёр', NAMES[partnerOf(o.partner)]],
+    o.addr ? ['Адрес', esc(o.addr)] : null,
+    o.area ? ['Площадь', esc(o.area) + ' м²'] : null,
+    o.date ? ['Дата', esc(o.date.split('-').reverse().join('.'))] : null,
+    o.note ? ['Заметка', esc(o.note)] : null,
+    ['Приход', fmt(inc)], ['Расход', fmt(exp)], ['Итог по объекту', fmt(inc - exp)]
+  ].filter(Boolean).map(([a, b]) => `<div class="kv"><span>${a}</span><span>${b}</span></div>`).join('')
+    + (o.locked ? '<div class="hint" style="margin-top:6px">Объект заблокирован в старой CRM: менять нельзя.</div>' : '');
+  if(!$('#sh-add').dataset.ready){
+    $('#sh-add').dataset.ready = '1';
+    $('#sh-add').innerHTML = `<div class="card col">
+      <div class="seg" id="sh-type"><button data-act="txType" data-t="income">Приход</button><button data-act="txType" data-t="expense">Расход</button><button data-act="txType" data-t="info">Заметка</button></div>
+      <input class="in" id="sh-text" placeholder="205 тыс монтаж" autocomplete="off">
+      <div class="prev" id="sh-prev"></div>
+      <button class="btn" id="sh-go" data-act="addTx" disabled>Добавить</button></div>`;
+    updateSheetEntry();
+  }
+  $('#sh-add').hidden = !!o.locked;
+  const list = txs.slice().sort((a, b) => (Number(b.ts) || 0) - (Number(a.ts) || 0));
+  $('#sh-tx').innerHTML = list.length ? '<div class="lbl" style="margin:6px 0 2px">Записи</div>' + list.map(t => {
+    const plus = t.type === 'income';
+    return `<div class="row"><div class="bd">${LET[partnerOf(t.createdBy || o.partner)]}</div>
+      <div class="rb"><div class="rd">${esc(t.desc)}</div><div class="rt">${t.type === 'info' ? 'заметка' : (plus ? 'приход' : 'расход')}${t.cat ? ' · ' + esc(stripEmoji(t.cat)) : ''} · ${dayTitle(Number(t.ts))}</div>
+      ${(t.locked || o.locked) ? '' : `<button class="link-del" data-act="delTx" data-id="${esc(t.id)}">Удалить</button>`}</div>
+      <div class="ra">${t.type === 'info' ? '' : signed(t.amount, plus)}</div></div>`;
+  }).join('') : '<div class="empty">Записей пока нет</div>';
+}
+function updateSheetEntry(){
+  if(!S.sheet || S.sheet.kind !== 'obj' || !$('#sh-text')) return;
+  $$('#sh-type button').forEach(b => b.classList.toggle('on', b.dataset.t === S.sheetTx.type));
+  const raw = $('#sh-text').value, type = S.sheetTx.type;
+  const prev = $('#sh-prev'), go = $('#sh-go');
+  const p = parseLine(raw);
+  if(!p){ prev.innerHTML = '<span class="hint">Сумма и за что. Например: «205 тыс монтаж»</span>'; go.disabled = true; return; }
+  if(type === 'info'){ prev.innerHTML = '<b>Заметка</b> · ' + esc(raw.trim()); go.disabled = !raw.trim(); return; }
+  prev.innerHTML = [type === 'income' ? 'Приход' : 'Расход', p.amount ? money(p.amount) : '<span class="warn">сумма?</span>', p.desc ? esc(p.desc) : '<span class="warn">за что?</span>'].join(' · ')
+    + p.warn.map(w => `<div class="warn">${esc(w)}</div>`).join('');
+  go.disabled = !(p.amount && p.desc);
+}
+function updateSheetLive(){ if(S.sheet && S.sheet.kind === 'obj') renderObjSheet(); }
+function addSheetTx(){
+  const o = S.objects.find(x => x.id === S.sheet.id); if(!o || o.locked) return;
+  const raw = $('#sh-text').value, type = S.sheetTx.type;
+  let tx;
+  if(type === 'info'){ if(!raw.trim()) return; tx = { id: newId(), ts: Date.now(), desc: raw.trim(), amount: 0, type: 'info', cat: '📝 Прочее', createdBy: S.me, locked: false }; }
+  else {
+    const p = parseLine(raw); if(!p || !p.amount || !p.desc) return;
+    tx = { id: newId(), ts: Date.now(), desc: p.desc, amount: p.amount, type, cat: guessTxCat(type, p.desc), createdBy: S.me, locked: false };
+  }
+  $('#sh-text').value = ''; updateSheetEntry();
+  guard(() => adapter.addTx(o.id, tx), 'Записано');
+}
+function delSheetTx(id){
+  const o = S.objects.find(x => x.id === S.sheet.id); if(!o) return;
+  const tx = txOf(o).find(t => String(t.id) === String(id)); if(!tx) return;
+  if(tx.locked || o.locked){ toast('Запись заблокирована'); return; }
+  if(!confirm('Удалить запись «' + tx.desc + '»?')) return;
+  guard(() => adapter.removeTx(o.id, tx), 'Удалено');
+}
+function setStatus(s){
+  const o = S.objects.find(x => x.id === S.sheet.id); if(!o) return;
+  if(o.locked){ toast('Объект заблокирован'); return; }
+  guard(() => adapter.setStatus(o.id, s), STATUS[s]);
+}
+
+// ───────────── новый объект ─────────────
+const NEW = { type: 'measure', partner: 'aziz' };
+function openNewObj(){
+  S.sheet = { kind: 'new' }; NEW.type = 'measure'; NEW.partner = S.me;
+  openSheet(`<div class="sheet-h"><h3>Новый объект</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+    <div class="col">
+      <div class="seg" id="no-type"><button data-act="noType" data-t="measure">Замер</button><button data-act="noType" data-t="project">Проект</button></div>
+      <input class="in" id="no-name" placeholder="Название, например: Квартира Чиланзар" autocomplete="off">
+      <input class="in" id="no-addr" placeholder="Адрес" autocomplete="off">
+      <div class="rowf"><input class="in" id="no-area" placeholder="Площадь, м²" inputmode="decimal"><input class="in" id="no-date" type="date"></div>
+      <div id="no-adv-wrap"><input class="in" id="no-adv" placeholder="Аванс, сум (для проекта)" inputmode="numeric"></div>
+      <input class="in" id="no-note" placeholder="Заметка" autocomplete="off">
+      <div class="rowf"><div class="hint">Кто ведёт</div><div class="pt" id="no-pt"></div></div>
+      <button class="btn" data-act="createObj">Создать</button>
+    </div>`);
+  $('#no-date').value = dayKey(Date.now());
+  renderNewObj();
+}
+function renderNewObj(){
+  $$('#no-type button').forEach(b => b.classList.toggle('on', b.dataset.t === NEW.type));
+  $('#no-adv-wrap').hidden = NEW.type !== 'project';
+  renderPT($('#no-pt'), NEW.partner, 'nop');
+}
+function createObj(){
+  const name = $('#no-name').value.trim();
+  if(!name){ toast('Введи название'); return; }
+  let adv = 0;
+  if(NEW.type === 'project'){
+    const p = parseLine($('#no-adv').value);
+    adv = p && p.amount ? p.amount : 0;
+    if(!(adv > 0)){ toast('Для проекта нужен аванс'); return; }
+  }
+  const obj = {
+    name, createdBy: S.me, addr: $('#no-addr').value.trim(), area: parseFloat($('#no-area').value) || 0,
+    date: $('#no-date').value, note: $('#no-note').value.trim(), type: NEW.type, partner: NEW.partner,
+    status: NEW.type === 'project' ? 'working' : 'waiting', locked: false, photo: '',
+    transactions: NEW.type === 'project' ? [{ id: newId(), ts: Date.now(), desc: 'Аванс', amount: adv, type: 'income', cat: '💰 Аванс', createdBy: S.me, locked: false }] : []
+  };
+  closeSheet();
+  guard(() => adapter.addObject(obj), 'Объект создан');
+}
+
+// ───────────── PIN ─────────────
+function lockGate(){
+  return new Promise(resolve => {
+    const saved = LS.get('ar_pin');
+    let buf = '', first = '', mode = saved ? 'enter' : 'set';
+    const L = $('#lock');
+    const dots = err => { $('#lock-dots').innerHTML = [0, 1, 2, 3].map(i => `<div class="dot ${i < buf.length ? 'on' : ''} ${err ? 'err' : ''}"></div>`).join(''); };
+    const title = () => {
+      $('#lock-title').textContent = mode === 'enter' ? 'Введите код' : mode === 'set' ? 'Придумайте код' : 'Повторите код';
+      $('#lock-sub').textContent = mode === 'set' ? '4 цифры. Один общий для Азиза и Редвана.' : '';
+    };
+    $('#lock-pad').innerHTML = ['1','2','3','4','5','6','7','8','9','','0','⌫'].map(k => k === '' ? '<span></span>' : `<button data-k="${k}">${k}</button>`).join('');
+    $('#lock-pad').onclick = e => {
+      const b = e.target.closest('button'); if(!b) return;
+      const k = b.dataset.k;
+      if(k === '⌫'){ buf = buf.slice(0, -1); dots(); return; }
+      if(buf.length >= 4) return;
+      buf += k; dots();
+      if(buf.length < 4) return;
+      setTimeout(() => {
+        if(mode === 'enter'){
+          if(buf === LS.get('ar_pin')){ L.hidden = true; resolve(); }
+          else { dots(true); setTimeout(() => { buf = ''; dots(); }, 350); }
+        } else if(mode === 'set'){ first = buf; buf = ''; mode = 'confirm'; title(); dots(); }
+        else if(buf === first){ LS.set('ar_pin', buf); L.hidden = true; resolve(); }
+        else { buf = ''; first = ''; mode = 'set'; title(); $('#lock-title').textContent = 'Коды не совпали, заново'; dots(true); setTimeout(() => dots(), 350); }
+      }, 120);
+    };
+    title(); dots(); L.hidden = false;
+  });
+}
+
+// ───────────── события ─────────────
+const ACT = {
+  tab: el => setTab(el.dataset.t),
+  goMore: () => setTab('more'),
+  ept: el => { S.entry.partner = el.dataset.p; updateEntry(); },
+  kind: el => { S.entry.kind = el.dataset.k; updateEntry(); },
+  entryGo,
+  filter: el => { S.filter = el.dataset.f; updateObjects(); },
+  openObj: el => openObj(el.dataset.id),
+  newObj: openNewObj,
+  closeSheet,
+  setStatus: el => setStatus(el.dataset.s),
+  txType: el => { S.sheetTx.type = el.dataset.t; updateSheetEntry(); },
+  addTx: addSheetTx,
+  delTx: el => delSheetTx(el.dataset.id),
+  noType: el => { NEW.type = el.dataset.t; renderNewObj(); },
+  nop: el => { NEW.partner = el.dataset.p; renderNewObj(); },
+  createObj,
+  mep: el => { S.me = el.dataset.p; LS.set('ar_pill', S.me); S.entry.partner = null; updateAll(); toast('Работает ' + NAMES[S.me]); },
+  changePin: () => { LS.del('ar_pin'); toast('Код сброшен. Задай новый при следующем входе'); },
+  row: (el, e) => { if(e.target.closest('[data-act="delItem"]')) return; const k = el.dataset.key; S.openRow = S.openRow === k ? null : k; updateFeed(); },
+  delItem: el => delItem(el.dataset.key)
+};
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-act]'); if(!el) return;
+  const f = ACT[el.dataset.act]; if(f) f(el, e);
+});
+$('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') closeSheet(); });
+$('#entry-text').addEventListener('input', () => { S.entry.kind = null; updateEntry(); });
+$('#entry-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); entryGo(); } });
+$('#entry-obj').addEventListener('change', e => { S.entry.objectId = e.target.value; });
+document.addEventListener('input', e => { if(e.target.id === 'sh-text') updateSheetEntry(); });
+
+// ───────────── запуск ─────────────
+(async function boot(){
+  if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
+  if(!DEMO) await lockGate();
+  $('#app').hidden = false;
+  updateAll();
+  adapter = DEMO ? demoAdapter() : await liveAdapter().catch(e => { console.error(e); return offlineAdapter(e); });
+  updateMore();
+  adapter.subscribe({
+    objects: a => { S.objects = a; updateAll(); },
+    cash: a => { S.cashbox = a; updateAll(); },
+    conn: (c, msg) => { S.conn = c; S.connMsg = msg || ''; updateHeader(); }
+  });
+})();
+</script>
+</body>
+</html>
