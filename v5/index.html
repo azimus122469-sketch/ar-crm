@@ -198,6 +198,14 @@ table.t .neg{color:var(--red)}
     <section class="tab" id="tab-sum">
       <h2 class="h">Итоги</h2>
       <div id="sums"></div>
+      <div class="card col" id="report-card" style="margin-top:14px">
+        <div class="lbl">Отчёт за месяц, Excel</div>
+        <div class="hint">Файл .xlsx: итог месяца, касса по дням, объекты, расчёт между партнёрами. Суммы считаются формулами.</div>
+        <select class="in" id="rep-month" aria-label="Месяц"></select>
+        <button class="btn" id="rep-go" data-act="repGo">Скачать Excel</button>
+        <button class="btn2" id="rep-share" data-act="repShare" hidden>Отправить файл…</button>
+        <div class="hint" id="rep-msg"></div>
+      </div>
     </section>
 
     <section class="tab" id="tab-more">
@@ -231,7 +239,7 @@ table.t .neg{color:var(--red)}
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.1</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.2</div>
       </div>
     </section>
   </main>
@@ -387,7 +395,7 @@ function partnerStats(p, m){
   const returned = Math.min(d, c);
   return { c, d, share, returned, toReturn: c - returned, fromShare: d - returned, owed: share + c - d };
 }
-window.__calc = calc; window.__parse = parseLine; window.__S = S; window.__stats = partnerStats;
+window.__calc = calc; window.__parse = parseLine; window.__S = S; window.__stats = partnerStats; window.__report = () => ({ buildReport, reportRows });
 
 const FB_CFG = {
   apiKey: "AIzaSyDrnbfSNxy1FaUgzAeExe-pR0TbxkPt9vc",
@@ -668,7 +676,7 @@ function updateMore(){
   const mr = $('#more-rate'); if(document.activeElement !== mr) mr.value = S.rate ? fmt(S.rate) : '';
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive();
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths();
 }
 
 // ───────────── записи ─────────────
@@ -952,6 +960,8 @@ const ACT = {
   delItem: el => delItem(el.dataset.key),
   editItem: el => openEdit(el.dataset.key),
   saveEdit,
+  repGo,
+  repShare,
   edp: el => { S.edit.partner = el.dataset.p; renderPT($('#ed-pt'), S.edit.partner, 'edp'); },
   src: el => { S.entry.src = el.dataset.s; updateEntry(); }
 };
@@ -971,6 +981,187 @@ document.addEventListener('input', e => {
     if(id === 'entry-rate') updateEntry(); else if(id === 'sh-rate') updateSheetEntry();
   }
 });
+
+// <report>
+// Отчёт за месяц. Все суммы в листе «Итог» и «Объекты» считаются формулами по листу «Касса»;
+// рядом записаны готовые значения, чтобы файл правильно открывался и в просмотрщиках без пересчёта.
+const REP_TYPES = { inc: 'Приход клиента', objExp: 'Расход объекта', over: 'Общий расход', contrib: 'Вложил', draw: 'Забрал себе' };
+const MONTHS_RU = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const ymOf = ts => { const d = new Date(ts); return d.getFullYear() * 100 + d.getMonth() + 1; };
+const ymLabel = ym => MONTHS_RU[(ym % 100) - 1] + ' ' + Math.floor(ym / 100);
+function reportRows(data, K){
+  const rows = [], nm = x => (x === 'redvan' ? 'Редван' : 'Азиз');
+  const clean = c => String(c || '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+  const sig = r => (r.editedTs ? (actor(r.editedBy || r.createdBy) + ', изм. ' + dtm(tsNum(r.editedTs))) : (isAi(r.createdBy) ? 'помощник' : ''));
+  data.cashbox.forEach(c => {
+    const ts = tsNum(c.ts); if(!ts) return;
+    const type = c.type === 'draw' ? REP_TYPES.draw : c.type === 'contribution' ? REP_TYPES.contrib : REP_TYPES.over;
+    rows.push({ ts, who: nm(c.partner), type, desc: c.desc || '', obj: '', cat: clean(c.cat) + (c.pairId ? (c.cat ? ' · ' : '') + 'из своих' : ''), amount: Number(c.amount) || 0, usd: c.usd || null, rate: c.rate || null, sig: sig(c), ym: ymOf(ts) });
+  });
+  data.objects.forEach(o => (Array.isArray(o.transactions) ? o.transactions : []).forEach(t => {
+    const ts = Number(t.ts); if(!ts || t.type === 'info') return;
+    rows.push({ ts, who: nm(t.createdBy || o.partner), type: t.type === 'income' ? REP_TYPES.inc : REP_TYPES.objExp, desc: t.desc || '', obj: o.name || '', cat: clean(t.cat) + (t.pairId ? (t.cat ? ' · ' : '') + 'из своих' : ''), amount: Number(t.amount) || 0, usd: t.usd || null, rate: t.rate || null, sig: sig(t), ym: ymOf(ts) });
+  }));
+  return rows.filter(r => r.ym <= K).sort((a, b) => a.ts - b.ts);
+}
+async function buildReport(ExcelJS, data, K, withCache = true){
+  const rows = reportRows(data, K);
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'АР · Тетрадь'; wb.created = new Date();
+  const INK = 'FF16202B', PAPER = 'FFF3F0E7', BLUE = 'FF1F3A93', GRID = 'FFDCE5EE';
+  const NUM = '#,##0', USD = '#,##0.00';
+  const head = row => row.eachCell(c => { c.font = { bold: true, color: { argb: 'FFFFFFFF' } }; c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: INK } }; c.alignment = { vertical: 'middle', wrapText: true }; });
+  const F = (formula, result) => withCache ? { formula, result } : { formula };
+
+  // ── Касса (данные) ──
+  const sm = wb.addWorksheet('Итог', { views: [{ showGridLines: false }] });
+  const os = wb.addWorksheet('Объекты', { views: [{ state: 'frozen', ySplit: 1 }] });
+  const ks = wb.addWorksheet('Касса', { views: [{ state: 'frozen', ySplit: 1 }] });
+  ks.columns = [
+    { header: 'Дата', key: 'd', width: 12 }, { header: 'Время', key: 't', width: 8 }, { header: 'Кто', key: 'w', width: 10 },
+    { header: 'Тип', key: 'ty', width: 17 }, { header: 'Описание', key: 'de', width: 34 }, { header: 'Объект', key: 'ob', width: 28 },
+    { header: 'Категория', key: 'ca', width: 22 }, { header: 'Сумма, сум', key: 'a', width: 15 }, { header: 'Сумма, $', key: 'u', width: 11 },
+    { header: 'Курс', key: 'r', width: 10 }, { header: 'Изменено', key: 'sg', width: 22 }, { header: 'Месяц', key: 'm', width: 9 }
+  ];
+  head(ks.getRow(1)); ks.getRow(1).height = 22;
+  rows.forEach(r => {
+    const d = new Date(r.ts);
+    const row = ks.addRow({ d: new Date(d.getFullYear(), d.getMonth(), d.getDate()), t: pad2(d.getHours()) + ':' + pad2(d.getMinutes()), w: r.who, ty: r.type, de: r.desc, ob: r.obj, ca: r.cat, a: r.amount, u: r.usd, r: r.rate, sg: r.sig, m: r.ym });
+    row.getCell('d').numFmt = 'dd.mm.yyyy'; row.getCell('a').numFmt = NUM; row.getCell('u').numFmt = USD; row.getCell('r').numFmt = NUM;
+    if(r.ym === K) row.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: PAPER } }; });
+  });
+  const N = Math.max(rows.length + 1, 2);
+  const R = col => `Касса!$${col}$2:$${col}$${N}`;
+  const sumIf = (type, who, mode) => rows.filter(r => r.type === type && (!who || r.who === who) && (mode === 'eq' ? r.ym === K : true)).reduce((s, r) => s + r.amount, 0);
+  const crit = (type, who, mode) => `SUMIFS(${R('H')},${R('D')},"${type}"${who ? `,${R('C')},${who}` : ''},${R('L')},${mode === 'eq' ? '$B$2' : '"<="&$B$2'})`;
+
+  // ── Итог ──
+  sm.columns = [{ width: 38 }, { width: 18 }, { width: 18 }];
+  sm.mergeCells('A1:C1'); sm.getCell('A1').value = 'АР · Отчёт за ' + ymLabel(K);
+  sm.getCell('A1').font = { name: 'Georgia', bold: true, size: 16, color: { argb: INK } }; sm.getRow(1).height = 28;
+  sm.getCell('A2').value = 'Месяц (код)'; sm.getCell('A2').font = { color: { argb: 'FF8A939E' }, size: 9 };
+  sm.getCell('B2').value = K; sm.getCell('B2').font = { color: { argb: 'FF8A939E' }, size: 9 }; sm.getCell('B2').alignment = { horizontal: 'right' };
+  const sec = (r, t, b, c) => { sm.getCell('A' + r).value = t; sm.getCell('B' + r).value = b === undefined ? '' : b; sm.getCell('C' + r).value = c === undefined ? '' : c; head(sm.getRow(r)); sm.getRow(r).getCell(2).alignment = { horizontal: 'right' }; sm.getRow(r).getCell(3).alignment = { horizontal: 'right' }; };
+  const line = (r, t, f, v, bold) => { sm.getCell('A' + r).value = t; const c = sm.getCell('B' + r); c.value = F(f, v); c.numFmt = NUM; if(bold){ sm.getRow(r).font = { bold: true }; sm.getRow(r).eachCell(x => { x.border = { top: { style: 'thin', color: { argb: INK } }, bottom: { style: 'double', color: { argb: INK } } }; }); } else sm.getRow(r).eachCell(x => { x.border = { bottom: { style: 'thin', color: { argb: GRID } } }; }); };
+  const inc = sumIf(REP_TYPES.inc, null, 'eq'), oe = sumIf(REP_TYPES.objExp, null, 'eq'), ov = sumIf(REP_TYPES.over, null, 'eq'), co = sumIf(REP_TYPES.contrib, null, 'eq'), dr = sumIf(REP_TYPES.draw, null, 'eq');
+  sec(4, 'За месяц');
+  line(5, 'Приход от клиентов', crit(REP_TYPES.inc, null, 'eq'), inc);
+  line(6, 'Расходы по объектам', crit(REP_TYPES.objExp, null, 'eq'), oe);
+  line(7, 'Общие расходы', crit(REP_TYPES.over, null, 'eq'), ov);
+  line(8, 'Прибыль за месяц', 'B5-B6-B7', inc - oe - ov, true);
+  line(9, 'Вложили партнёры', crit(REP_TYPES.contrib, null, 'eq'), co);
+  line(10, 'Взяли себе', crit(REP_TYPES.draw, null, 'eq'), dr);
+  const Ti = sumIf(REP_TYPES.inc), Toe = sumIf(REP_TYPES.objExp), Tov = sumIf(REP_TYPES.over), Tco = sumIf(REP_TYPES.contrib), Tdr = sumIf(REP_TYPES.draw);
+  sec(12, 'На конец месяца, накопительно');
+  line(13, 'Приход от клиентов', crit(REP_TYPES.inc), Ti);
+  line(14, 'Расходы по объектам', crit(REP_TYPES.objExp), Toe);
+  line(15, 'Общие расходы', crit(REP_TYPES.over), Tov);
+  line(16, 'Прибыль', 'B13-B14-B15', Ti - Toe - Tov, true);
+  line(17, 'Вложили партнёры', crit(REP_TYPES.contrib), Tco);
+  line(18, 'Взяли себе', crit(REP_TYPES.draw), Tdr);
+  line(19, 'Остаток в кассе', 'B13+B17-B14-B15-B18', Ti + Tco - Toe - Tov - Tdr, true);
+  sec(21, 'Расчёт между партнёрами', 'Азиз', 'Редван');
+  const profit = Ti - Toe - Tov;
+  ['B', 'C'].forEach((col, i) => {
+    const who = i ? 'Редван' : 'Азиз';
+    const c = sumIf(REP_TYPES.contrib, who), d = sumIf(REP_TYPES.draw, who), ret = Math.min(c, d);
+    const put = (r, f, v, bold) => { const cell = sm.getCell(col + r); cell.value = F(f, v); cell.numFmt = NUM; if(bold) cell.font = { bold: true }; };
+    put(22, '$B$16/2', profit / 2);
+    put(23, crit(REP_TYPES.contrib, col + '$21'), c);
+    put(24, crit(REP_TYPES.draw, col + '$21'), d);
+    put(25, `MIN(${col}24,${col}23)`, ret);
+    put(26, `${col}23-${col}25`, c - ret, true);
+    put(27, `${col}24-${col}25`, d - ret);
+    put(28, `${col}22+${col}23-${col}24`, profit / 2 + c - d, true);
+  });
+  [[22, 'Доля прибыли'], [23, 'Вложил'], [24, 'Взял себе'], [25, 'Вложение возвращено'], [26, 'Осталось вернуть вложение'], [27, 'Взял из доли прибыли'], [28, 'К получению']].forEach(([r, t]) => {
+    sm.getCell('A' + r).value = t;
+    sm.getRow(r).eachCell({ includeEmpty: true }, (x, n) => { if(n <= 3) x.border = r === 28 ? { top: { style: 'thin', color: { argb: INK } }, bottom: { style: 'double', color: { argb: INK } } } : { bottom: { style: 'thin', color: { argb: GRID } } }; });
+  });
+  sm.getRow(28).font = { bold: true };
+  sm.mergeCells('A30:C31'); sm.getCell('A30').value = 'Суммы в сумах. Сначала возвращается вложение партнёра, остальное идёт из доли прибыли. Формулы считают лист «Касса»: правите там — итоги пересчитываются.';
+  sm.getCell('A30').alignment = { wrapText: true, vertical: 'top' }; sm.getCell('A30').font = { size: 9, color: { argb: 'FF4A5663' } };
+
+  // ── Объекты ──
+  os.columns = [{ header: 'Объект', width: 32 }, { header: 'Тип', width: 10 }, { header: 'Статус', width: 12 }, { header: 'Партнёр', width: 10 },
+    { header: 'Приход, всего', width: 15 }, { header: 'Расход, всего', width: 15 }, { header: 'Итог', width: 15 }, { header: 'Приход за месяц', width: 16 }, { header: 'Расход за месяц', width: 16 }];
+  head(os.getRow(1)); os.getRow(1).height = 30;
+  const used = [...new Set(rows.filter(r => r.obj).map(r => r.obj))];
+  const ST = { waiting: 'Ожидание', working: 'В работе', done: 'Сдан', cancelled: 'Отменён' };
+  const objs = used.map(n => data.objects.find(o => o.name === n)).filter(Boolean);
+  const osum = (name, type, eq) => rows.filter(r => r.obj === name && r.type === type && (!eq || r.ym === K)).reduce((a, r) => a + r.amount, 0);
+  const oc = (type, eq) => r => `SUMIFS(${R('H')},${R('F')},$A${r},${R('D')},"${type}",${R('L')},${eq ? 'Итог!$B$2' : '"<="&Итог!$B$2'})`;
+  objs.forEach((o, i) => {
+    const r = i + 2;
+    os.addRow([o.name, o.type === 'project' ? 'Проект' : 'Замер', ST[o.status] || o.status, o.partner === 'redvan' ? 'Редван' : 'Азиз']);
+    const set = (col, f, v) => { const c = os.getCell(col + r); c.value = F(f, v); c.numFmt = NUM; };
+    set('E', oc(REP_TYPES.inc, false)(r), osum(o.name, REP_TYPES.inc, false));
+    set('F', oc(REP_TYPES.objExp, false)(r), osum(o.name, REP_TYPES.objExp, false));
+    set('G', `E${r}-F${r}`, osum(o.name, REP_TYPES.inc, false) - osum(o.name, REP_TYPES.objExp, false));
+    set('H', oc(REP_TYPES.inc, true)(r), osum(o.name, REP_TYPES.inc, true));
+    set('I', oc(REP_TYPES.objExp, true)(r), osum(o.name, REP_TYPES.objExp, true));
+  });
+  if(objs.length){
+    const last = objs.length + 1, tr = last + 1;
+    os.getCell('A' + tr).value = 'Всего';
+    ['E', 'F', 'G', 'H', 'I'].forEach(col => {
+      const v = objs.reduce((a, o) => a + (col === 'E' ? osum(o.name, REP_TYPES.inc, false) : col === 'F' ? osum(o.name, REP_TYPES.objExp, false) : col === 'G' ? osum(o.name, REP_TYPES.inc, false) - osum(o.name, REP_TYPES.objExp, false) : col === 'H' ? osum(o.name, REP_TYPES.inc, true) : osum(o.name, REP_TYPES.objExp, true)), 0);
+      const c = os.getCell(col + tr); c.value = F(`SUM(${col}2:${col}${last})`, v); c.numFmt = NUM;
+    });
+    os.getRow(tr).font = { bold: true };
+    os.getRow(tr).eachCell({ includeEmpty: true }, (x, n) => { if(n <= 9) x.border = { top: { style: 'thin', color: { argb: INK } }, bottom: { style: 'double', color: { argb: INK } } }; });
+  }
+  wb.views = [{ activeTab: 0 }];
+  return wb;
+}
+// </report>
+
+// ───────────── отчёт: интерфейс ─────────────
+let repFile = null;
+function repMonths(){
+  const set = new Set([ymOf(Date.now())]);
+  S.cashbox.forEach(c => { const t = tsNum(c.ts); if(t) set.add(ymOf(t)); });
+  realObjects().forEach(o => txOf(o).forEach(t => { if(Number(t.ts)) set.add(ymOf(Number(t.ts))); }));
+  return [...set].sort((a, b) => b - a);
+}
+function updateReportMonths(){
+  const sel = $('#rep-month'); if(!sel) return;
+  const months = repMonths(), cur = sel.value;
+  const key = months.join(',');
+  if(sel.dataset.key === key) return;
+  sel.dataset.key = key;
+  sel.innerHTML = months.map(m => `<option value="${m}">${ymLabel(m)}</option>`).join('');
+  sel.value = months.map(String).includes(cur) ? cur : String(months[0]);
+}
+function loadExcelJS(){
+  if(window.ExcelJS) return Promise.resolve();
+  const urls = ['https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js'];
+  const one = u => new Promise((res, rej) => { const el = document.createElement('script'); el.src = u; el.onload = res; el.onerror = () => { el.remove(); rej(new Error('load')); }; document.head.appendChild(el); });
+  return one(urls[0]).catch(() => one(urls[1])).then(() => { if(!window.ExcelJS) throw new Error('load'); });
+}
+async function repGo(){
+  const K = Number($('#rep-month').value), msg = $('#rep-msg'), btn = $('#rep-go');
+  btn.disabled = true; msg.textContent = 'Собираю файл…'; $('#rep-share').hidden = true;
+  try {
+    await loadExcelJS();
+    const wb = await buildReport(window.ExcelJS, { objects: realObjects(), cashbox: S.cashbox }, K);
+    const buf = await wb.xlsx.writeBuffer();
+    const name = 'AR-report-' + Math.floor(K / 100) + '-' + pad2(K % 100) + '.xlsx';
+    const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    repFile = new File([blob], name, { type: blob.type });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    msg.textContent = 'Готово: ' + name + '. Если файл не открылся, нажми «Отправить файл».';
+    try { if(navigator.canShare && navigator.canShare({ files: [repFile] })) $('#rep-share').hidden = false; } catch(e){}
+  } catch(e){
+    console.error(e);
+    msg.textContent = e && e.message === 'load' ? 'Не загрузилась библиотека Excel. Проверь интернет и повтори.' : 'Не получилось собрать отчёт: ' + (e && e.message || 'ошибка');
+  } finally { btn.disabled = false; }
+}
+function repShare(){
+  if(!repFile) return;
+  navigator.share({ files: [repFile], title: repFile.name }).catch(() => {});
+}
 
 // ───────────── запуск ─────────────
 (async function boot(){
