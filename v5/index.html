@@ -87,6 +87,22 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:40px;
 .link-del{background:transparent;border:0;color:var(--red);padding:4px 0;font-size:14px;font-weight:600}
 .link-ed{background:transparent;border:0;color:var(--blue);padding:4px 16px 4px 0;font-size:14px;font-weight:600}
 .sig{font-size:12px;color:var(--faint);margin-top:1px}
+.chat{display:flex;flex-direction:column;gap:10px;padding-bottom:10px}
+.msg{max-width:88%;padding:10px 12px;border:1px solid var(--edge);border-radius:12px;background:var(--card);font-size:15px;white-space:pre-wrap;word-break:break-word}
+.msg.me{align-self:flex-end;background:var(--paper2)}
+.msg .who{font-size:11px;color:var(--faint);margin-bottom:2px}
+.prop{border:2px solid var(--ink);border-radius:12px;padding:12px;background:var(--card);display:flex;flex-direction:column;gap:8px}
+.prop .st{font-size:12px;color:var(--faint)}
+.prop .st.bad{color:var(--red)}
+.aibar{position:sticky;bottom:calc(66px + var(--sb));display:flex;gap:8px;background:var(--paper);padding:8px 0}
+.aibar .btn{width:auto;padding:12px 18px}
+.dev{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--edge)}
+.dev:last-child{border-bottom:0}
+.dev .nm{font-weight:600}
+.tabbar button{position:relative}
+.tabbar .bdg{position:absolute;top:4px;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:8px;background:var(--blue);color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px}
+.code{font-family:var(--serif);font-size:34px;letter-spacing:.18em;text-align:center;padding:12px;border:2px solid var(--ink);border-radius:10px;background:var(--card);user-select:all}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all;background:var(--paper2);border:1px solid var(--edge);border-radius:8px;padding:8px}
 .ratebox{display:flex;gap:10px;align-items:center}
 .ratebox .hint{white-space:nowrap}
 .warnbox{font-size:14px;color:var(--red);margin-top:4px}
@@ -208,6 +224,12 @@ table.t .neg{color:var(--red)}
       </div>
     </section>
 
+    <section class="tab" id="tab-ai">
+      <h2 class="h">Помощник</h2>
+      <div id="ai-body" class="chat"></div>
+      <div class="aibar" id="ai-bar"><input class="in" id="ai-text" placeholder="Спроси или поручи: «сколько в кассе?»" autocomplete="off" enterkeyhint="send"><button class="btn" id="ai-send" data-act="aiSend">Отправить</button></div>
+    </section>
+
     <section class="tab" id="tab-more">
       <h2 class="h">Ещё</h2>
       <div class="col">
@@ -215,6 +237,8 @@ table.t .neg{color:var(--red)}
           <div class="lbl">Кто работает с этого телефона</div>
           <div class="rowf"><div class="pt" id="me-pt"></div><div class="hint" id="me-name"></div></div>
         </div>
+        <div class="card col" id="cab"></div>
+        <div class="card col" id="tok" hidden></div>
         <div class="card col">
           <div class="lbl">Режим</div>
           <div id="mode-info" class="hint"></div>
@@ -232,14 +256,14 @@ table.t .neg{color:var(--red)}
         </div>
         <div class="card col">
           <div class="lbl">Пока в старой версии</div>
-          <div class="hint">Замеры по календарю, ИИ-помощник, выгрузка копии.</div>
+          <div class="hint">Замеры по календарю, выгрузка копии.</div>
           <a class="btn3" href="../">Открыть старую CRM</a>
         </div>
         <div class="card col">
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.2</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.3</div>
       </div>
     </section>
   </main>
@@ -248,6 +272,7 @@ table.t .neg{color:var(--red)}
     <button data-act="tab" data-t="book" class="on"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Тетрадь</button>
     <button data-act="tab" data-t="obj"><svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/></svg>Объекты</button>
     <button data-act="tab" data-t="sum"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Итоги</button>
+    <button data-act="tab" data-t="ai"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5z"/></svg>Помощник<span class="bdg" id="ai-badge" hidden></span></button>
     <button data-act="tab" data-t="more"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>Ещё</button>
   </div></nav>
 </div>
@@ -512,6 +537,8 @@ function setTab(t){
   $$('.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
   $$('.tabbar button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   window.scrollTo(0, 0);
+  if(t === 'ai') aiPull();
+  if(t === 'more') cabPull();
 }
 function updateHeader(){
   const m = calc();
@@ -676,7 +703,7 @@ function updateMore(){
   const mr = $('#more-rate'); if(document.activeElement !== mr) mr.value = S.rate ? fmt(S.rate) : '';
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths();
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi();
 }
 
 // ───────────── записи ─────────────
@@ -962,6 +989,16 @@ const ACT = {
   saveEdit,
   repGo,
   repShare,
+  devReg: () => devRegister('main'),
+  devJoin: () => devRegister('join'),
+  devInvite,
+  devRevoke: async el => { if(!confirm('Отключить это устройство? Помощник и чат на нём перестанут работать.')) return; try { await api('/devices/revoke', { id: el.dataset.id }); toast('Отключено'); } catch(e){ toast(e.message); } cabPull(); },
+  tokCreate,
+  tokRevoke: async el => { if(!confirm('Отозвать токен? Подключение с ним сразу перестанет работать.')) return; try { await api('/tokens/revoke', { id: el.dataset.id }); toast('Отозван'); } catch(e){ toast(e.message); } cabPull(); },
+  copyInvite: el => copyText(el.dataset.v),
+  aiSend,
+  aiApprove: el => aiApprove(el.dataset.id),
+  aiReject: el => aiReject(el.dataset.id),
   edp: el => { S.edit.partner = el.dataset.p; renderPT($('#ed-pt'), S.edit.partner, 'edp'); },
   src: el => { S.entry.src = el.dataset.s; updateEntry(); }
 };
@@ -972,6 +1009,7 @@ document.addEventListener('click', e => {
 $('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') closeSheet(); });
 $('#entry-text').addEventListener('input', () => { S.entry.kind = null; updateEntry(); });
 $('#entry-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); entryGo(); } });
+$('#ai-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); aiSend(); } });
 $('#entry-obj').addEventListener('change', e => { S.entry.objectId = e.target.value; });
 document.addEventListener('input', e => {
   const id = e.target.id;
@@ -1163,6 +1201,185 @@ function repShare(){
   navigator.share({ files: [repFile], title: repFile.name }).catch(() => {});
 }
 
+// ───────────── помощник, устройства, токены ─────────────
+// Сервер: функция ar-mcp (Supabase). Здесь только экран: чат, одобрение предложений, «Мой кабинет».
+const AR_API = String(window.__AR_API || 'https://jwdwltvmmokffyupseer.supabase.co/functions/v1/ar-mcp').replace(/\/+$/, '');
+S.dev = { token: LS.get('ar_dev') || '', list: [], me: '', main: false, loaded: false, err: '', msg: '', tokens: [], newName: '' };
+S.ai = { msgs: [], actions: {}, busy: false, err: '', loaded: false };
+const devGuess = () => /iPhone|iPad/i.test(navigator.userAgent) ? 'iPhone' : /Android/i.test(navigator.userAgent) ? 'Android' : 'Компьютер';
+const canApprove = () => !!window.__AR_TEST || (adapter && adapter.mode === 'live' && S.conn !== 'err');
+async function api(path, body){
+  const tk = LS.get('ar_dev');
+  const headers = { 'Content-Type': 'application/json' }; if(tk) headers['x-ar-device'] = tk;
+  let r;
+  try { r = await fetch(AR_API + path, { method: body ? 'POST' : 'GET', headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch(e){ throw new Error('Нет связи с сервером помощника'); }
+  let j = null; try { j = await r.json(); } catch(e){}
+  if(r.status === 401 && tk && !/^\/(register|join)/.test(path)){
+    LS.del('ar_dev'); S.dev = { ...S.dev, token: '', list: [], tokens: [], loaded: false, msg: 'Это устройство отключено. Подключи его заново.' };
+    S.ai = { msgs: [], actions: {}, busy: false, err: '', loaded: false }; updateAll();
+  }
+  if(!r.ok || (j && j.ok === false)){ const e = new Error((j && j.error) || ('Ошибка ' + r.status)); e.status = r.status; throw e; }
+  return j || {};
+}
+
+/* — Мой кабинет — */
+async function cabPull(){
+  if(!S.dev.token) return;
+  try {
+    const j = await api('/devices');
+    S.dev.list = j.devices; S.dev.me = j.me; S.dev.main = !!j.is_main; S.dev.loaded = true; S.dev.err = '';
+    if(j.is_main){ try { S.dev.tokens = (await api('/tokens')).tokens; } catch(e){} }
+  } catch(e){ S.dev.err = e.message; }
+  updateCabinet();
+}
+function updateCabinet(){
+  const box = $('#cab'), tb = $('#tok'); if(!box) return;
+  const d = S.dev;
+  if(!d.token){
+    if(document.activeElement && box.contains(document.activeElement)) return;
+    box.innerHTML = `<div class="lbl">Мой кабинет</div>
+      <div class="hint">Это устройство ещё не подключено к помощнику. Подключённые устройства видны здесь, главное устройство может отключать остальные.</div>
+      ${d.msg ? `<div class="warn">${esc(d.msg)}</div>` : ''}
+      <input class="in" id="dev-name" value="${esc(devGuess())}" placeholder="Название устройства" autocomplete="off">
+      <input class="in" id="dev-code" placeholder="Код" autocomplete="off" autocapitalize="characters">
+      <button class="btn" data-act="devReg">Подключить как главное (код настройки)</button>
+      <button class="btn2" data-act="devJoin">Подключить по приглашению</button>
+      <div class="hint" id="dev-err"></div>`;
+    tb.hidden = true; return;
+  }
+  const act = d.list.filter(x => !x.revoked_at), old = d.list.filter(x => x.revoked_at);
+  box.innerHTML = `<div class="lbl">Мой кабинет</div>
+    <div class="hint">${d.loaded ? 'Устройств подключено: <b>' + act.length + '</b>' + (act.some(x => x.is_main) ? '. Главное: ' + esc(act.find(x => x.is_main).name) : '') : 'Загружаю…'}</div>
+    ${d.err ? `<div class="warn">${esc(d.err)}</div>` : ''}
+    <div>${act.map(x => `<div class="dev"><div class="bd">${LET[partnerOf(x.who)]}</div><div style="flex:1"><div class="nm">${esc(x.name)}${x.me ? ' · это устройство' : ''}${x.is_main ? ' · главное' : ''}</div>
+      <div class="hint">${esc(x.platform || '')}${x.platform ? ' · ' : ''}был ${dtm(Date.parse(x.last_seen))}</div></div>
+      ${d.main && !x.me ? `<button class="link-del" data-act="devRevoke" data-id="${esc(x.id)}">Отключить</button>` : ''}</div>`).join('')}</div>
+    ${old.length ? `<div class="hint">Отключено: ${old.length}</div>` : ''}
+    ${d.main ? '<button class="btn2" data-act="devInvite">Пригласить телефон партнёра</button>' : '<div class="hint">Приглашать устройства и отключать их может только главное устройство.</div>'}`;
+  if(!d.main){ tb.hidden = true; return; }
+  tb.hidden = false;
+  tb.innerHTML = `<div class="lbl">Токены для Claude и n8n</div>
+    <div class="hint">Один токен подходит и для Claude (MCP), и для n8n (HTTP). Помощник читает данные свободно, а менять их только предлагает: запись вносится после твоего «Одобрить».</div>
+    <div>${d.tokens.map(x => `<div class="dev"><div style="flex:1"><div class="nm">${esc(x.name)}${x.revoked_at ? ' · отозван' : ''}</div><div class="hint">создан ${dtm(Date.parse(x.created_at))}${x.last_used_at ? ' · использован ' + dtm(Date.parse(x.last_used_at)) : ' · не использовался'}</div></div>
+      ${x.revoked_at ? '' : `<button class="link-del" data-act="tokRevoke" data-id="${esc(x.id)}">Отозвать</button>`}</div>`).join('') || '<div class="hint">Токенов пока нет.</div>'}</div>
+    <input class="in" id="tok-name" placeholder="Название, например Claude или n8n" autocomplete="off">
+    <button class="btn" data-act="tokCreate">Создать токен</button>`;
+}
+function copyText(t){
+  try { navigator.clipboard.writeText(t).then(() => toast('Скопировано'), () => toast('Не удалось скопировать')); } catch(e){ toast('Не удалось скопировать'); }
+}
+async function devRegister(kind){
+  const name = $('#dev-name').value.trim() || devGuess(), code = $('#dev-code').value.trim(), er = $('#dev-err');
+  if(!code){ er.textContent = 'Введи код.'; return; }
+  er.textContent = 'Подключаю…';
+  try {
+    const j = await api(kind === 'main' ? '/register' : '/join', kind === 'main' ? { setup_code: code, name, platform: devGuess() } : { code, name, platform: devGuess() });
+    LS.set('ar_dev', j.token); S.dev.token = j.token; S.dev.msg = '';
+    if(j.who && j.who !== S.me){ S.me = j.who; LS.set('ar_pill', S.me); S.entry.partner = null; }
+    toast('Устройство подключено'); await cabPull(); aiPull(); updateAll();
+  } catch(e){ er.textContent = e.message; }
+}
+async function devInvite(){
+  try {
+    const j = await api('/invite', { who: S.me === 'aziz' ? 'redvan' : 'aziz' });
+    openSheet(`<div class="sheet-h"><h3>Код для телефона партнёра</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+      <div class="col"><div class="code">${esc(j.code)}</div>
+      <div class="hint">Партнёр открывает приложение, Ещё → Мой кабинет → вводит этот код → «Подключить по приглашению». Код одноразовый, действует ${j.expires_in_hours} ч.</div>
+      <button class="btn2" data-act="copyInvite" data-v="${esc(j.code)}">Скопировать код</button></div>`);
+  } catch(e){ toast(e.message); }
+}
+async function tokCreate(){
+  const name = ($('#tok-name').value || '').trim() || 'Ассистент';
+  try {
+    const j = await api('/tokens/create', { name });
+    const mcp = AR_API + '/', http = AR_API + '/call';
+    openSheet(`<div class="sheet-h"><h3>Токен создан</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+      <div class="col"><div class="warn">Токен показан один раз. Сохрани его сейчас.</div>
+      <div class="mono" id="tok-val">${esc(j.token)}</div>
+      <button class="btn2" data-act="copyInvite" data-v="${esc(j.token)}">Скопировать токен</button>
+      <div class="lbl">Claude (MCP)</div>
+      <div class="hint">Добавь своё MCP-подключение. Адрес (Streamable HTTP):</div><div class="mono">${esc(mcp)}?token=${esc(j.token)}</div>
+      <div class="lbl">n8n</div>
+      <div class="hint">Узел HTTP Request: метод POST, адрес</div><div class="mono">${esc(http)}</div>
+      <div class="hint">Заголовок <b>x-ar-token</b> = токен. Тело JSON:</div><div class="mono">{"tool":"get_overview","arguments":{}}</div>
+      <div class="hint">Список инструментов: GET ${esc(AR_API)}/tools с тем же заголовком. Либо узел MCP Client с тем же адресом MCP и заголовком Authorization: Bearer токен.</div></div>`);
+    cabPull();
+  } catch(e){ toast(e.message); }
+}
+
+/* — Чат помощника — */
+async function aiPull(){
+  if(!S.dev.token) return;
+  try {
+    const j = await api('/chat');
+    S.ai.msgs = j.messages; S.ai.actions = Object.fromEntries(j.actions.map(a => [a.id, a])); S.ai.loaded = true; S.ai.err = '';
+  } catch(e){ S.ai.err = e.message; }
+  updateAi();
+}
+const aiPending = () => Object.values(S.ai.actions).filter(a => a.status === 'pending').length;
+function updateAi(){
+  const bd = $('#ai-badge'), n = aiPending(); bd.hidden = !n; bd.textContent = n > 9 ? '9+' : String(n);
+  const box = $('#ai-body'), bar = $('#ai-bar');
+  if(!S.dev.token){
+    bar.hidden = true;
+    box.innerHTML = `<div class="empty">Помощник подключается в разделе Ещё → Мой кабинет.<br><br><button class="btn2" data-act="goMore">Открыть «Ещё»</button></div>`; return;
+  }
+  bar.hidden = false;
+  if(!S.ai.loaded){ box.innerHTML = `<div class="empty">${S.ai.err ? esc(S.ai.err) : 'Загружаю…'}</div>`; return; }
+  const stick = (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 120;
+  let html = S.ai.msgs.length ? '' : '<div class="empty">Спроси, сколько в кассе, или поручи запись: «Редван заплатил 50$ за клей из своих».<br>Любую запись помощник сначала предлагает, а вносится она после «Одобрить».</div>';
+  S.ai.msgs.forEach(m => {
+    const me = m.role === 'user';
+    html += `<div class="msg ${me ? 'me' : ''}"><div class="who">${me ? esc(NAMES[partnerOf(m.who)] || '') : 'помощник'} · ${dtm(Date.parse(m.created_at))}</div>${esc(m.content)}</div>`;
+    const a = m.action_id ? S.ai.actions[m.action_id] : null;
+    if(a){
+      const lab = { pending: 'ждёт одобрения', approved: 'одобрено, внесено', rejected: 'отклонено', failed: 'не внеслось' }[a.status] || a.status;
+      html += `<div class="prop"><div>${esc(a.summary)}</div><div class="st ${a.status === 'failed' ? 'bad' : ''}">${lab}${a.error ? ': ' + esc(a.error) : ''}</div>
+        ${a.status === 'pending' ? (canApprove() ? `<div class="rowf"><button class="btn" data-act="aiApprove" data-id="${esc(a.id)}">Одобрить</button><button class="btn2" data-act="aiReject" data-id="${esc(a.id)}">Отклонить</button></div>` : '<div class="hint">Одобрить можно только в рабочей базе и с интернетом.</div>') : ''}</div>`;
+    }
+  });
+  if(S.ai.busy) html += '<div class="msg"><div class="who">помощник</div>думает…</div>';
+  if(S.ai.err) html += `<div class="warn">${esc(S.ai.err)}</div>`;
+  if(box.dataset.h !== html){ box.innerHTML = html; box.dataset.h = html; if(stick || S.ai.busy) window.scrollTo(0, document.body.scrollHeight); }
+}
+async function aiSend(){
+  const inp = $('#ai-text'), text = inp.value.trim();
+  if(!text || S.ai.busy) return;
+  inp.value = ''; S.ai.busy = true; S.ai.err = '';
+  S.ai.msgs.push({ id: 'tmp', role: 'user', who: S.me, content: text, created_at: new Date().toISOString() }); updateAi();
+  try { await api('/chat/send', { content: text }); } catch(e){ S.ai.err = e.message; }
+  S.ai.busy = false; await aiPull();
+}
+async function applyOp(op){
+  if(op.op === 'addCash') return adapter.addCash(op.rec);
+  if(op.op === 'addTx') return adapter.addTx(op.oid, op.tx);
+  if(op.op === 'deleteCash') return adapter.deleteCash(op.id);
+  if(op.op === 'updateCash') return adapter.updateCash(op.id, op.patch);
+  if(op.op === 'editTx') return adapter.editTx(op.oid, op.id, op.patch);
+  if(op.op === 'removeTx'){
+    const o = S.objects.find(x => x.id === op.oid), tx = o && txOf(o).find(t => String(t.id) === String(op.id));
+    if(!tx) throw new Error('запись уже удалена');
+    return adapter.removeTx(op.oid, tx);
+  }
+  throw new Error('неизвестная операция');
+}
+async function aiApprove(id){
+  if(!canApprove()){ toast('Нет связи с рабочей базой'); return; }
+  let r;
+  try { r = await api('/actions/claim', { id }); } catch(e){ toast(e.message); aiPull(); return; }
+  try {
+    for(const op of r.ops) await applyOp(op);
+    await api('/actions/result', { id, ok: true }); toast('Внесено');
+  } catch(e){
+    console.error(e);
+    try { await api('/actions/result', { id, ok: false, error: e.message }); } catch(x){}
+    toast('Не внеслось: ' + e.message);
+  }
+  aiPull();
+}
+async function aiReject(id){ try { await api('/actions/reject', { id }); } catch(e){ toast(e.message); } aiPull(); }
+
 // ───────────── запуск ─────────────
 (async function boot(){
   if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
@@ -1174,8 +1391,15 @@ function repShare(){
   adapter.subscribe({
     objects: a => { S.objects = a; updateAll(); },
     cash: a => { S.cashbox = a; updateAll(); },
-    conn: (c, msg) => { S.conn = c; S.connMsg = msg || ''; updateHeader(); }
+    conn: (c, msg) => { S.conn = c; S.connMsg = msg || ''; updateHeader(); updateAi(); }
   });
+  if(S.dev.token){ cabPull(); aiPull(); }
+  let tick = 0;
+  setInterval(() => {
+    if(!S.dev.token || document.visibilityState !== 'visible') return;
+    tick++;
+    if(S.tab === 'ai' && !S.ai.busy) aiPull(); else if(tick % 12 === 0) aiPull();
+  }, 5000);
 })();
 </script>
 </body>
