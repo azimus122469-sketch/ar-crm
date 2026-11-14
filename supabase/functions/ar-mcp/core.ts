@@ -78,6 +78,27 @@ async function loadAll(d: Deps) {
   const [objects, cashbox] = await Promise.all([d.loadCollection("objects"), d.loadCollection("cashbox")]);
   return { objects: objects.filter((o) => o.sandbox !== true), cashbox };
 }
+async function loadStock(d: Deps): Promise<Row[]> { try { return (await d.loadCollection("stock")) || []; } catch { return []; } }
+const matKey = (n: any) => String(n ?? "").toLowerCase().replace(/ё/g, "е").replace(/\s+/g, " ").trim();
+const r3 = (n: number) => Math.round(n * 1000) / 1000;
+// Остатки склада: куплено, списано, остаток, средняя цена по покупкам. Списание идёт по средней цене на момент списания.
+function stockModel(list: Row[], endTs = Infinity) {
+  const xs = list.filter((r) => tsNum(r.ts) && tsNum(r.ts) < endTs).sort((a, b) => tsNum(a.ts) - tsNum(b.ts));
+  const m = new Map<string, any>();
+  for (const r of xs) {
+    const k = matKey(r.material); if (!k) continue;
+    const e = m.get(k) || { key: k, name: r.material, unit: r.unit || "", in_qty: 0, in_sum: 0, out_qty: 0, out_sum: 0, last_purchase: null, min: null };
+    e.name = r.material; if (r.unit) e.unit = r.unit;
+    if (r.kind === "in") { e.in_qty += num(r.qty); e.in_sum += num(r.sum); e.last_purchase = { date: dayStr(tsNum(r.ts)), qty: num(r.qty), price: num(r.price), usd: r.usd ?? null, rate: r.rate ?? null }; }
+    else if (r.kind === "out") { e.out_qty += num(r.qty); e.out_sum += num(r.sum); }
+    else if (r.kind === "min") e.min = num(r.min) > 0 ? num(r.min) : null;
+    m.set(k, e);
+  }
+  return [...m.values()].map((e) => {
+    const left = r3(e.in_qty - e.out_qty), avg = e.in_qty ? e.in_sum / e.in_qty : 0;
+    return { ...e, in_qty: r3(e.in_qty), out_qty: r3(e.out_qty), left, avg_price: r2(avg), value: Math.round(left * avg), low: e.min != null && left < e.min };
+  }).sort((a, b) => String(a.name).localeCompare(String(b.name), "ru"));
+}
 const txOf = (o: Row): Row[] => (Array.isArray(o.transactions) ? o.transactions : []);
 const sumBy = (xs: Row[], pred: (x: Row) => boolean) => xs.filter(pred).reduce((s, x) => s + num(x.amount), 0);
 
@@ -126,6 +147,7 @@ const DESCRIBE = `АР · Тетрадь — общая касса и объек
 Формулы: прибыль = приход клиентов − расходы по объектам − общие расходы. Остаток в кассе = приход клиентов + вложения − расходы по объектам − общие расходы − взято себе. К получению партнёру = половина прибыли + его вложения − то, что он взял.
 Вложение возвращается первым: когда партнёр берёт деньги, сначала гасится его вложение, остальное идёт из доли прибыли.
 «Из своих» (from_own_pocket): расход, оплаченный партнёром своими деньгами, записан парой: вложение + расход с общим pair_id. На остаток кассы пара не влияет, а партнёру засчитывается вложение.
+Склад (stock): записи прихода (in: сколько, когда, почём купили; цена за единицу в сумах, у долларовой покупки есть usd за единицу и rate) и списания (out: ушло на объект по средней цене). Остаток = куплено − списано. Покупка по умолчанию записывается ещё и расходом в кассу (pay: cash), «из своих» (own) — парой вложение+расход, none — только склад. Списание на объект кассу не трогает: деньги учтены при покупке.
 ПРАВИЛО: любое добавление, исправление и удаление ты только предлагаешь (propose_*). Ничего не меняется, пока владелец не нажмёт «Одобрить» в приложении. Не выдумывай данные: если чего-то не хватает, спроси (send_chat_message). Перед ответом по теме разговора смотри get_chat_history.`;
 
 const t = (name: string, description: string, properties: any = {}, required: string[] = []) => ({ name, description, inputSchema: { type: "object", properties, required } });
@@ -148,6 +170,11 @@ export const TOOLS = [
   t("propose_add_object_tx", "Предложить движение по объекту: income (приход от клиента) или expense (расход по объекту).", {
     object_id: S, type: { type: "string", enum: ["income", "expense"] }, amount: N, usd: N, rate: N, desc: S, partner: PARTNER, message: MSG,
   }, ["object_id", "type", "desc"]),
+  t("get_stock", "Склад: остаток каждого материала, средняя цена, стоимость остатка, последняя покупка, минимум, и последние движения (приход/списание). Параметр search — по названию.", { search: S, limit: N }),
+  t("propose_stock_in", "Предложить приход на склад (закупку материала). Цена за единицу: price в сумах ИЛИ price_usd + rate. pay: cash (по умолчанию, расход из кассы), own (из своих денег партнёра: вложение+расход) или none (только склад, в кассу не вносить).", {
+    material: S, unit: { type: "string", description: "м, м², шт, рул, кг, упак, л" }, qty: N, price: N, price_usd: N, rate: N, partner: PARTNER, pay: { type: "string", enum: ["cash", "own", "none"] }, message: MSG,
+  }, ["material", "qty", "partner"]),
+  t("propose_stock_out", "Предложить списание материала со склада (ушло на объект). Сумма считается по средней цене. Объект необязателен.", { material: S, qty: N, object_id: S, partner: PARTNER, message: MSG }, ["material", "qty"]),
   t("propose_update_record", "Предложить исправить запись по её key (из list_cash / get_object): можно менять desc, amount, usd, rate, partner. Для пары «из своих» меняются обе половины.", {
     key: S, desc: S, amount: N, usd: N, rate: N, partner: PARTNER, message: MSG,
   }, ["key"]),
@@ -297,6 +324,55 @@ const HANDLERS: Handlers = {
     const usdTxt = mo.usd ? ` ($${mo.usd} по ${fmt(mo.rate!)})` : "";
     const tx = { id: newId(d), ts: d.now(), type, desc, cat: type === "income" ? "💵 Оплата" : "📝 Прочее", createdBy: partner, locked: false, ...mo };
     return propose(d, c, `${type === "income" ? "Приход" : "Расход"} по объекту «${o.name}»: ${desc} ${fmt(mo.amount)} сум${usdTxt}`, [{ op: "addTx", oid: o.id, tx }], a.message);
+  },
+
+  async get_stock(a, _c, d) {
+    const list = await loadStock(d), mats = stockModel(list);
+    const q = matKey(a.search), limit = Math.min(Math.max(num(a.limit) || 30, 1), 200);
+    const shown = q ? mats.filter((x) => x.key.includes(q)) : mats;
+    const moves = list.filter((r) => (r.kind === "in" || r.kind === "out") && tsNum(r.ts) && (!q || matKey(r.material).includes(q))).sort((x, y) => tsNum(y.ts) - tsNum(x.ts)).slice(0, limit)
+      .map((r) => ({ key: "s:" + r.id, date: dayStr(tsNum(r.ts)), kind: r.kind === "in" ? "приход" : "списание", material: r.material, unit: r.unit, qty: num(r.qty), price: r2(num(r.price)), usd: r.usd ?? null, rate: r.rate ?? null, sum: num(r.sum), partner: r.partner ? partnerOf(r.partner) : null, object: r.objectName ?? null, entered_by: r.createdBy ?? null }));
+    return { currency: "UZS", stock_value: shown.reduce((s2, x) => s2 + x.value, 0), materials: shown.map(({ key: _k, ...x }) => x), recent_moves: moves };
+  },
+
+  async propose_stock_in(a, c, d) {
+    const material = clean(a.material), unit = clean(a.unit) || "шт", qty = r3(num(a.qty)), partner = partnerOf(a.partner), now = d.now();
+    if (!material) throw new Error("material: нужно название");
+    if (!(qty > 0)) throw new Error("qty: нужно число больше нуля");
+    const pay = ["cash", "own", "none"].includes(String(a.pay)) ? String(a.pay) : "cash";
+    let price: number, usd: number | undefined, rate: number | undefined;
+    if (a.price_usd != null) {
+      usd = r2(num(a.price_usd)); rate = num(a.rate);
+      if (!(usd > 0)) throw new Error("price_usd: нужно число больше нуля");
+      if (!(rate > 0)) throw new Error("для цены в долларах нужен rate (сум за $1)");
+      price = usd * rate;
+    } else { price = num(a.price); if (!(price > 0)) throw new Error("price: нужна цена за единицу в сумах (или price_usd + rate)"); }
+    const sum = Math.round(qty * price), sid = "s" + newId(d), uf = usd ? { usd, rate } : {};
+    const totalUsd = usd ? { usd: r2(qty * usd), rate } : {};
+    const ops: Row[] = [{ op: "addStock", rec: { kind: "in", sid, ts: now, material, unit, qty, price: r2(price), sum, partner, src: pay, createdBy: "assistant", ...uf } }];
+    const desc = `Закуп: ${material} ${qty} ${unit}`;
+    if (pay === "cash") ops.push({ op: "addCash", rec: { type: "overhead", desc, amount: sum, partner, cat: "📦 Закуп материала", createdBy: "assistant", ts: now + 1, stockId: sid, ...totalUsd } });
+    if (pay === "own") {
+      const pairId = "p" + newId(d);
+      ops.push({ op: "addCash", rec: { type: "contribution", desc: "Вложил для: " + desc, amount: sum, partner, cat: "", createdBy: "assistant", ts: now + 1, pairId, stockId: sid, ...totalUsd } });
+      ops.push({ op: "addCash", rec: { type: "overhead", desc, amount: sum, partner, cat: "📦 Закуп материала", createdBy: "assistant", ts: now + 2, pairId, stockId: sid, ...totalUsd } });
+    }
+    const how = pay === "cash" ? "расход из кассы" : pay === "own" ? `из своих (${NAMES[partner]}), вложение и расход вместе` : "в кассу не вносится";
+    return propose(d, c, `Приход на склад: ${material} ${qty} ${unit} × ${fmt(price)}${usd ? ` ($${usd} по ${fmt(rate!)})` : ""} = ${fmt(sum)} сум, ${how}`, ops, a.message);
+  },
+
+  async propose_stock_out(a, c, d) {
+    const qty = r3(num(a.qty)), key = matKey(a.material);
+    if (!key) throw new Error("material: нужно название");
+    if (!(qty > 0)) throw new Error("qty: нужно число больше нуля");
+    const e = stockModel(await loadStock(d)).find((x) => x.key === key);
+    if (!e) throw new Error("такого материала на складе нет");
+    if (qty > e.left) throw new Error(`на складе только ${e.left} ${e.unit}`);
+    let objectId: string | undefined, objectName: string | undefined;
+    if (a.object_id) { const o = (await loadAll(d)).objects.find((x) => x.id === String(a.object_id)); if (!o) throw new Error("объект не найден"); objectId = o.id; objectName = o.name; }
+    const sum = Math.round(qty * e.avg_price);
+    const rec = { kind: "out", sid: "s" + newId(d), ts: d.now(), material: e.name, unit: e.unit, qty, price: e.avg_price, sum, partner: partnerOf(a.partner), createdBy: "assistant", ...(objectId ? { objectId, objectName } : {}) };
+    return propose(d, c, `Списание со склада: ${e.name} ${qty} ${e.unit} по ${fmt(e.avg_price)} = ${fmt(sum)} сум${objectName ? ", объект «" + objectName + "»" : ""}`, [{ op: "addStock", rec }], a.message);
   },
 
   async propose_update_record(a, c, d) {
@@ -535,16 +611,16 @@ export function createHandler(d: Deps) {
       // 3. Приложение: токен устройства ard_…
       const dev = await authDevice(req, d);
       if (!dev) return err("нужно подключить это устройство (Ещё → Мой кабинет)", 401);
-      const main = !!dev.is_main;
+      const main = true; // два равноправных админа: каждое подключённое устройство (Азиз или Редван) может всё
 
       if (path === "/devices" && req.method === "GET") {
         const xs = await d.store.select("ar_devices", {}, { order: "created_at" });
-        return json({ ok: true, me: dev.id, is_main: main, devices: xs.map((x) => pubDevice(x, dev.id)) });
+        return json({ ok: true, me: dev.id, is_main: true, devices: xs.map((x) => pubDevice(x, dev.id)) });
       }
       if (path === "/devices/revoke" && req.method === "POST") {
         if (!main) return err("Отзывать устройства может только главное.", 403);
         const b = await body();
-        if (b.id === dev.id) return err("Главное устройство отозвать нельзя.");
+        if (b.id === dev.id) return err("Своё устройство отозвать нельзя.");
         const r = await d.store.update("ar_devices", { id: String(b.id), revoked_at: null }, { revoked_at: isoNow(d) });
         return r.length ? json({ ok: true }) : err("Устройство не найдено.", 404);
       }

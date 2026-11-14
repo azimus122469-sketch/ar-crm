@@ -22,6 +22,12 @@ const FS: any = {
     { id: 'c1', type: 'contribution', desc: 'Вложил', amount: 500000, partner: 'aziz', ts: T },
     { id: 'c2', type: 'overhead', desc: 'Бензин', amount: 100000, partner: 'redvan', ts: T },
     { id: 'c3', type: 'draw', desc: 'Забрал себе', amount: 700000, partner: 'aziz', ts: T }
+  ],
+  stock: [
+    { id: 's1', kind: 'in', sid: 'sA', ts: T, material: 'Багет', unit: 'м', qty: 500, price: 3240, usd: 0.27, rate: 12000, sum: 1620000, partner: 'redvan', src: 'cash', createdBy: 'redvan' },
+    { id: 's2', kind: 'in', sid: 'sB', ts: T + 1000, material: 'багет', unit: 'м', qty: 100, price: 3360, sum: 336000, partner: 'redvan', src: 'cash', createdBy: 'redvan' },
+    { id: 's3', kind: 'out', sid: 'sC', ts: T + 2000, material: 'Багет', unit: 'м', qty: 120, price: 3260, sum: 391200, objectId: 'o1', objectName: 'Квартира', createdBy: 'aziz' },
+    { id: 's4', kind: 'min', ts: T + 3000, material: 'Багет', min: 500 }
   ]
 };
 let openaiScript: any[] = []; let openaiCalls: any[] = [];
@@ -58,14 +64,14 @@ check('декодер Firestore', d.id === 'abc' && d.n === 5 && d.t[0].amount =
   check('телефон Редвана подключён', r.j.ok && r.j.who === 'redvan' && !r.j.is_main, JSON.stringify(r.j));
   const R = { 'x-ar-device': r.j.token }; const redvanId = r.j.device_id;
   r = await call('POST', '/join', { code, name: 'ещё' }); check('код приглашения одноразовый', r.status === 401);
-  r = await call('POST', '/invite', { who: 'redvan' }, R); check('партнёр не может приглашать', r.status === 403);
+  r = await call('POST', '/invite', { who: 'redvan' }, R); check('партнёр тоже может приглашать (равные права)', r.status === 200 && r.j.code);
   // список устройств
   r = await call('GET', '/devices', undefined, A);
   check('главный видит 2 устройства', r.j.devices.length === 2 && r.j.is_main && r.j.devices.filter((x: any) => x.me).length === 1, JSON.stringify(r.j));
-  r = await call('GET', '/devices', undefined, R); check('партнёр видит список, но не главный', r.j.devices.length === 2 && !r.j.is_main);
-  r = await call('POST', '/devices/revoke', { id: redvanId }, R); check('партнёр не может отзывать', r.status === 403);
+  r = await call('GET', '/devices', undefined, R); check('партнёр видит тот же список', r.j.devices.length === 2 && r.j.is_main);
+  r = await call('POST', '/devices/revoke', { id: redvanId }, R); check('партнёр не может отозвать своё же устройство', r.status === 400);
   // токены MCP
-  r = await call('POST', '/tokens/create', { name: 'Claude' }, R); check('партнёр не создаёт токены', r.status === 403);
+  r = await call('POST', '/tokens/create', { name: 'Claude' }, R); check('партнёр создаёт токены (равные права)', r.status === 200 && /^arm_/.test(r.j.token));
   r = await call('POST', '/tokens/create', { name: 'Claude' }, A); check('токен MCP создан', r.j.ok && /^arm_/.test(r.j.token), JSON.stringify(r.j));
   const MT = r.j.token;
   check('MCP-токен в базе только хэшем', !JSON.stringify(tables.ar_tokens).includes(MT));
@@ -97,10 +103,25 @@ check('декодер Firestore', d.id === 'abc' && d.n === 5 && d.t[0].amount =
   r = await call('POST', '/call', { tool: 'propose_add_object_tx', arguments: { object_id: 'o2', type: 'income', amount: 1000, desc: 'x' } }, { 'x-ar-token': MT }); check('песочница недоступна', !r.j.ok);
   r = await call('POST', '/call', { tool: 'propose_update_record', arguments: { key: 'c:c2', amount: 120000 } }, { 'x-ar-token': MT });
   check('предложение исправить запись', r.j.ok && tables.ar_actions.at(-1).ops[0].patch.editedBy === 'assistant' && tables.ar_actions.at(-1).ops[0].patch.amount === 120000, JSON.stringify(r.j));
+  // склад
+  r = await call('POST', '/call', { tool: 'get_stock', arguments: {} }, { 'x-ar-token': MT });
+  const st = r.j.result.materials[0];
+  check('склад: «Багет» и «багет» — один материал, остаток 480 м', r.j.result.materials.length === 1 && st.left === 480 && st.in_qty === 600 && st.out_qty === 120, JSON.stringify(r.j.result));
+  check('склад: средняя цена по покупкам (1 956 000 / 600 = 3 260), стоимость остатка', st.avg_price === 3260 && st.value === 1564800, JSON.stringify(st));
+  check('склад: минимум 500, значит мало', st.min === 500 && st.low === true);
+  r = await call('POST', '/call', { tool: 'propose_stock_in', arguments: { material: 'Вставка чёрная', unit: 'м', qty: 100, price_usd: 0.65, rate: 12000, partner: 'redvan', pay: 'own' } }, { 'x-ar-token': MT });
+  const sa = tables.ar_actions.at(-1);
+  check('приход из своих: склад + вложение + расход в паре', r.j.ok && sa.ops.length === 3 && sa.ops[0].op === 'addStock' && sa.ops[0].rec.sum === 780000 && sa.ops[1].rec.type === 'contribution' && sa.ops[2].rec.type === 'overhead' && sa.ops[1].rec.pairId === sa.ops[2].rec.pairId && sa.ops[1].rec.stockId === sa.ops[0].rec.sid && sa.ops[1].rec.usd === 65, JSON.stringify(sa.ops));
+  r = await call('POST', '/call', { tool: 'propose_stock_in', arguments: { material: 'Кольцо', qty: 10, price: 5000, partner: 'aziz', pay: 'none' } }, { 'x-ar-token': MT });
+  check('приход без кассы: только склад', r.j.ok && tables.ar_actions.at(-1).ops.length === 1);
+  r = await call('POST', '/call', { tool: 'propose_stock_in', arguments: { material: 'Кольцо', qty: 10, partner: 'aziz' } }, { 'x-ar-token': MT }); check('приход без цены отклонён', !r.j.ok && /price/.test(r.j.error), JSON.stringify(r.j));
+  r = await call('POST', '/call', { tool: 'propose_stock_out', arguments: { material: 'багет', qty: 500 } }, { 'x-ar-token': MT }); check('списание больше остатка отклонено', !r.j.ok && /480/.test(r.j.error), JSON.stringify(r.j));
+  r = await call('POST', '/call', { tool: 'propose_stock_out', arguments: { material: 'Багет', qty: 80, object_id: 'o1', partner: 'redvan' } }, { 'x-ar-token': MT });
+  check('списание по средней цене на объект, кассу не трогает', r.j.ok && tables.ar_actions.at(-1).ops.length === 1 && tables.ar_actions.at(-1).ops[0].rec.sum === 260800 && tables.ar_actions.at(-1).ops[0].rec.objectName === 'Квартира', JSON.stringify(tables.ar_actions.at(-1).ops));
   r = await call('POST', '/call', { tool: 'propose_delete', arguments: { keys: ['o:o1:2'] } }, { 'x-ar-token': MT });
   check('предложение удалить расход объекта', r.j.ok && tables.ar_actions.at(-1).ops[0].op === 'removeTx' && tables.ar_actions.at(-1).ops[0].oid === 'o1', JSON.stringify(r.j));
   // приложение: чат и одобрение
-  r = await call('GET', '/chat', undefined, R); check('чат виден партнёру, предложения в списке', r.j.ok && r.j.actions.length === 3 && r.j.messages.length === 3, JSON.stringify(r.j).slice(0, 200));
+  r = await call('GET', '/chat', undefined, R); check('чат виден партнёру, предложения в списке', r.j.ok && r.j.actions.length === 6 && r.j.messages.length === 6, JSON.stringify(r.j).slice(0, 200));
   r = await call('POST', '/actions/claim', { id: pid }, R); check('одобрение: операции переданы', r.j.ok && r.j.ops.length === 2);
   r = await call('POST', '/actions/claim', { id: pid }, A); check('повторное одобрение невозможно', r.status === 409);
   r = await call('POST', '/actions/reject', { id: tables.ar_actions[1]?.id || 'x' }, A);
@@ -122,9 +143,9 @@ check('декодер Firestore', d.id === 'abc' && d.n === 5 && d.t[0].amount =
   // отзыв устройства
   r = await call('POST', '/devices/revoke', { id: redvanId }, A); check('отзыв устройства', r.j.ok);
   r = await call('GET', '/chat', undefined, R); check('отозванное устройство больше не имеет доступа', r.status === 401);
-  r = await call('POST', '/devices/revoke', { id: tables.ar_devices[0].id }, A); check('главное устройство отозвать нельзя', r.status === 400);
+  r = await call('POST', '/devices/revoke', { id: tables.ar_devices[0].id }, A); check('своё устройство отозвать нельзя', r.status === 400);
   // отзыв MCP-токена
-  r = await call('POST', '/tokens/revoke', { id: tables.ar_tokens[0].id }, A); check('отзыв MCP-токена', r.j.ok);
+  r = await call('POST', '/tokens/revoke', { id: tables.ar_tokens[1].id }, A); check('отзыв MCP-токена', r.j.ok);
   r = await call('POST', '/call', { tool: 'get_overview' }, { 'x-ar-token': MT }); check('отозванный MCP-токен не работает', r.status === 401);
   console.log(fails ? 'CORE FAILED ' + fails : 'ALL CORE TESTS PASSED'); process.exit(fails ? 1 : 0);
 })();

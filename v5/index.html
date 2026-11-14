@@ -150,6 +150,26 @@ table.t .neg{color:var(--red)}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + var(--sb));z-index:80;background:var(--ink);color:var(--paper);
   padding:10px 16px;border-radius:10px;font-size:14px;max-width:90vw;text-align:center}
 .demo-tag{border:1px solid var(--ink);border-radius:20px;padding:0 8px;font-size:12px}
+
+.fl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fl>.hint{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sgrid{border:1px solid var(--edge);background:var(--card);border-radius:12px;overflow:hidden}
+.sg{display:grid;align-items:stretch;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--grid);padding:0;font-variant-numeric:tabular-nums}
+.sg>div{padding:9px 8px;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.sg>div+div{border-left:1px solid var(--grid)}
+.sg.l{grid-template-columns:minmax(0,1fr) 62px 64px 86px}
+.sg.j{grid-template-columns:28px minmax(0,1fr) 66px 58px 58px}
+.sg.h{background:var(--paper2);border-bottom:1.5px solid var(--ink);font-size:12px;font-weight:700}
+.sg.h>div{padding:8px}
+.sg .r{align-items:flex-end;text-align:right}
+.sg .num{font-family:var(--serif);font-size:14px}
+.sg .nm{font-weight:600;overflow-wrap:anywhere}
+.sg .sub{font-size:11px;color:var(--soft)}
+.sg.tot{border-top:3px double var(--ink);border-bottom:0;font-weight:700;background:var(--paper2)}
+.sg .low{color:var(--red);font-weight:700}
+.sg .out{color:var(--red)}
+.sg .lt{align-items:center;font-family:var(--serif);font-weight:700;font-size:13px}
 </style>
 </head>
 <body>
@@ -159,6 +179,7 @@ table.t .neg{color:var(--red)}
   <div class="hint" id="lock-sub" style="text-align:center;max-width:280px"></div>
   <div class="dots" id="lock-dots"></div>
   <div class="pad" id="lock-pad"></div>
+  <button class="btn3" id="lock-bio" hidden>Войти по Face ID / отпечатку</button>
 </div>
 
 <div id="app" hidden>
@@ -211,6 +232,43 @@ table.t .neg{color:var(--red)}
       <div id="objlist"></div>
     </section>
 
+    <section class="tab" id="tab-stock">
+      <h2 class="h">Склад</h2>
+      <div class="seg" id="st-view" style="margin-bottom:12px">
+        <button data-act="stView" data-v="left">Остатки</button>
+        <button data-act="stView" data-v="journal">Журнал</button>
+      </div>
+      <div class="two" id="st-btns" style="margin-bottom:12px">
+        <button class="btn" data-act="stOpen" data-k="in">+ Приход</button>
+        <button class="btn2" data-act="stOpen" data-k="out">− Списать</button>
+      </div>
+      <div class="card col" id="st-form" hidden style="margin-bottom:12px">
+        <div class="seg" id="st-kind"><button data-act="stOpen" data-k="in">Приход</button><button data-act="stOpen" data-k="out">Списание</button></div>
+        <div class="fl"><span class="hint">Материал</span><input class="in" id="st-mat" list="st-mats" autocomplete="off" placeholder="например: Багет"></div>
+        <datalist id="st-mats"></datalist>
+        <div class="two">
+          <div class="fl"><span class="hint">Количество</span><input class="in" id="st-qty" inputmode="decimal" autocomplete="off" placeholder="500"></div>
+          <div class="fl" id="st-unit-box"><span class="hint">Единица</span><select class="in" id="st-unit"></select></div>
+        </div>
+        <div id="st-in-only" class="col">
+          <div class="fl"><span class="hint">Цена за единицу</span>
+            <div class="rowf"><input class="in" id="st-price" inputmode="decimal" autocomplete="off" placeholder="0,27"><div class="seg" id="st-cur" style="flex:none;width:110px"><button data-act="stCur" data-c="uzs">сум</button><button data-act="stCur" data-c="usd">$</button></div></div></div>
+          <div class="fl" id="st-rate-row" hidden><span class="hint">Курс, сум за $1</span><input class="in" id="st-rate" inputmode="numeric" autocomplete="off" placeholder="например 12 000"></div>
+          <div class="fl"><span class="hint">Оплата</span>
+            <div class="seg" id="st-src"><button data-act="stSrc" data-s="cash">Из кассы</button><button data-act="stSrc" data-s="own">Из своих</button><button data-act="stSrc" data-s="none">В кассу не вносить</button></div></div>
+        </div>
+        <div class="fl" id="st-out-only"><span class="hint">Объект</span><select class="in" id="st-obj"></select></div>
+        <div class="two">
+          <div class="fl"><span class="hint">Дата</span><input class="in" id="st-date" type="date"></div>
+          <div class="fl"><span class="hint">Кто</span><div class="pt" id="st-pt"></div></div>
+        </div>
+        <div class="prev" id="st-prev"></div>
+        <div class="two"><button class="btn2" data-act="stClose">Закрыть</button><button class="btn" id="st-go" data-act="stGo" disabled>Записать</button></div>
+      </div>
+      <div class="hint" id="st-err" hidden style="color:var(--red);margin-bottom:10px"></div>
+      <div id="st-body"></div>
+    </section>
+
     <section class="tab" id="tab-sum">
       <h2 class="h">Итоги</h2>
       <div id="sums"></div>
@@ -250,9 +308,11 @@ table.t .neg{color:var(--red)}
           <input class="in" id="more-rate" inputmode="numeric" autocomplete="off" placeholder="например 12 000">
         </div>
         <div class="card col">
-          <div class="lbl">Код доступа</div>
-          <div class="hint">Один код на двоих, 4 цифры. Хранится на этом телефоне.</div>
+          <div class="lbl">Вход в приложение</div>
+          <div class="hint" id="pin-info"></div>
           <button class="btn2" data-act="changePin">Сменить код</button>
+          <button class="btn2" id="bio-btn" data-act="bioToggle" hidden></button>
+          <div class="hint" id="bio-msg"></div>
         </div>
         <div class="card col">
           <div class="lbl">Пока в старой версии</div>
@@ -263,7 +323,7 @@ table.t .neg{color:var(--red)}
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.3</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.4</div>
       </div>
     </section>
   </main>
@@ -271,6 +331,7 @@ table.t .neg{color:var(--red)}
   <nav class="tabbar"><div class="in-bar">
     <button data-act="tab" data-t="book" class="on"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Тетрадь</button>
     <button data-act="tab" data-t="obj"><svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/></svg>Объекты</button>
+    <button data-act="tab" data-t="stock"><svg viewBox="0 0 24 24"><path d="M3 9l9-5 9 5v11H3z"/><path d="M8 20v-6h8v6M8 14h8"/></svg>Склад</button>
     <button data-act="tab" data-t="sum"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Итоги</button>
     <button data-act="tab" data-t="ai"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5z"/></svg>Помощник<span class="bdg" id="ai-badge" hidden></span></button>
     <button data-act="tab" data-t="more"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>Ещё</button>
@@ -400,6 +461,8 @@ function actor(x){
 }
 const isAi = x => actor(x) === 'помощник';
 let adapter = null;
+S.stock = []; S.stockErr = '';
+S.stk = { view: 'left', kind: 'in', open: false, partner: null, unit: 'м', unitTouched: false, cur: 'uzs', src: 'cash' };
 const realObjects = () => S.objects.filter(o => o.sandbox !== true);
 const txOf = o => Array.isArray(o.transactions) ? o.transactions : [];
 const sumT = (txs, t) => txs.filter(x => x.type === t).reduce((s, x) => s + (Number(x.amount) || 0), 0);
@@ -457,7 +520,12 @@ async function liveAdapter(){
       fs.onSnapshot(fs.query(fs.collection(db, 'cashbox'), fs.orderBy('ts', 'desc')),
         snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.cash(a); },
         err => console.error('cashbox', err));
+      fs.onSnapshot(fs.query(fs.collection(db, 'stock'), fs.orderBy('ts', 'desc')),
+        snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.stock(a, ''); },
+        err => { console.error('stock', err); on.stock(null, diagnose(err)); });
     },
+    addStock: rec => fs.addDoc(fs.collection(db, 'stock'), { ...rec, createdAt: fs.serverTimestamp() }),
+    deleteStock: id => fs.deleteDoc(fs.doc(db, 'stock', id)),
     addCash: rec => fs.addDoc(fs.collection(db, 'cashbox'), { ...rec, createdAt: fs.serverTimestamp() }),
     deleteCash: id => fs.deleteDoc(fs.doc(db, 'cashbox', id)),
     updateCash: (id, patch) => fs.updateDoc(fs.doc(db, 'cashbox', id), patch),
@@ -475,7 +543,7 @@ async function liveAdapter(){
 function offlineAdapter(e){
   const fail = () => Promise.reject(new Error('нет связи с базой'));
   return { mode: 'live', subscribe(on){ on.conn('err', 'Не удалось загрузить базу. Проверь интернет и открой приложение заново.'); },
-    addCash: fail, deleteCash: fail, updateCash: fail, editTx: fail, addObject: fail, addTx: fail, removeTx: fail, setStatus: fail };
+    addCash: fail, addStock: fail, deleteStock: fail, deleteCash: fail, updateCash: fail, editTx: fail, addObject: fail, addTx: fail, removeTx: fail, setStatus: fail };
 }
 // Демо: всё в памяти, в базу ничего не пишется
 function demoAdapter(){
@@ -504,12 +572,24 @@ function demoAdapter(){
     // вложение в долларах
     { id: 'c8', type: 'contribution', desc: 'Вложил на профиль', amount: 1200000, usd: 100, rate: 12000, partner: 'aziz', cat: '', createdBy: 'aziz', ts: now - 5 * D }
   ];
+  // Склад (примеры для демо)
+  let stock = [
+    { id: 'k1', kind: 'in', sid: 'ds1', ts: now - 6 * D, material: 'Багет', unit: 'м', qty: 500, price: 3240, usd: 0.27, rate: 12000, sum: 1620000, partner: 'redvan', src: 'cash', createdBy: 'redvan' },
+    { id: 'k2', kind: 'in', sid: 'ds2', ts: now - 6 * D + 1000, material: 'Вставка чёрная', unit: 'м', qty: 300, price: 7800, usd: 0.65, rate: 12000, sum: 2340000, partner: 'redvan', src: 'cash', createdBy: 'redvan' },
+    { id: 'k3', kind: 'in', sid: 'ds3', ts: now - 5 * D, material: 'Площадка 60–110', unit: 'шт', qty: 100, price: 3500, sum: 350000, partner: 'aziz', src: 'own', createdBy: 'aziz' },
+    { id: 'k4', kind: 'out', sid: 'ds4', ts: now - 3 * D, material: 'Багет', unit: 'м', qty: 85, price: 3240, sum: 275400, objectId: 'o1', objectName: 'Квартира, Чиланзар (демо)', partner: 'aziz', createdBy: 'aziz' },
+    { id: 'k5', kind: 'out', sid: 'ds5', ts: now - 2 * D, material: 'Вставка чёрная', unit: 'м', qty: 42, price: 7800, sum: 327600, objectId: 'o2', objectName: 'Офис, Юнусабад (демо)', partner: 'redvan', createdBy: 'redvan' },
+    { id: 'k6', kind: 'out', sid: 'ds6', ts: now - 1 * D, material: 'Площадка 60–110', unit: 'шт', qty: 85, price: 3500, sum: 297500, partner: 'redvan', createdBy: 'redvan' },
+    { id: 'k7', kind: 'min', ts: now - 6 * D, material: 'Площадка 60–110', min: 20, createdBy: 'redvan' }
+  ];
   let sub = null;
-  const emit = () => { if(!sub) return; sub.objects(JSON.parse(JSON.stringify(objects))); sub.cash(JSON.parse(JSON.stringify(cash))); };
+  const emit = () => { if(!sub) return; sub.objects(JSON.parse(JSON.stringify(objects))); sub.cash(JSON.parse(JSON.stringify(cash))); if(sub.stock) sub.stock(JSON.parse(JSON.stringify(stock)), ''); };
   const ok = () => { emit(); return Promise.resolve(); };
   return {
     mode: 'demo',
     subscribe(on){ sub = on; on.conn('demo'); emit(); },
+    addStock(rec){ stock.unshift({ id: uid(), ...rec }); stock.sort((a, b) => b.ts - a.ts); return ok(); },
+    deleteStock(id){ stock = stock.filter(r => r.id !== id); return ok(); },
     addCash(rec){ cash.unshift({ id: uid(), ...rec }); cash.sort((a, b) => b.ts - a.ts); return ok(); },
     deleteCash(id){ cash = cash.filter(c => c.id !== id); return ok(); },
     updateCash(id, patch){ const c = cash.find(x => x.id === id); if(c) Object.assign(c, patch); return ok(); },
@@ -700,10 +780,13 @@ function updateMore(){
   const live = adapter && adapter.mode === 'live';
   $('#mode-info').textContent = live ? 'Рабочая база. Записи видят оба партнёра и старая CRM.' : 'Демо. Записи живут только пока открыта страница.';
   $('#mode-link').hidden = !live;
+  $('#pin-info').textContent = LS.get('ar_pin') ? 'Код свой, 4 цифры. Хранится только на этом телефоне.' : 'Сейчас код по умолчанию: 0000. Смените его на свой.';
+  const bb = $('#bio-btn'); bb.hidden = !S.bioOk; bb.textContent = LS.get('ar_bio') ? 'Выключить вход по Face ID / отпечатку' : 'Включить вход по Face ID / отпечатку';
+  $('#bio-msg').textContent = S.bioOk === false ? 'На этом устройстве вход по Face ID / отпечатку недоступен.' : '';
   const mr = $('#more-rate'); if(document.activeElement !== mr) mr.value = S.rate ? fmt(S.rate) : '';
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi();
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateStock();
 }
 
 // ───────────── записи ─────────────
@@ -750,16 +833,20 @@ function delItem(key){
   if(it.locked){ toast('Запись заблокирована'); return; }
   const group = it.rec.pairId ? pairItems(it.rec.pairId) : [it];
   if(group.some(g => g.locked)){ toast('Часть записи заблокирована'); return; }
-  const msg = group.length > 1 ? 'Удалить «' + it.desc + '» вместе со связанной записью (вложение и расход «из своих»)?' : 'Удалить запись «' + it.desc + '»? Остаток и доли пересчитаются.';
+  const stRecs = [];
+  group.forEach(g => { const sid = g.rec && g.rec.stockId; if(sid) S.stock.filter(r => r.sid === sid).forEach(r => { if(!stRecs.includes(r)) stRecs.push(r); }); });
+  if(stRecs.some(r => !stockCanDelete(r))){ toast('Нельзя: из этой закупки уже списывали со склада. Сначала удали списания'); return; }
+  const msg = stRecs.length ? 'Удалить «' + it.desc + '» и запись прихода на складе?' : group.length > 1 ? 'Удалить «' + it.desc + '» вместе со связанной записью (вложение и расход «из своих»)?' : 'Удалить запись «' + it.desc + '»? Остаток и доли пересчитаются.';
   if(!confirm(msg)) return;
   S.openRow = null;
-  guard(() => Promise.all(group.map(g => g.src === 'cash' ? adapter.deleteCash(g.id) : adapter.removeTx(g.oid, g.rec))), 'Удалено');
+  guard(() => Promise.all([...group.map(g => g.src === 'cash' ? adapter.deleteCash(g.id) : adapter.removeTx(g.oid, g.rec)), ...stRecs.map(r => adapter.deleteStock(r.id))]), 'Удалено');
 }
 
 // ───────────── правка записи ─────────────
 function openEdit(key){
   const it = findItem(key); if(!it) return;
   if(it.locked){ toast('Запись заблокирована'); return; }
+  if(it.rec.stockId){ toast('Это закупка со склада. Исправь её в разделе «Склад»: удали и запиши заново'); return; }
   S.sheet = { kind: 'edit', key }; S.edit = { partner: it.partner };
   const usd = !!it.rec.usd;
   const descVal = it.rec.pairId && it.rec.type === 'contribution' ? String(it.desc).replace(/^Вложил для:\s*/, '') : it.desc;
@@ -931,36 +1018,294 @@ function createObj(){
   guard(() => adapter.addObject(obj), 'Объект создан');
 }
 
-// ───────────── PIN ─────────────
+// ───────────── склад ─────────────
+// Журнал движений в коллекции stock: kind in (приход), out (списание), min (минимум материала).
+// Остаток = куплено − списано. Цена средняя по всем покупкам. Списание считается по средней цене на момент списания.
+const UNITS = ['м', 'м²', 'шт', 'рул', 'кг', 'упак', 'л'];
+const matKey = n => String(n || '').toLowerCase().replace(/ё/g, 'е').replace(/\s+/g, ' ').trim();
+const r3 = n => Math.round(n * 1000) / 1000;
+function stockModel(list, endTs = Infinity){
+  const xs = list.filter(r => tsNum(r.ts) && tsNum(r.ts) < endTs).sort((a, b) => tsNum(a.ts) - tsNum(b.ts));
+  const m = new Map();
+  for(const r of xs){
+    const k = matKey(r.material); if(!k) continue;
+    const e = m.get(k) || { key: k, name: r.material, unit: r.unit || '', inQty: 0, inSum: 0, outQty: 0, outSum: 0, last: null, min: null };
+    e.name = r.material; if(r.unit) e.unit = r.unit;
+    if(r.kind === 'in'){ e.inQty += Number(r.qty) || 0; e.inSum += Number(r.sum) || 0; e.last = r; }
+    else if(r.kind === 'out'){ e.outQty += Number(r.qty) || 0; e.outSum += Number(r.sum) || 0; }
+    else if(r.kind === 'min'){ e.min = Number(r.min) > 0 ? Number(r.min) : null; }
+    m.set(k, e);
+  }
+  return [...m.values()].map(e => {
+    const left = r3(e.inQty - e.outQty), avg = e.inQty ? e.inSum / e.inQty : 0;
+    return { ...e, inQty: r3(e.inQty), outQty: r3(e.outQty), left, avg, value: Math.round(left * avg), low: e.min != null && left < e.min };
+  }).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+}
+const stockModelNow = () => stockModel(S.stock);
+const todayStr = () => dayKey(Date.now());
+function stDateTs(){
+  const v = $('#st-date').value; if(!/^\d{4}-\d{2}-\d{2}$/.test(v)) return NaN;
+  return v === todayStr() ? Date.now() : new Date(v + 'T12:00:00').getTime();
+}
+// Что сейчас введено в форме склада
+function stockRead(){
+  const k = S.stk.kind, name = $('#st-mat').value.replace(/\s+/g, ' ').trim(), qty = numOf($('#st-qty').value);
+  const partner = S.stk.partner || S.me, mats = stockModelNow(), e = mats.find(x => x.key === matKey(name));
+  const R = { kind: k, name, qty, partner, e, ts: stDateTs(), warn: [], ok: false, html: '' };
+  const who = `<b>${LET[partner]}</b>`;
+  if(k === 'in'){
+    const unit = S.stk.unit, usd = S.stk.cur === 'usd';
+    const price = numOf($('#st-price').value), rate = numOf($('#st-rate').value) > 0 ? numOf($('#st-rate').value) : S.rate;
+    const priceUzs = usd ? price * rate : price, sum = Math.round(qty * priceUzs);
+    Object.assign(R, { unit, usd, price, rate, priceUzs, sum });
+    const bits = [who, 'Приход', name ? esc(name) : '<span class="warn">материал?</span>'];
+    bits.push(qty > 0 ? fmt2(qty) + ' ' + unit : '<span class="warn">сколько?</span>');
+    bits.push(price > 0 ? (usd ? '$' + fmt2(price) + (rate > 0 ? ' × ' + fmt(rate) : ' <span class="warn">курс?</span>') : fmt2(price) + ' за ед.') : '<span class="warn">цена?</span>');
+    if(sum > 0) bits.push('= <b>' + fmt(sum) + ' сум</b>');
+    let w = '';
+    if(!usd && price > 0 && price < 1000) w += `<div class="warn">Цена ${fmt2(price)} сум за единицу. Если тысячи, допиши «тыс».</div>`;
+    if(e && e.unit && e.unit !== unit) w += `<div class="warn">Раньше «${esc(e.name)}» считали в «${esc(e.unit)}».</div>`;
+    if(sum > 0 && S.stk.src === 'cash'){
+      const have = Math.max(calc().left, 0);
+      if(sum > have) w += `<div class="warnbox">В кассе ${fmt(have)} сум, не хватает ${fmt(sum - have)}. Платишь своими?<br><button data-act="stSrc" data-s="own">Записать из своих (${LET[partner]})</button></div>`;
+    }
+    R.ok = !!name && qty > 0 && price > 0 && (!usd || rate > 0) && sum > 0 && isFinite(R.ts);
+    R.html = bits.join(' · ') + w;
+  } else {
+    const bits = [who, 'Списание', name ? esc(name) : '<span class="warn">материал?</span>'];
+    let w = '';
+    if(!e || e.left <= 0){ if(name) w += '<div class="warn">Такого материала нет на складе. Сначала запиши приход.</div>'; }
+    else {
+      R.unit = e.unit; R.avg = e.avg; R.sum = Math.round((qty > 0 ? qty : 0) * e.avg);
+      bits.push(qty > 0 ? fmt2(qty) + ' ' + e.unit : '<span class="warn">сколько?</span>');
+      if(qty > 0) bits.push('по ' + fmt(e.avg) + ' = <b>' + fmt(R.sum) + ' сум</b>');
+      bits.push('остаток ' + fmt2(e.left) + (qty > 0 && qty <= e.left ? ' → ' + fmt2(r3(e.left - qty)) : ''));
+      if(qty > e.left) w += `<div class="warn">На складе только ${fmt2(e.left)} ${esc(e.unit)}.</div>`;
+      R.ok = qty > 0 && qty <= e.left && isFinite(R.ts);
+    }
+    R.html = bits.join(' · ') + w;
+  }
+  return R;
+}
+function updateStock(){
+  const st = S.stk;
+  $$('#st-view button').forEach(b => b.classList.toggle('on', b.dataset.v === st.view));
+  $('#st-btns').hidden = st.open;
+  $('#st-form').hidden = !st.open;
+  const er = $('#st-err'); er.hidden = !S.stockErr; er.textContent = S.stockErr ? 'Склад не загрузился: ' + S.stockErr + ' Для склада нужна коллекция «stock» (правила Firestore).' : '';
+  if(st.open){
+    const out = st.kind === 'out';
+    $$('#st-kind button').forEach(b => b.classList.toggle('on', b.dataset.k === st.kind));
+    $('#st-in-only').hidden = out; $('#st-out-only').hidden = !out; $('#st-unit-box').hidden = out;
+    const mats = stockModelNow(), nm = $('#st-mat');
+    const names = (out ? mats.filter(x => x.left > 0) : mats).map(x => x.name);
+    const dl = $('#st-mats'); const dh = names.join('|'); if(dl.dataset.h !== dh){ dl.innerHTML = names.map(n => `<option value="${esc(n)}">`).join(''); dl.dataset.h = dh; }
+    const e = mats.find(x => x.key === matKey(nm.value));
+    if(e && e.unit && !st.unitTouched && !out) st.unit = e.unit;
+    const us = $('#st-unit'), uh = [...new Set([...UNITS, st.unit])].join('|') + '|' + st.unit;
+    if(us.dataset.h !== uh){ us.innerHTML = [...new Set([...UNITS, st.unit])].map(u => `<option>${esc(u)}</option>`).join(''); us.dataset.h = uh; }
+    us.value = st.unit;
+    $$('#st-cur button').forEach(b => b.classList.toggle('on', b.dataset.c === st.cur));
+    $$('#st-src button').forEach(b => b.classList.toggle('on', b.dataset.s === st.src));
+    const rr = $('#st-rate-row'), ri = $('#st-rate'); rr.hidden = out || st.cur !== 'usd';
+    if(!rr.hidden && document.activeElement !== ri && !ri.value) ri.value = S.rate ? fmt(S.rate) : '';
+    $('#st-price').placeholder = st.cur === 'usd' ? '0,27' : '3 240';
+    const so = $('#st-obj'), cur = so.value;
+    const oh = ['<option value="">Без объекта</option>'].concat(realObjects().filter(o => o.status !== 'cancelled').map(o => `<option value="${esc(o.id)}">${esc(o.name)}</option>`)).join('');
+    if(so.dataset.h !== oh){ so.innerHTML = oh; so.dataset.h = oh; so.value = realObjects().some(o => o.id === cur) ? cur : ''; }
+    renderPT($('#st-pt'), st.partner || S.me, 'stp');
+    if(!$('#st-date').value) $('#st-date').value = todayStr();
+    const R = stockRead();
+    $('#st-prev').innerHTML = (!nm.value && !$('#st-qty').value) ? '<span class="hint">Заполни поля. Сумма и остаток посчитаются сами.</span>' : R.html;
+    $('#st-go').disabled = !R.ok;
+  }
+  // список
+  const body = $('#st-body');
+  if(st.view === 'left'){
+    const mats = stockModelNow().filter(x => x.inQty || x.outQty);
+    if(!mats.length){ body.innerHTML = '<div class="empty">Склад пуст. Первая закупка: «+ Приход».</div>'; return; }
+    const total = mats.reduce((a, x) => a + x.value, 0), low = mats.filter(x => x.low).length;
+    body.innerHTML = `<div class="sgrid">
+      <div class="sg l h"><div>Материал</div><div class="r">Остаток</div><div class="r">Цена</div><div class="r">Сумма</div></div>
+      ${mats.map(x => `<button class="sg l" data-act="stMat" data-key="${esc(x.key)}">
+        <div><span class="nm">${esc(x.name)}</span><span class="sub">${esc(x.unit)}${x.low ? ' · <span class="low">мало</span>' : ''}</span></div>
+        <div class="r num ${x.low ? 'low' : ''}">${fmt2(x.left)}</div><div class="r num">${fmt(x.avg)}</div><div class="r num">${fmt(x.value)}</div></button>`).join('')}
+      <div class="sg l tot"><div>Остатки на сумму, сум</div><div></div><div></div><div class="r num">${fmt(total)}</div></div>
+    </div><div class="hint" style="margin-top:8px">Остаток = куплено − списано. Цена средняя по закупкам.${low ? ' Красным отмечено, что ниже минимума.' : ''} Нажми на материал, чтобы увидеть историю и задать минимум.</div>`;
+  } else {
+    const rows = stockJournal();
+    if(!rows.length){ body.innerHTML = '<div class="empty">Движений пока нет.</div>'; return; }
+    let html = '<div class="sgrid"><div class="sg j h"><div></div><div>Материал</div><div class="r">±</div><div class="r">Цена</div><div class="r">Остаток</div></div>', last = '';
+    rows.forEach(({ r, after }) => {
+      const k = dayKey(tsNum(r.ts));
+      if(k !== last){ html += `<div style="padding:5px 10px;background:var(--paper2);border-bottom:1px solid var(--grid);font-size:12px;font-weight:700;display:flex;justify-content:space-between"><span>${dayTitle(tsNum(r.ts))}</span><span style="font-weight:400;color:var(--soft)">${weekday(tsNum(r.ts))}</span></div>`; last = k; }
+      const inn = r.kind === 'in';
+      const note = inn ? 'приход · ' + fmt(r.sum) + ' сум' + (r.usd ? ' · $' + fmt2(r.usd) + ' по ' + fmt(r.rate) : '') : 'списание' + (r.objectName ? ' · ' + r.objectName : '');
+      html += `<button class="sg j" data-act="stRec" data-id="${esc(r.id)}">
+        <div class="lt">${LET[partnerOf(r.partner || r.createdBy)]}</div>
+        <div><span class="nm">${esc(r.material)}</span><span class="sub">${esc(note)}</span>${isAi(r.createdBy) ? '<span class="sub">помощник · ' + dtm(tsNum(r.ts)) + '</span>' : ''}</div>
+        <div class="r num ${inn ? '' : 'out'}"><b>${inn ? '+' : '−'}${fmt2(r.qty)}</b><span class="sub">${esc(r.unit || '')}</span></div>
+        <div class="r num">${inn ? fmt(r.price) : ''}</div><div class="r num">${fmt2(after)}</div></button>`;
+    });
+    body.innerHTML = html + '</div>';
+  }
+}
+function stockJournal(){
+  const asc = S.stock.filter(r => (r.kind === 'in' || r.kind === 'out') && tsNum(r.ts)).sort((a, b) => tsNum(a.ts) - tsNum(b.ts));
+  const bal = new Map();
+  return asc.map(r => { const k = matKey(r.material), v = (bal.get(k) || 0) + (r.kind === 'in' ? 1 : -1) * (Number(r.qty) || 0); bal.set(k, v); return { r, after: r3(v) }; }).reverse();
+}
+function stockOpen(kind){
+  S.stk.open = true; S.stk.kind = kind; updateStock();
+  if(!$('#st-mat').value) $('#st-mat').focus();
+}
+function stockClear(){ ['#st-mat', '#st-qty', '#st-price'].forEach(i => { $(i).value = ''; }); S.stk.unitTouched = false; }
+function stockGo(){
+  const R = stockRead(); if(!R.ok) return;
+  const now = R.ts, sid = 's' + newId(), partner = R.partner;
+  if(R.kind === 'in'){
+    const price = Math.round(R.priceUzs * 100) / 100, uf = R.usd ? { usd: R.price, rate: R.rate } : {}, tot = R.usd ? { usd: Math.round(R.qty * R.price * 100) / 100, rate: R.rate } : {};
+    const rec = { kind: 'in', sid, ts: now, material: R.name, unit: R.unit, qty: R.qty, price, sum: R.sum, partner, src: S.stk.src, createdBy: S.me, ...uf };
+    const desc = 'Закуп: ' + R.name + ' ' + fmt2(R.qty) + ' ' + R.unit;
+    const jobs = [() => adapter.addStock(rec)];
+    if(S.stk.src === 'cash') jobs.push(() => adapter.addCash({ type: 'overhead', desc, amount: R.sum, partner, cat: '📦 Закуп материала', createdBy: S.me, ts: now + 1, stockId: sid, ...tot }));
+    if(S.stk.src === 'own'){
+      const pairId = 'p' + newId();
+      jobs.push(() => adapter.addCash({ type: 'contribution', desc: 'Вложил для: ' + desc, amount: R.sum, partner, cat: '', createdBy: S.me, ts: now + 1, pairId, stockId: sid, ...tot }));
+      jobs.push(() => adapter.addCash({ type: 'overhead', desc, amount: R.sum, partner, cat: '📦 Закуп материала', createdBy: S.me, ts: now + 2, pairId, stockId: sid, ...tot }));
+    }
+    if(R.usd){ S.rate = R.rate; LS.set('ar_rate', String(R.rate)); }
+    guard(() => Promise.all(jobs.map(j => j())), 'Приход записан');
+  } else {
+    const oid = $('#st-obj').value, o = realObjects().find(x => x.id === oid);
+    const rec = { kind: 'out', sid, ts: now, material: R.e.name, unit: R.e.unit, qty: R.qty, price: Math.round(R.avg * 100) / 100, sum: R.sum, partner, createdBy: S.me, ...(o ? { objectId: o.id, objectName: o.name } : {}) };
+    guard(() => adapter.addStock(rec), 'Списано');
+  }
+  stockClear(); updateStock();
+}
+function stockCanDelete(r){
+  if(r.kind !== 'in') return true;
+  const e = stockModelNow().find(x => x.key === matKey(r.material));
+  return !e || r3(e.left - (Number(r.qty) || 0)) >= 0;
+}
+function stockDel(id){
+  const r = S.stock.find(x => x.id === id); if(!r) return;
+  if(!stockCanDelete(r)){ toast('Нельзя: из этой закупки уже списывали. Сначала удали списания'); return; }
+  const linked = r.sid ? S.cashbox.filter(c => c.stockId === r.sid) : [];
+  if(!confirm('Удалить запись склада «' + r.material + '»?' + (linked.length ? ' Вместе с ней удалится запись в кассе (' + linked.length + ').' : ''))) return;
+  closeSheet();
+  guard(() => Promise.all([adapter.deleteStock(id), ...linked.map(c => adapter.deleteCash(c.id))]), 'Удалено');
+}
+function openStockRec(id){
+  const r = S.stock.find(x => x.id === id); if(!r) return;
+  S.sheet = { kind: 'srec', id };
+  const inn = r.kind === 'in', kv = (a, b) => `<div class="kv"><span>${a}</span><span>${b}</span></div>`;
+  openSheet(`<div class="sheet-h"><h3>${esc(r.material)}</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+    ${kv('Что', inn ? 'Приход' : 'Списание')}${kv('Дата', dtm(tsNum(r.ts)))}${kv('Количество', fmt2(r.qty) + ' ' + esc(r.unit || ''))}
+    ${inn ? kv('Цена за единицу', fmt2(r.price) + ' сум' + (r.usd ? ' ($' + fmt2(r.usd) + ' по ' + fmt(r.rate) + ')' : '')) : kv('Цена (средняя)', fmt2(r.price) + ' сум')}
+    ${kv('Сумма', fmt(r.sum) + ' сум')}${inn ? kv('Оплата', r.src === 'own' ? 'из своих (' + NAMES[partnerOf(r.partner)] + ')' : r.src === 'none' ? 'в кассу не вносилось' : 'из кассы') : (r.objectName ? kv('Объект', esc(r.objectName)) : '')}
+    ${kv('Внёс', esc(actor(r.createdBy) || '—'))}
+    <button class="btn2" style="margin-top:14px;color:var(--red);border-color:var(--red)" data-act="stDel" data-id="${esc(id)}">Удалить запись</button>`);
+}
+function openMat(key){
+  const e = stockModelNow().find(x => x.key === key); if(!e) return;
+  S.sheet = { kind: 'mat', key };
+  const kv = (a, b) => `<div class="kv"><span>${a}</span><span>${b}</span></div>`;
+  const hist = S.stock.filter(r => (r.kind === 'in' || r.kind === 'out') && matKey(r.material) === key).sort((a, b) => tsNum(b.ts) - tsNum(a.ts)).slice(0, 8);
+  openSheet(`<div class="sheet-h"><h3>${esc(e.name)}</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+    ${kv('Остаток', fmt2(e.left) + ' ' + esc(e.unit))}${kv('Куплено', fmt2(e.inQty))}${kv('Списано', fmt2(e.outQty))}
+    ${kv('Средняя цена', fmt(e.avg) + ' сум')}${kv('Стоимость остатка', fmt(e.value) + ' сум')}
+    ${e.last ? kv('Последняя покупка', dayTitle(tsNum(e.last.ts)) + ' · ' + fmt2(e.last.price) + ' сум' + (e.last.usd ? ' ($' + fmt2(e.last.usd) + ')' : '')) : ''}
+    <div class="fl" style="margin-top:12px"><span class="hint">Минимум (предупреждать, когда меньше)</span>
+      <div class="rowf"><input class="in" id="mat-min" inputmode="decimal" value="${e.min != null ? esc(String(e.min).replace('.', ',')) : ''}" placeholder="не задан" autocomplete="off"><button class="btn" style="width:auto;padding:12px 18px" data-act="stMin" data-key="${esc(key)}">Сохранить</button></div></div>
+    <div class="lbl" style="margin:14px 0 4px">Последние движения</div>
+    ${hist.map(r => `<div class="kv"><span>${dayTitle(tsNum(r.ts))} · ${r.kind === 'in' ? 'приход' : 'списание'}</span><span>${r.kind === 'in' ? '+' : '−'}${fmt2(r.qty)} ${esc(r.unit || '')}</span></div>`).join('') || '<div class="hint">Нет движений</div>'}`);
+}
+function stockSaveMin(key){
+  const e = stockModelNow().find(x => x.key === key); if(!e) return;
+  const raw = $('#mat-min').value.trim(), v = raw ? numOf(raw) : 0;
+  if(raw && !(v > 0)){ toast('Минимум: число больше нуля или пусто'); return; }
+  const old = S.stock.filter(r => r.kind === 'min' && matKey(r.material) === key);
+  closeSheet();
+  guard(() => Promise.all([...old.map(r => adapter.deleteStock(r.id)), ...(v > 0 ? [adapter.addStock({ kind: 'min', ts: Date.now(), material: e.name, min: v, createdBy: S.me })] : [])]), v > 0 ? 'Минимум сохранён' : 'Минимум убран');
+}
+
+// ───────────── PIN, Face ID / отпечаток ─────────────
+// Код хранится на этом телефоне (хэш). По умолчанию 0000: у каждого своя смена в «Ещё → Вход в приложение».
+const sha = async v => { try { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('ar|' + v)); return 'h:' + [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join(''); } catch(e){ return 'p:' + v; } };
+async function pinOk(v){
+  const saved = LS.get('ar_pin');
+  if(!saved) return v === '0000';
+  if(/^\d{4}$/.test(saved)) return v === saved; // старый формат
+  return (await sha(v)) === saved;
+}
+const b64 = u8 => btoa(String.fromCharCode(...new Uint8Array(u8))), unb64 = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+const rnd = n => crypto.getRandomValues(new Uint8Array(n));
+async function bioAvailable(){
+  try { return !!(window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch(e){ return false; }
+}
+async function bioEnable(){
+  const cred = await navigator.credentials.create({ publicKey: {
+    challenge: rnd(32), rp: { name: 'АР · Тетрадь' }, user: { id: rnd(16), name: NAMES[S.me], displayName: NAMES[S.me] },
+    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' }, timeout: 60000 } });
+  if(!cred) throw new Error('отменено');
+  LS.set('ar_bio', b64(cred.rawId));
+}
+async function bioCheck(){
+  const id = LS.get('ar_bio'); if(!id) return false;
+  const a = await navigator.credentials.get({ publicKey: { challenge: rnd(32), allowCredentials: [{ type: 'public-key', id: unb64(id), transports: ['internal'] }], userVerification: 'required', timeout: 60000 } });
+  return !!a;
+}
 function lockGate(){
   return new Promise(resolve => {
-    const saved = LS.get('ar_pin');
-    let buf = '', first = '', mode = saved ? 'enter' : 'set';
-    const L = $('#lock');
+    let buf = '', bad = 0, wait = false;
+    const L = $('#lock'), bio = $('#lock-bio');
     const dots = err => { $('#lock-dots').innerHTML = [0, 1, 2, 3].map(i => `<div class="dot ${i < buf.length ? 'on' : ''} ${err ? 'err' : ''}"></div>`).join(''); };
-    const title = () => {
-      $('#lock-title').textContent = mode === 'enter' ? 'Введите код' : mode === 'set' ? 'Придумайте код' : 'Повторите код';
-      $('#lock-sub').textContent = mode === 'set' ? '4 цифры. Один общий для Азиза и Редвана.' : '';
-    };
+    const open = () => { L.hidden = true; resolve(); };
+    $('#lock-title').textContent = 'Введите код';
+    $('#lock-sub').textContent = LS.get('ar_pin') ? '' : 'Код по умолчанию 0000. Смените его: Ещё, «Вход в приложение».';
     $('#lock-pad').innerHTML = ['1','2','3','4','5','6','7','8','9','','0','⌫'].map(k => k === '' ? '<span></span>' : `<button data-k="${k}">${k}</button>`).join('');
     $('#lock-pad').onclick = e => {
-      const b = e.target.closest('button'); if(!b) return;
+      const b = e.target.closest('button'); if(!b || wait) return;
       const k = b.dataset.k;
       if(k === '⌫'){ buf = buf.slice(0, -1); dots(); return; }
       if(buf.length >= 4) return;
       buf += k; dots();
       if(buf.length < 4) return;
-      setTimeout(() => {
-        if(mode === 'enter'){
-          if(buf === LS.get('ar_pin')){ L.hidden = true; resolve(); }
-          else { dots(true); setTimeout(() => { buf = ''; dots(); }, 350); }
-        } else if(mode === 'set'){ first = buf; buf = ''; mode = 'confirm'; title(); dots(); }
-        else if(buf === first){ LS.set('ar_pin', buf); L.hidden = true; resolve(); }
-        else { buf = ''; first = ''; mode = 'set'; title(); $('#lock-title').textContent = 'Коды не совпали, заново'; dots(true); setTimeout(() => dots(), 350); }
+      setTimeout(async () => {
+        if(await pinOk(buf)){ open(); return; }
+        bad++; dots(true);
+        if(bad >= 5){ wait = true; $('#lock-sub').textContent = 'Слишком много попыток. Подожди 30 секунд.'; setTimeout(() => { wait = false; bad = 0; buf = ''; dots(); $('#lock-sub').textContent = ''; }, 30000); return; }
+        setTimeout(() => { buf = ''; dots(); }, 350);
       }, 120);
     };
-    title(); dots(); L.hidden = false;
+    const tryBio = async () => { try { if(await bioCheck()) open(); } catch(e){} };
+    if(LS.get('ar_bio')){ bio.hidden = false; bio.onclick = tryBio; }
+    dots(); L.hidden = false;
+    if(LS.get('ar_bio')) setTimeout(tryBio, 250);
   });
+}
+function openPinSheet(){
+  S.sheet = { kind: 'pin' };
+  const f = (id, label) => `<div class="fl"><span class="hint">${label}</span><input class="in" id="${id}" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" autocomplete="off"></div>`;
+  openSheet(`<div class="sheet-h"><h3>Сменить код</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+    <div class="col">${f('pin-old', 'Сейчас' + (LS.get('ar_pin') ? '' : ' (по умолчанию 0000)'))}${f('pin-new', 'Новый код, 4 цифры')}${f('pin-new2', 'Повторите новый код')}
+    <div class="warn" id="pin-err"></div><button class="btn" data-act="pinSave">Сохранить</button></div>`);
+}
+async function pinSave(){
+  const o = $('#pin-old').value, n = $('#pin-new').value, n2 = $('#pin-new2').value, err = t => { $('#pin-err').textContent = t; };
+  if(!(await pinOk(o))) return err('Старый код неверный');
+  if(!/^\d{4}$/.test(n)) return err('Новый код: ровно 4 цифры');
+  if(n === '0000') return err('Выберите код, отличный от 0000');
+  if(n !== n2) return err('Коды не совпали');
+  LS.set('ar_pin', await sha(n)); closeSheet(); updateMore(); toast('Код изменён');
+}
+async function bioToggle(){
+  if(LS.get('ar_bio')){ LS.del('ar_bio'); updateMore(); toast('Вход по Face ID / отпечатку выключен'); return; }
+  try { await bioEnable(); toast('Включено. При входе телефон спросит Face ID или отпечаток'); }
+  catch(e){ $('#bio-msg').textContent = 'Не получилось включить: ' + (e && e.name === 'NotAllowedError' ? 'отменено или не разрешено' : (e && e.message) || 'ошибка') + '. Проверь, что на телефоне настроен Face ID или отпечаток.'; }
+  updateMore();
 }
 
 // ───────────── события ─────────────
@@ -982,7 +1327,18 @@ const ACT = {
   nop: el => { NEW.partner = el.dataset.p; renderNewObj(); },
   createObj,
   mep: el => { S.me = el.dataset.p; LS.set('ar_pill', S.me); S.entry.partner = null; updateAll(); toast('Работает ' + NAMES[S.me]); },
-  changePin: () => { LS.del('ar_pin'); toast('Код сброшен. Задай новый при следующем входе'); },
+  changePin: openPinSheet, pinSave, bioToggle,
+  stView: el => { S.stk.view = el.dataset.v; updateStock(); },
+  stOpen: el => stockOpen(el.dataset.k),
+  stClose: () => { S.stk.open = false; updateStock(); },
+  stCur: el => { S.stk.cur = el.dataset.c; updateStock(); },
+  stSrc: el => { S.stk.src = el.dataset.s; updateStock(); },
+  stp: el => { S.stk.partner = el.dataset.p; updateStock(); },
+  stGo: stockGo,
+  stMat: el => openMat(el.dataset.key),
+  stRec: el => openStockRec(el.dataset.id),
+  stDel: el => stockDel(el.dataset.id),
+  stMin: el => stockSaveMin(el.dataset.key),
   row: (el, e) => { if(e.target.closest('[data-act="delItem"],[data-act="editItem"]')) return; const k = el.dataset.key; S.openRow = S.openRow === k ? null : k; updateFeed(); },
   delItem: el => delItem(el.dataset.key),
   editItem: el => openEdit(el.dataset.key),
@@ -1010,9 +1366,15 @@ $('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') closeSh
 $('#entry-text').addEventListener('input', () => { S.entry.kind = null; updateEntry(); });
 $('#entry-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); entryGo(); } });
 $('#ai-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); aiSend(); } });
+$('#st-unit').addEventListener('change', e => { S.stk.unit = e.target.value; S.stk.unitTouched = true; updateStock(); });
+$('#st-obj').addEventListener('change', () => updateStock());
 $('#entry-obj').addEventListener('change', e => { S.entry.objectId = e.target.value; });
 document.addEventListener('input', e => {
   const id = e.target.id;
+  if(id && id.startsWith('st-')){
+    if(id === 'st-rate'){ const v = numOf(e.target.value); S.rate = v > 0 ? v : 0; LS.set('ar_rate', S.rate ? String(S.rate) : ''); }
+    updateStock();
+  }
   if(id === 'sh-text') updateSheetEntry();
   if(id === 'entry-rate' || id === 'sh-rate' || id === 'more-rate'){
     const v = numOf(e.target.value); S.rate = v > 0 ? v : 0; LS.set('ar_rate', S.rate ? String(S.rate) : '');
@@ -1149,6 +1511,45 @@ async function buildReport(ExcelJS, data, K, withCache = true){
     os.getRow(tr).font = { bold: true };
     os.getRow(tr).eachCell({ includeEmpty: true }, (x, n) => { if(n <= 9) x.border = { top: { style: 'thin', color: { argb: INK } }, bottom: { style: 'double', color: { argb: INK } } }; });
   }
+  // ── Склад: закупки и списания месяца, остатки на конец месяца ──
+  const stk = Array.isArray(data.stock) ? data.stock : [];
+  if(stk.length){
+    const y = Math.floor(K / 100), mo = K % 100, t0 = new Date(y, mo - 1, 1).getTime(), t1 = new Date(y, mo, 1).getTime();
+    const mv = stk.filter(r => (r.kind === 'in' || r.kind === 'out') && tsNum(r.ts) >= t0 && tsNum(r.ts) < t1).sort((a, b) => tsNum(a.ts) - tsNum(b.ts));
+    const zs = wb.addWorksheet('Закупки', { views: [{ state: 'frozen', ySplit: 1 }] });
+    zs.columns = [{ header: 'Дата', width: 12 }, { header: 'Тип', width: 11 }, { header: 'Материал', width: 26 }, { header: 'Кол-во', width: 10 }, { header: 'Ед.', width: 7 },
+      { header: 'Цена за ед., сум', width: 15 }, { header: 'Цена за ед., $', width: 13 }, { header: 'Курс', width: 10 }, { header: 'Сумма, сум', width: 15 }, { header: 'Кто', width: 10 }, { header: 'Оплата / объект', width: 30 }];
+    head(zs.getRow(1)); zs.getRow(1).height = 30;
+    mv.forEach(r => {
+      const d = new Date(tsNum(r.ts)), inn = r.kind === 'in';
+      const row = zs.addRow([new Date(d.getFullYear(), d.getMonth(), d.getDate()), inn ? 'Приход' : 'Списание', r.material, Number(r.qty) || 0, r.unit || '', Number(r.price) || 0, r.usd || null, r.rate || null, Number(r.sum) || 0, NAMES[partnerOf(r.partner || r.createdBy)],
+        inn ? (r.src === 'own' ? 'из своих' : r.src === 'none' ? 'в кассу не вносилось' : 'из кассы') : (r.objectName || '')]);
+      row.getCell(1).numFmt = 'dd.mm.yyyy'; row.getCell(4).numFmt = '#,##0.###'; [6, 8, 9].forEach(c => { row.getCell(c).numFmt = NUM; }); row.getCell(7).numFmt = USD;
+    });
+    const zl = Math.max(mv.length + 1, 2), ZI = `Закупки!$I$2:$I$${zl}`, ZB = `Закупки!$B$2:$B$${zl}`;
+    const sin = mv.filter(r => r.kind === 'in').reduce((a, r) => a + (Number(r.sum) || 0), 0), sout = mv.filter(r => r.kind === 'out').reduce((a, r) => a + (Number(r.sum) || 0), 0);
+    [['Приход за месяц', 'Приход', sin], ['Списано за месяц', 'Списание', sout]].forEach(([t, kind, v], i) => {
+      const r = zl + 2 + i; zs.getCell('H' + r).value = t; zs.getCell('H' + r).font = { bold: true };
+      const c = zs.getCell('I' + r); c.value = F(`SUMIFS($I$2:$I$${zl},$B$2:$B$${zl},"${kind}")`, v); c.numFmt = NUM; c.font = { bold: true };
+    });
+    line(11, 'Закуплено материалов за месяц (справочно)', `SUMIFS(${ZI},${ZB},"Приход")`, sin);
+    const ms = wb.addWorksheet('Остатки', { views: [{ state: 'frozen', ySplit: 1 }] });
+    ms.columns = [{ header: 'Материал', width: 28 }, { header: 'Ед.', width: 7 }, { header: 'Куплено', width: 12 }, { header: 'Списано', width: 12 }, { header: 'Остаток', width: 12 }, { header: 'Средняя цена, сум', width: 17 }, { header: 'Стоимость остатка, сум', width: 22 }, { header: 'Минимум', width: 11 }];
+    head(ms.getRow(1)); ms.getRow(1).height = 30;
+    const mats = stockModel(stk, t1).filter(x => x.inQty || x.outQty);
+    mats.forEach((x, i) => {
+      const r = i + 2, row = ms.addRow([x.name, x.unit, x.inQty, x.outQty, null, Math.round(x.avg), null, x.min]);
+      row.getCell(3).numFmt = row.getCell(4).numFmt = row.getCell(5).numFmt = row.getCell(8).numFmt = '#,##0.###'; row.getCell(6).numFmt = row.getCell(7).numFmt = NUM;
+      row.getCell(5).value = F(`C${r}-D${r}`, x.left); row.getCell(7).value = F(`ROUND(E${r}*F${r},0)`, Math.round(x.left * Math.round(x.avg)));
+      if(x.low) row.getCell(5).font = { bold: true, color: { argb: 'FFB23A32' } };
+    });
+    if(mats.length){
+      const last = mats.length + 1, tr = last + 1; ms.getCell('A' + tr).value = 'Остатки на сумму';
+      const c = ms.getCell('G' + tr); c.value = F(`SUM(G2:G${last})`, mats.reduce((a, x) => a + Math.round(x.left * Math.round(x.avg)), 0)); c.numFmt = NUM;
+      ms.getRow(tr).font = { bold: true };
+      ms.getRow(tr).eachCell({ includeEmpty: true }, (x, n) => { if(n <= 8) x.border = { top: { style: 'thin', color: { argb: INK } }, bottom: { style: 'double', color: { argb: INK } } }; });
+    }
+  }
   wb.views = [{ activeTab: 0 }];
   return wb;
 }
@@ -1160,6 +1561,7 @@ function repMonths(){
   const set = new Set([ymOf(Date.now())]);
   S.cashbox.forEach(c => { const t = tsNum(c.ts); if(t) set.add(ymOf(t)); });
   realObjects().forEach(o => txOf(o).forEach(t => { if(Number(t.ts)) set.add(ymOf(Number(t.ts))); }));
+  S.stock.forEach(r => { const t = tsNum(r.ts); if(t && r.kind !== 'min') set.add(ymOf(t)); });
   return [...set].sort((a, b) => b - a);
 }
 function updateReportMonths(){
@@ -1182,7 +1584,7 @@ async function repGo(){
   btn.disabled = true; msg.textContent = 'Собираю файл…'; $('#rep-share').hidden = true;
   try {
     await loadExcelJS();
-    const wb = await buildReport(window.ExcelJS, { objects: realObjects(), cashbox: S.cashbox }, K);
+    const wb = await buildReport(window.ExcelJS, { objects: realObjects(), cashbox: S.cashbox, stock: S.stock }, K);
     const buf = await wb.xlsx.writeBuffer();
     const name = 'AR-report-' + Math.floor(K / 100) + '-' + pad2(K % 100) + '.xlsx';
     const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -1239,24 +1641,24 @@ function updateCabinet(){
   if(!d.token){
     if(document.activeElement && box.contains(document.activeElement)) return;
     box.innerHTML = `<div class="lbl">Мой кабинет</div>
-      <div class="hint">Это устройство ещё не подключено к помощнику. Подключённые устройства видны здесь, главное устройство может отключать остальные.</div>
+      <div class="hint">Это устройство ещё не подключено к помощнику. Подключённые устройства видны здесь вам обоим. У Азиза и Редвана права одинаковые: любой может пригласить телефон или отключить чужое устройство.</div>
       ${d.msg ? `<div class="warn">${esc(d.msg)}</div>` : ''}
       <input class="in" id="dev-name" value="${esc(devGuess())}" placeholder="Название устройства" autocomplete="off">
       <input class="in" id="dev-code" placeholder="Код" autocomplete="off" autocapitalize="characters">
-      <button class="btn" data-act="devReg">Подключить как главное (код настройки)</button>
+      <button class="btn" data-act="devReg">Подключить первое устройство (код настройки)</button>
       <button class="btn2" data-act="devJoin">Подключить по приглашению</button>
       <div class="hint" id="dev-err"></div>`;
     tb.hidden = true; return;
   }
   const act = d.list.filter(x => !x.revoked_at), old = d.list.filter(x => x.revoked_at);
   box.innerHTML = `<div class="lbl">Мой кабинет</div>
-    <div class="hint">${d.loaded ? 'Устройств подключено: <b>' + act.length + '</b>' + (act.some(x => x.is_main) ? '. Главное: ' + esc(act.find(x => x.is_main).name) : '') : 'Загружаю…'}</div>
+    <div class="hint">${d.loaded ? 'Устройств подключено: <b>' + act.length + '</b>' + '' : 'Загружаю…'}</div>
     ${d.err ? `<div class="warn">${esc(d.err)}</div>` : ''}
-    <div>${act.map(x => `<div class="dev"><div class="bd">${LET[partnerOf(x.who)]}</div><div style="flex:1"><div class="nm">${esc(x.name)}${x.me ? ' · это устройство' : ''}${x.is_main ? ' · главное' : ''}</div>
+    <div>${act.map(x => `<div class="dev"><div class="bd">${LET[partnerOf(x.who)]}</div><div style="flex:1"><div class="nm">${esc(x.name)}${x.me ? ' · это устройство' : ''}</div>
       <div class="hint">${esc(x.platform || '')}${x.platform ? ' · ' : ''}был ${dtm(Date.parse(x.last_seen))}</div></div>
       ${d.main && !x.me ? `<button class="link-del" data-act="devRevoke" data-id="${esc(x.id)}">Отключить</button>` : ''}</div>`).join('')}</div>
     ${old.length ? `<div class="hint">Отключено: ${old.length}</div>` : ''}
-    ${d.main ? '<button class="btn2" data-act="devInvite">Пригласить телефон партнёра</button>' : '<div class="hint">Приглашать устройства и отключать их может только главное устройство.</div>'}`;
+    ${d.main ? '<button class="btn2" data-act="devInvite">Пригласить телефон партнёра</button>' : ''}`;
   if(!d.main){ tb.hidden = true; return; }
   tb.hidden = false;
   tb.innerHTML = `<div class="lbl">Токены для Claude и n8n</div>
@@ -1354,6 +1756,7 @@ async function aiSend(){
 async function applyOp(op){
   if(op.op === 'addCash') return adapter.addCash(op.rec);
   if(op.op === 'addTx') return adapter.addTx(op.oid, op.tx);
+  if(op.op === 'addStock') return adapter.addStock(op.rec);
   if(op.op === 'deleteCash') return adapter.deleteCash(op.id);
   if(op.op === 'updateCash') return adapter.updateCash(op.id, op.patch);
   if(op.op === 'editTx') return adapter.editTx(op.oid, op.id, op.patch);
@@ -1387,10 +1790,12 @@ async function aiReject(id){ try { await api('/actions/reject', { id }); } catch
   $('#app').hidden = false;
   updateAll();
   adapter = DEMO ? demoAdapter() : await liveAdapter().catch(e => { console.error(e); return offlineAdapter(e); });
+  bioAvailable().then(ok => { S.bioOk = ok; updateMore(); });
   updateMore();
   adapter.subscribe({
     objects: a => { S.objects = a; updateAll(); },
     cash: a => { S.cashbox = a; updateAll(); },
+    stock: (a, err) => { if(a) S.stock = a; S.stockErr = err || ''; updateAll(); },
     conn: (c, msg) => { S.conn = c; S.connMsg = msg || ''; updateHeader(); updateAi(); }
   });
   if(S.dev.token){ cabPull(); aiPull(); }
