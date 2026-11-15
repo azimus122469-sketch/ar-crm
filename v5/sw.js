@@ -1,7 +1,7 @@
 // АР · Тетрадь v5 — service worker.
-// Сеть в приоритете, кэш только на случай, когда интернета нет.
+// Сеть в приоритете, кэш только на случай, когда интернета нет. Принимает фоновые уведомления (Web Push).
 // Область действия — только папка v5, старую CRM не затрагивает.
-const CACHE = 'ar-v5-1';
+const CACHE = 'ar-v5-2';
 
 self.addEventListener('install', () => { self.skipWaiting(); });
 
@@ -26,4 +26,20 @@ self.addEventListener('fetch', e => {
       })
       .catch(() => caches.match(req).then(c => c || caches.match('./index.html')))
   );
+});
+
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'АР · Тетрадь', {
+    body: d.body || '', tag: d.tag || 'ar-remind', icon: 'icon-192.png', badge: 'icon-192.png', data: { url: d.url || './' }
+  }));
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+    for (const c of cs) { if ('focus' in c) return c.focus(); }
+    return self.clients.openWindow('./');
+  }));
 });

@@ -2,7 +2,7 @@
 // Секреты проекта: ADMIN_SETUP_CODE (код первого запуска главного устройства), OPENAI_API_KEY, OPENAI_MODEL (необязательно).
 // Данные CRM читаются из Firestore по REST тем же публичным ключом, что и приложение
 // (FIREBASE_API_KEY и FIREBASE_PROJECT можно переопределить секретами).
-import { createHandler, fsDoc, type Deps, type Row, type Store } from "./core.ts";
+import { createHandler, fbBearer, fsDoc, type Deps, type Row, type Store } from "./core.ts";
 
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -25,6 +25,7 @@ const store: Store = {
     return pg(`${table}?select=*${q.length ? "&" + q.join("&") : ""}`);
   },
   insert: async (table, row) => (await pg(table, { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify(row) }))[0],
+  delete: async (table, filter) => { await pg(`${table}?${filterQs(filter).join("&")}`, { method: "DELETE" }); },
   update: (table, filter, patch) => pg(`${table}?${filterQs(filter).join("&")}`, { method: "PATCH", headers: { Prefer: "return=representation" }, body: JSON.stringify(patch) }),
 };
 
@@ -35,7 +36,8 @@ async function loadCollection(name: string): Promise<Row[]> {
   let token = "";
   for (let i = 0; i < 40; i++) {
     const url = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents/${name}?pageSize=300&key=${FB_KEY}${token ? "&pageToken=" + encodeURIComponent(token) : ""}`;
-    const r = await fetch(url);
+    const bearer = await fbBearer(deps); // ключ сервиса, если задан; иначе прежний общий ключ
+    const r = await fetch(bearer ? url.replace(/&key=[^&]*/, "") : url, bearer ? { headers: { Authorization: bearer } } : {});
     if (!r.ok) throw new Error(`Firestore (${name}): ${r.status}. Проверь правила базы и ключ.`);
     const j = await r.json();
     (j.documents || []).forEach((d: any) => out.push(fsDoc(d)));
@@ -45,5 +47,14 @@ async function loadCollection(name: string): Promise<Row[]> {
   return out;
 }
 
-const deps: Deps = { store, loadCollection, env: (k) => Deno.env.get(k), fetch, now: () => Date.now() };
+// Библиотека push подключается лениво: если она не загрузится, остальная функция работает.
+const push = {
+  async genKeys() { const w = (await import("npm:web-push@3.6.7")).default; return w.generateVAPIDKeys(); },
+  async send(sub: any, payload: string, v: { publicKey: string; privateKey: string }) {
+    const w = (await import("npm:web-push@3.6.7")).default;
+    try { const r = await w.sendNotification(sub, payload, { TTL: 6 * 3600, vapidDetails: { subject: SB_URL, publicKey: v.publicKey, privateKey: v.privateKey } }); return r.statusCode as number; }
+    catch (e) { return (e as any).statusCode || 0; }
+  },
+};
+const deps: Deps = { store, loadCollection, env: (k) => Deno.env.get(k), fetch, now: () => Date.now(), push };
 Deno.serve(createHandler(deps));

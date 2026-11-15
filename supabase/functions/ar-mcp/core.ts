@@ -11,6 +11,14 @@ export interface Store {
   select(table: string, filter?: Row, opts?: { order?: string; desc?: boolean; limit?: number }): Promise<Row[]>;
   insert(table: string, row: Row): Promise<Row>;
   update(table: string, filter: Row, patch: Row): Promise<Row[]>; // возвращает изменённые строки
+  delete(table: string, filter: Row): Promise<void>;
+}
+// Фоновые уведомления (Web Push). Подставляется в index.ts лениво, чтобы сбой библиотеки не ронял всю функцию.
+export interface PushSub { endpoint: string; keys: { p256dh: string; auth: string } }
+export interface Vapid { publicKey: string; privateKey: string }
+export interface PushDep {
+  genKeys(): Promise<Vapid>;
+  send(sub: PushSub, payload: string, vapid: Vapid): Promise<number>; // HTTP-статус push-сервиса
 }
 export interface Deps {
   store: Store;
@@ -18,6 +26,7 @@ export interface Deps {
   env(k: string): string | undefined;
   fetch: typeof fetch;
   now(): number;
+  push?: PushDep;
 }
 
 const CORS: Record<string, string> = {
@@ -523,6 +532,96 @@ async function runAssistant(d: Deps) {
   }
 }
 
+
+/* ───────── Firebase: пропуск для приложения и вход сервера ───────── */
+// Приложение получает от сервера подписанный пропуск (custom token) и входит в Firestore под ним.
+// Правила базы пускают только вошедших с отметкой ar. Ключ сервисного аккаунта лежит только в секрете функции.
+const b64u = (x: ArrayBuffer | Uint8Array | string) => {
+  const u = typeof x === "string" ? new TextEncoder().encode(x) : x instanceof Uint8Array ? x : new Uint8Array(x);
+  let t = ""; u.forEach((c) => (t += String.fromCharCode(c)));
+  return btoa(t).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+async function signRs256(pem: string, claims: Row) {
+  const der = Uint8Array.from(atob(pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "")), (c) => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("pkcs8", der, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]);
+  const head = b64u(JSON.stringify({ alg: "RS256", typ: "JWT" })), pay = b64u(JSON.stringify(claims));
+  const sig = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(head + "." + pay));
+  return head + "." + pay + "." + b64u(sig);
+}
+export type SA = { email: string; key: string; project: string };
+export function saOf(d: Deps): SA | null {
+  const raw = d.env("FIREBASE_SERVICE_ACCOUNT"); if (!raw) return null;
+  try {
+    const j = JSON.parse(raw);
+    if (!j.client_email || !j.private_key) return null;
+    return { email: String(j.client_email), key: String(j.private_key), project: String(j.project_id || d.env("FIREBASE_PROJECT") || "ar-crm-c46c3") };
+  } catch { return null; }
+}
+export async function fbCustomToken(d: Deps, sa: SA, uid: string, claims: Row) {
+  const iat = Math.floor(d.now() / 1000);
+  return signRs256(sa.key, { iss: sa.email, sub: sa.email, aud: "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit", iat, exp: iat + 3600, uid, claims });
+}
+const gtok = new Map<string, { t: string; exp: number }>();
+async function googleToken(d: Deps, sa: SA) {
+  const c = gtok.get(sa.email); if (c && c.exp > d.now() + 60_000) return c.t;
+  const iat = Math.floor(d.now() / 1000);
+  const jwt = await signRs256(sa.key, { iss: sa.email, scope: "https://www.googleapis.com/auth/cloud-platform", aud: "https://oauth2.googleapis.com/token", iat, exp: iat + 3600 });
+  const r = await d.fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }).toString() });
+  if (!r.ok) throw new Error("Google отказал в доступе сервису: " + r.status);
+  const j = await r.json(); gtok.set(sa.email, { t: j.access_token, exp: d.now() + (Number(j.expires_in) || 3600) * 1000 });
+  return j.access_token as string;
+}
+// Заголовок доступа сервера к Firestore: по сервисному ключу, а если ключа нет, без него (прежний режим с общим ключом)
+export async function fbBearer(d: Deps): Promise<string | null> {
+  const sa = saOf(d); return sa ? "Bearer " + await googleToken(d, sa) : null;
+}
+// Отключить пользователя Firebase отозванного устройства: обновить пропуск он уже не сможет
+async function fbDisableUser(d: Deps, uid: string) {
+  const sa = saOf(d); if (!sa) return;
+  try {
+    await d.fetch(`https://identitytoolkit.googleapis.com/v1/projects/${sa.project}/accounts:update`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + await googleToken(d, sa) }, body: JSON.stringify({ localId: uid, disableUser: true }) });
+  } catch { /* не критично: пропуск и так живёт не дольше часа */ }
+}
+
+/* ───────── напоминания (Web Push) ───────── */
+async function vapidRow(d: Deps) {
+  let row = (await d.store.select("ar_vapid", {}))[0];
+  if (!row) throw new Error("не применена миграция ar_push");
+  if (!row.public_key) {
+    if (!d.push) throw new Error("фоновые уведомления на сервере не подключены");
+    const k = await d.push.genKeys();
+    const u = await d.store.update("ar_vapid", { id: row.id, public_key: null }, { public_key: k.publicKey, private_key: k.privateKey });
+    row = u[0] || (await d.store.select("ar_vapid", {}))[0];
+  }
+  return row;
+}
+const pushBody = (title: string, body: string, tag: string) => JSON.stringify({ title, body, tag, url: "./" });
+const REMIND = "Сегодня ещё ничего не внесено. Запиши расходы и приходы, пока помнишь.";
+function activeBetween(objects: Row[], cashbox: Row[], stock: Row[], t0: number, t1: number) {
+  const inR = (x: any) => { const t = tsNum(x); return t >= t0 && t < t1; };
+  return cashbox.some((c) => inR(c.ts)) || stock.some((r) => r.kind !== "min" && inR(r.ts))
+    || objects.some((o) => (Array.isArray(o.transactions) ? o.transactions : []).some((t: any) => inR(t.ts)));
+}
+// Раз в 15 минут вызывается по расписанию. Если подошло время и за сегодня нет записей, шлёт напоминание.
+export async function pushTick(d: Deps) {
+  const subs = await d.store.select("ar_push", { enabled: true });
+  const now = d.now(), loc = (s: Row) => new Date(now + (Number(s.tz_min) || 300) * 60_000);
+  const due = subs.filter((s) => { const l = loc(s); return l.getUTCHours() >= Number(s.hour) && l.getUTCHours() < 23 && s.last_sent !== l.toISOString().slice(0, 10); });
+  const out = { due: due.length, sent: 0, skipped: 0, gone: 0 };
+  if (!due.length || !d.push) return out;
+  const [{ objects, cashbox }, stock] = await Promise.all([loadAll(d), loadStock(d)]);
+  const v = await vapidRow(d), vapid = { publicKey: v.public_key, privateKey: v.private_key };
+  for (const s of due) {
+    const l = loc(s), off = (Number(s.tz_min) || 300) * 60_000, today = l.toISOString().slice(0, 10);
+    await d.store.update("ar_push", { id: s.id }, { last_sent: today });
+    const t0 = Date.UTC(l.getUTCFullYear(), l.getUTCMonth(), l.getUTCDate()) - off;
+    if (activeBetween(objects, cashbox, stock, t0, t0 + 86_400_000)) { out.skipped++; continue; }
+    const st = await d.push.send({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, pushBody("АР · Тетрадь", REMIND, "ar-remind"), vapid).catch(() => 0);
+    if (st === 404 || st === 410) { await d.store.delete("ar_push", { id: s.id }); out.gone++; } else if (st >= 200 && st < 300) out.sent++;
+  }
+  return out;
+}
+
 /* ───────── устройства, токены, вход ───────── */
 const fails = new Map<string, number[]>(); // best effort: защита от подбора кодов
 function tooMany(ip: string, now: number) { const a = (fails.get(ip) || []).filter((x) => now - x < 600_000); fails.set(ip, a); return a.length >= 8; }
@@ -562,6 +661,13 @@ export function createHandler(d: Deps) {
     const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "?";
     try {
       const body = async () => { try { return await req.json(); } catch { return {}; } };
+
+      // 0. Расписание: вызывает база раз в 15 минут, по секрету из таблицы ar_vapid
+      if (path === "/push/tick" && req.method === "POST") {
+        const row = (await d.store.select("ar_vapid", {}))[0];
+        if (!row || !row.cron_secret || !same(req.headers.get("x-ar-cron") || "", String(row.cron_secret))) return err("нет доступа", 401);
+        return json({ ok: true, ...(await pushTick(d)) });
+      }
 
       // 1. Регистрация устройств: без токена, по коду
       if (req.method === "POST" && (path === "/register" || path === "/join")) {
@@ -613,6 +719,34 @@ export function createHandler(d: Deps) {
       if (!dev) return err("нужно подключить это устройство (Ещё → Мой кабинет)", 401);
       const main = true; // два равноправных админа: каждое подключённое устройство (Азиз или Редван) может всё
 
+      if (path === "/firebase-token" && req.method === "POST") {
+        const sa = saOf(d); if (!sa) return err("firebase_not_configured", 503);
+        return json({ ok: true, token: await fbCustomToken(d, sa, "dev-" + dev.id, { ar: true, who: dev.who }), project: sa.project });
+      }
+      if (path === "/push/key" && req.method === "GET") return json({ ok: true, key: (await vapidRow(d)).public_key });
+      if (path === "/push/subscribe" && req.method === "POST") {
+        const b = await body(), sub = b.subscription || {}, k = sub.keys || {};
+        if (!/^https:\/\//.test(String(sub.endpoint || "")) || !k.p256dh || !k.auth) return err("Подписка неполная.");
+        const hour = Math.min(23, Math.max(0, Math.round(Number(b.hour)) || 19)), tz = Math.min(840, Math.max(-720, Math.round(Number(b.tz)) || 300));
+        const row = { device_id: dev.id, who: dev.who, p256dh: String(k.p256dh), auth: String(k.auth), hour, tz_min: tz, enabled: true };
+        const ex = (await d.store.select("ar_push", { endpoint: String(sub.endpoint) }))[0];
+        if (ex) await d.store.update("ar_push", { id: ex.id }, row); else await d.store.insert("ar_push", { endpoint: String(sub.endpoint), ...row });
+        return json({ ok: true });
+      }
+      if (path === "/push/off" && req.method === "POST") {
+        const b = await body(); await d.store.delete("ar_push", { endpoint: String(b.endpoint || ""), device_id: dev.id }); return json({ ok: true });
+      }
+      if (path === "/push/test" && req.method === "POST") {
+        if (!d.push) return err("фоновые уведомления на сервере не подключены", 503);
+        const v = await vapidRow(d), subs = await d.store.select("ar_push", { device_id: dev.id });
+        if (!subs.length) return err("Этот телефон не подписан на уведомления.", 404);
+        let sent = 0;
+        for (const s of subs) {
+          const st = await d.push.send({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, pushBody("АР · Тетрадь", "Проверка: уведомления работают.", "ar-test"), { publicKey: v.public_key, privateKey: v.private_key }).catch(() => 0);
+          if (st === 404 || st === 410) await d.store.delete("ar_push", { id: s.id }); else if (st >= 200 && st < 300) sent++;
+        }
+        return sent ? json({ ok: true, sent }) : err("Push-сервис не принял сообщение.", 502);
+      }
       if (path === "/devices" && req.method === "GET") {
         const xs = await d.store.select("ar_devices", {}, { order: "created_at" });
         return json({ ok: true, me: dev.id, is_main: true, devices: xs.map((x) => pubDevice(x, dev.id)) });
@@ -622,6 +756,7 @@ export function createHandler(d: Deps) {
         const b = await body();
         if (b.id === dev.id) return err("Своё устройство отозвать нельзя.");
         const r = await d.store.update("ar_devices", { id: String(b.id), revoked_at: null }, { revoked_at: isoNow(d) });
+        if (r.length) { await d.store.delete("ar_push", { device_id: String(b.id) }).catch(() => {}); await fbDisableUser(d, "dev-" + String(b.id)); }
         return r.length ? json({ ok: true }) : err("Устройство не найдено.", 404);
       }
       if (path === "/invite" && req.method === "POST") {

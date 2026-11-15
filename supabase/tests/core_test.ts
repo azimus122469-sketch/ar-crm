@@ -2,12 +2,13 @@ import { createHandler, TOOLS, fsDoc } from '../functions/ar-mcp/core.ts';
 let fails = 0; const check = (n: string, c: any, x: any = '') => { if(!c){ fails++; console.log('FAIL', n, x); } else console.log('ok  ', n); };
 
 // ── фейковая база ──
-const tables: Record<string, any[]> = { ar_devices: [], ar_invites: [], ar_tokens: [], ar_actions: [], ar_chat: [] };
+const tables: Record<string, any[]> = { ar_devices: [], ar_invites: [], ar_tokens: [], ar_actions: [], ar_chat: [], ar_push: [], ar_vapid: [{ id: 1, public_key: null, private_key: null, cron_secret: 'cronsecret1' }] };
 let clock = Date.parse('2026-11-12T09:00:00Z'); let n = 0;
 const match = (r: any, f: any) => Object.entries(f || {}).every(([k, v]) => v === null ? (r[k] == null) : r[k] === v);
 const store = {
   async select(t: string, f: any = {}, o: any = {}) { let xs = tables[t].filter(r => match(r, f)); if (o.order) xs = xs.slice().sort((a, b) => (a[o.order] < b[o.order] ? -1 : a[o.order] > b[o.order] ? 1 : 0) * (o.desc ? -1 : 1)); if (o.limit) xs = xs.slice(0, o.limit); return xs.map(x => ({ ...x })); },
   async insert(t: string, row: any) { const r = { id: 'id' + (++n), created_at: new Date(clock++).toISOString(), last_seen: new Date(clock).toISOString(), revoked_at: null, used_at: null, status: 'pending', ...row }; tables[t].push(r); return { ...r }; },
+  async delete(t: string, f: any) { tables[t] = tables[t].filter(r => !match(r, f)); },
   async update(t: string, f: any, p: any) { const xs = tables[t].filter(r => match(r, f)); xs.forEach(r => Object.assign(r, p)); return xs.map(x => ({ ...x })); }
 };
 // ── фейковые данные Firestore (в декодированном виде) ──

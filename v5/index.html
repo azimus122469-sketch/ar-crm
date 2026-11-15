@@ -47,6 +47,20 @@ button{cursor:pointer}
 .tab{display:none;padding:14px 16px}
 .tab.on{display:block}
 h2.h{font-family:var(--serif);font-size:22px;margin:0 0 10px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal .wd{font-size:11px;color:var(--faint);text-align:center;padding:2px 0}
+.cal .cd{min-height:50px;border:1px solid var(--edge);border-radius:6px;padding:3px 3px 2px;text-align:left;background:transparent;color:var(--ink);
+  display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;font-size:9px;line-height:1.15;min-width:0}
+.cal .cd b{font-family:var(--serif);font-size:12px;font-weight:700}
+.cal .cd i{font-style:normal;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cal .cd.off{background:#E6E4DD;color:var(--faint)}
+.cal .cd.fut{color:var(--faint);border-style:dashed}
+.cal .cd.plan{border-style:dashed}
+.cal .cd.today{border:2px solid var(--ink)}
+.cal .cd.void{border:0;background:transparent;pointer-events:none}
+.cal .cd .tg{font-size:8px;font-weight:700;letter-spacing:.02em}
+.lg{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--edge);font-size:14px}
+.lg .sw{flex:none;width:16px;height:16px;border:1px solid var(--ink);border-radius:4px;margin-top:2px}
 .card{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:14px}
 .col{display:flex;flex-direction:column;gap:10px}
 .rowf{display:flex;gap:10px;align-items:center}
@@ -197,6 +211,7 @@ table.t .neg{color:var(--red)}
 
   <main>
     <section class="tab on" id="tab-book">
+      <div class="banner" id="rem-banner" hidden></div>
       <div class="card col" id="entry">
         <div class="rowf">
           <div class="pt" id="entry-pt"></div>
@@ -272,6 +287,7 @@ table.t .neg{color:var(--red)}
     <section class="tab" id="tab-sum">
       <h2 class="h">Итоги</h2>
       <div id="sums"></div>
+      <div class="card col" id="cal-card" style="margin-top:14px"></div>
       <div class="card col" id="report-card" style="margin-top:14px">
         <div class="lbl">Отчёт за месяц, Excel</div>
         <div class="hint">Файл .xlsx: итог месяца, касса по дням, объекты, расчёт между партнёрами. Суммы считаются формулами.</div>
@@ -313,7 +329,9 @@ table.t .neg{color:var(--red)}
           <button class="btn2" data-act="changePin">Сменить код</button>
           <button class="btn2" id="bio-btn" data-act="bioToggle" hidden></button>
           <div class="hint" id="bio-msg"></div>
+          <div class="hint" id="auth-msg"></div>
         </div>
+        <div class="card col" id="rem-card"></div>
         <div class="card col">
           <div class="lbl">Пока в старой версии</div>
           <div class="hint">Замеры по календарю, выгрузка копии.</div>
@@ -323,7 +341,7 @@ table.t .neg{color:var(--red)}
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.4</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.5</div>
       </div>
     </section>
   </main>
@@ -437,7 +455,7 @@ const S = {
   entry: { partner: null, kind: null, objectId: '', src: 'cash' },
   sheetTx: { type: 'expense' },
   rate: Number(LS.get('ar_rate')) || 0,
-  edit: null
+  edit: null, cal: { k: 0 }
 };
 // Число из поля: «425 тыс», «12 000», «2,5 млн», «50.5». NaN, если не число.
 function numOf(s){
@@ -461,7 +479,7 @@ function actor(x){
 }
 const isAi = x => actor(x) === 'помощник';
 let adapter = null;
-S.stock = []; S.stockErr = '';
+S.stock = []; S.stockErr = ''; S.auth = '';
 S.stk = { view: 'left', kind: 'in', open: false, partner: null, unit: 'м', unitTouched: false, cur: 'uzs', src: 'cash' };
 const realObjects = () => S.objects.filter(o => o.sandbox !== true);
 const txOf = o => Array.isArray(o.transactions) ? o.transactions : [];
@@ -495,34 +513,56 @@ const FB_CFG = {
 };
 function diagnose(err){
   const c = err && err.code ? err.code : '';
-  if(c === 'permission-denied') return 'База отклонила доступ (правила Firestore).';
+  if(c === 'permission-denied') return S.auth === 'ok' ? 'База отклонила доступ (правила Firestore).' : 'База закрыта для этого устройства. Подключи его: Ещё, Мой кабинет.';
   if(c === 'failed-precondition') return 'База Firestore не создана.';
   if(c === 'unavailable') return 'Нет доступа к базе. Проверь интернет.';
   return 'Ошибка базы: ' + (c || 'неизвестно');
 }
 async function liveAdapter(){
   const V = '10.12.0';
-  const [{ initializeApp }, fs] = await Promise.all([
+  const [{ initializeApp }, fs, au] = await Promise.all([
     import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),
-    import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)
+    import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`),
+    import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`).catch(() => null)
   ]);
   const app = initializeApp(FB_CFG);
+  const auth = au ? au.getAuth(app) : null;
+  // Вход в базу по пропуску от сервера: статусы ok | off (на сервере нет ключа) | nodev (устройство не подключено) | fail
+  async function signIn(){
+    if(!auth) return 'fail';
+    const tk = LS.get('ar_dev'); if(!tk) return 'nodev';
+    try {
+      if(auth.authStateReady) await auth.authStateReady();
+      if(auth.currentUser) return 'ok';
+      const r = await fetch(AR_API + '/firebase-token', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ar-device': tk }, body: '{}' });
+      if(r.status === 503) return 'off';
+      if(!r.ok) return 'fail';
+      const j = await r.json(); await au.signInWithCustomToken(auth, j.token); return 'ok';
+    } catch(e){ console.error('auth', e); return 'fail'; }
+  }
   let db;
   try { db = fs.initializeFirestore(app, { experimentalAutoDetectLongPolling: true, localCache: fs.persistentLocalCache({ tabManager: fs.persistentMultipleTabManager() }) }); }
   catch(e){ try { db = fs.initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); } catch(e2){ db = fs.getFirestore(app); } }
   return {
     mode: 'live',
     subscribe(on){
-      on.conn('sync');
-      fs.onSnapshot(fs.query(fs.collection(db, 'objects'), fs.orderBy('createdAt', 'desc')),
-        snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.objects(a); on.conn(navigator.onLine === false ? 'off' : 'ok'); },
-        err => { console.error('objects', err); on.conn('err', diagnose(err)); });
-      fs.onSnapshot(fs.query(fs.collection(db, 'cashbox'), fs.orderBy('ts', 'desc')),
-        snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.cash(a); },
-        err => console.error('cashbox', err));
-      fs.onSnapshot(fs.query(fs.collection(db, 'stock'), fs.orderBy('ts', 'desc')),
-        snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.stock(a, ''); },
-        err => { console.error('stock', err); on.stock(null, diagnose(err)); });
+      let unsubs = [];
+      const start = async () => {
+        unsubs.forEach(u => u()); unsubs = [];
+        on.conn('sync');
+        S.auth = await signIn(); updateMore();
+        unsubs.push(fs.onSnapshot(fs.query(fs.collection(db, 'objects'), fs.orderBy('createdAt', 'desc')),
+          snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.objects(a); on.conn(navigator.onLine === false ? 'off' : 'ok'); },
+          err => { console.error('objects', err); on.conn('err', diagnose(err)); }));
+        unsubs.push(fs.onSnapshot(fs.query(fs.collection(db, 'cashbox'), fs.orderBy('ts', 'desc')),
+          snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.cash(a); },
+          err => console.error('cashbox', err)));
+        unsubs.push(fs.onSnapshot(fs.query(fs.collection(db, 'stock'), fs.orderBy('ts', 'desc')),
+          snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.stock(a, ''); },
+          err => { console.error('stock', err); on.stock(null, diagnose(err)); }));
+      };
+      this.reauth = start;
+      return start();
     },
     addStock: rec => fs.addDoc(fs.collection(db, 'stock'), { ...rec, createdAt: fs.serverTimestamp() }),
     deleteStock: id => fs.deleteDoc(fs.doc(db, 'stock', id)),
@@ -747,6 +787,158 @@ function updateObjects(){
       <div class="ob">Приход ${fmt(sumT(txs, 'income'))} · Расход ${fmt(sumT(txs, 'expense'))}</div></button>`;
   }).join('');
 }
+
+
+// <remind>
+// Напоминания внести данные. 1) Баннер в приложении. 2) Уведомление на телефон: серверное (Web Push, приходит и при закрытом
+// приложении) и местное (пока приложение открыто). Настройка у каждого телефона своя.
+S.rem = { on: false, hour: 19, push: false, msg: '', busy: false, t0: Date.now() };
+try { const r = JSON.parse(LS.get('ar_rem') || 'null'); if(r){ S.rem.on = !!r.on; S.rem.hour = Number(r.hour) || 19; } } catch(e){}
+const remSave = () => LS.set('ar_rem', JSON.stringify({ on: S.rem.on, hour: S.rem.hour }));
+const remSupported = () => 'Notification' in window && 'serviceWorker' in navigator;
+function hasToday(now = Date.now()){
+  const k = dayKey(now);
+  return S.cashbox.some(c => tsNum(c.ts) && dayKey(tsNum(c.ts)) === k)
+    || realObjects().some(o => txOf(o).some(t => Number(t.ts) && dayKey(Number(t.ts)) === k))
+    || S.stock.some(r => r.kind !== 'min' && tsNum(r.ts) && dayKey(tsNum(r.ts)) === k);
+}
+const remDue = (now = Date.now()) => S.rem.on && new Date(now).getHours() >= S.rem.hour && S.conn === 'ok' && now - S.rem.t0 > 15000 && !hasToday(now);
+const REM_TEXT = 'Сегодня ещё ничего не внесено. Запиши расходы и приходы, пока помнишь.';
+async function remNotify(title, body, tag){
+  const reg = await navigator.serviceWorker.ready;
+  await reg.showNotification(title, { body, tag: tag || 'ar-remind', icon: 'icon-192.png', badge: 'icon-192.png', data: { url: './' } });
+}
+function remCheck(){
+  const b = $('#rem-banner'); if(!b) return;
+  const due = remDue();
+  b.hidden = !due; if(due) b.textContent = REM_TEXT;
+  // местное уведомление нужно, только если серверное не подключено
+  if(due && !S.rem.push && remSupported() && Notification.permission === 'granted' && LS.get('ar_rem_last') !== dayKey(Date.now())){
+    LS.set('ar_rem_last', dayKey(Date.now())); remNotify('АР · Тетрадь', REM_TEXT).catch(() => {});
+  }
+}
+const urlB64 = b => { const p = '='.repeat((4 - b.length % 4) % 4), r = (b + p).replace(/-/g, '+').replace(/_/g, '/'), a = atob(r); return Uint8Array.from(a, c => c.charCodeAt(0)); };
+async function remPushSync(){
+  // Подписка на серверные уведомления. Нужны подключённое устройство и разрешение на уведомления.
+  if(!S.dev.token || !('PushManager' in window)) return false;
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if(!sub){
+    const k = (await api('/push/key')).key;
+    sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(k) });
+  }
+  await api('/push/subscribe', { subscription: sub.toJSON(), hour: S.rem.hour, tz: -new Date().getTimezoneOffset() });
+  return true;
+}
+async function remOn(){
+  if(!remSupported()){ S.rem.msg = 'Здесь уведомления недоступны. На iPhone сначала добавь приложение «На экран Домой» и открой его с иконки.'; updateRem(); return; }
+  S.rem.busy = true; updateRem();
+  try {
+    const perm = Notification.permission === 'granted' ? 'granted' : await Notification.requestPermission();
+    if(perm !== 'granted'){ S.rem.msg = 'Разрешение на уведомления не дано. Включи его в настройках телефона для этого приложения.'; return; }
+    S.rem.on = true; remSave();
+    try { S.rem.push = await remPushSync(); S.rem.msg = S.rem.push ? '' : 'Фоновые уведомления не подключены: сначала подключи устройство в «Мой кабинет». Пока напоминания работают, когда приложение открыто.'; }
+    catch(e){ S.rem.push = false; S.rem.msg = 'Фоновые уведомления не подключились (' + e.message + '). Напоминания работают, когда приложение открыто.'; }
+  } finally { S.rem.busy = false; updateRem(); remCheck(); }
+}
+async function remOff(){
+  S.rem.on = false; remSave(); S.rem.msg = ''; S.rem.push = false; updateRem(); remCheck();
+  try { const reg = await navigator.serviceWorker.ready, sub = await reg.pushManager.getSubscription(); if(sub){ try { await api('/push/off', { endpoint: sub.endpoint }); } catch(e){} await sub.unsubscribe(); } } catch(e){}
+}
+async function remHour(el){
+  S.rem.hour = Number(el.value) || 19; remSave();
+  if(S.rem.on && S.rem.push){ try { await remPushSync(); } catch(e){ S.rem.msg = 'Не удалось сохранить время на сервере: ' + e.message; } }
+  updateRem(); remCheck();
+}
+async function remTest(){
+  try {
+    if(Notification.permission !== 'granted') throw new Error('нет разрешения');
+    if(S.rem.push){ await api('/push/test', {}); S.rem.msg = 'Тест отправлен с сервера, он придёт через несколько секунд.'; }
+    else { await remNotify('АР · Тетрадь', 'Проверка: уведомления работают.', 'ar-test'); S.rem.msg = 'Тест показан на этом телефоне.'; }
+  } catch(e){ S.rem.msg = 'Не получилось: ' + e.message; }
+  updateRem();
+}
+function updateRem(){
+  const box = $('#rem-card'); if(!box) return;
+  if(box.contains(document.activeElement) && document.activeElement.tagName === 'SELECT') return;
+  const hrs = [16, 17, 18, 19, 20, 21, 22];
+  box.innerHTML = `<div class="lbl">Напоминание внести данные</div>
+    <div class="hint">Если к выбранному времени за день нет ни одной записи, на этот телефон придёт уведомление. Настройка своя на каждом телефоне.</div>
+    <div class="fl"><span class="hint">Время напоминания</span><select class="in" id="rem-hour" data-ch="remHour">${hrs.map(h => `<option value="${h}" ${h === S.rem.hour ? 'selected' : ''}>${pad2(h)}:00</option>`).join('')}</select></div>
+    <button class="btn${S.rem.on ? '2' : ''}" data-act="${S.rem.on ? 'remOff' : 'remOn'}" ${S.rem.busy ? 'disabled' : ''}>${S.rem.on ? 'Выключить напоминание' : 'Включить напоминание'}</button>
+    ${S.rem.on ? '<button class="btn2" data-act="remTest">Проверить уведомление</button>' : ''}
+    <div class="hint">${S.rem.on ? (S.rem.push ? 'Включено, приходит и при закрытом приложении.' : 'Включено, работает пока приложение открыто.') : 'Выключено.'}${S.rem.msg ? '<br>' + esc(S.rem.msg) : ''}</div>
+    <div class="hint">iPhone: уведомления работают, только если приложение добавлено «На экран Домой» и открыто с иконки.</div>`;
+}
+// </remind>
+// <calendar>
+// Календарь работы: строится сам. День рабочий, если в нём есть расход по объекту, списание материала на объект,
+// дата начала объекта или сдача. День без таких записей, прошедший, считается выходным.
+const CAL_COLORS = ['#BCCBEA', '#E2CFAE', '#BFDDB8', '#EBC3C9', '#CFC3EA', '#B2DADD', '#EBDB9C', '#D3BBA9', '#F0C9A6', '#C5CED8'];
+const WD_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+function calModel(objects, stock, K, now = Date.now()){
+  const y = Math.floor(K / 100), mo = K % 100, n = new Date(y, mo, 0).getDate();
+  const order = objects.slice().sort((a, b) => (tsNum(a.createdAt) || Infinity) - (tsNum(b.createdAt) || Infinity) || String(a.name).localeCompare(String(b.name), 'ru'));
+  const color = new Map(order.map((o, i) => [o.id, CAL_COLORS[i % CAL_COLORS.length]]));
+  const byId = new Map(objects.map(o => [o.id, o]));
+  const ev = new Map(); // день -> объект -> { n: записей, start, end }
+  const mark = (key, o, f) => {
+    if(!o) return;
+    const m = ev.get(key) || new Map(); const e = m.get(o.id) || { o, n: 0, start: false, end: false };
+    f(e); m.set(o.id, e); ev.set(key, m);
+  };
+  objects.forEach(o => {
+    txOf(o).forEach(t => { if(t.type === 'expense' && Number(t.ts)) mark(dayKey(Number(t.ts)), o, e => e.n++); });
+    if(/^\d{4}-\d{2}-\d{2}$/.test(o.date || '')) mark(o.date, o, e => { e.start = true; });
+    if(o.status === 'done' && tsNum(o.statusTs)) mark(dayKey(tsNum(o.statusTs)), o, e => { e.end = true; });
+  });
+  stock.forEach(r => { if(r.kind === 'out' && r.objectId && tsNum(r.ts)) mark(dayKey(tsNum(r.ts)), byId.get(r.objectId), e => e.n++); });
+  const today = dayKey(now), days = [], legend = new Map();
+  for(let d = 1; d <= n; d++){
+    const key = y + '-' + pad2(mo) + '-' + pad2(d), dow = (new Date(y, mo - 1, d).getDay() + 6) % 7, m = ev.get(key);
+    const objs = m ? [...m.values()].map(e => ({ id: e.o.id, name: e.o.name, addr: e.o.addr || '', color: color.get(e.o.id), start: e.start, end: e.end, n: e.n })) : [];
+    const future = key > today;
+    days.push({ key, d, dow, objs, work: objs.length > 0, off: !future && objs.length === 0, future, today: key === today });
+    objs.forEach(x => { const l = legend.get(x.id) || { ...x, days: 0, first: key, last: key }; if(!future) l.days++; l.last = key; if(x.start) l.start = true; if(x.end) l.end = true; legend.set(x.id, l); });
+  }
+  const work = days.filter(x => x.work && !x.future).length, off = days.filter(x => x.off).length;
+  return { y, mo, days, work, off, legend: [...legend.values()] };
+}
+const ddmm = k => k.slice(8) + '.' + k.slice(5, 7);
+function updateCal(){
+  const box = $('#cal-card'); if(!box) return;
+  if(!S.cal.k) S.cal.k = ymOf(Date.now());
+  const K = S.cal.k, M = calModel(realObjects(), S.stock, K);
+  const lead = (new Date(M.y, M.mo - 1, 1).getDay() + 6) % 7;
+  const cell = x => {
+    const bg = x.objs.length === 1 ? `background:${x.objs[0].color}` : x.objs.length > 1 ? `background:linear-gradient(135deg,${x.objs[0].color} 50%,${x.objs[1].color} 50%)` : '';
+    const tag = x.objs.some(o => o.end) ? 'сдан' : x.objs.some(o => o.start) ? 'начало' : '';
+    const label = x.objs.length ? esc(String(x.objs[0].name).split(',')[0]) + (x.objs.length > 1 ? ' +' + (x.objs.length - 1) : '') : '';
+    return `<button class="cd ${x.work ? (x.future ? 'plan' : '') : x.off ? 'off' : 'fut'} ${x.today ? 'today' : ''}" style="${bg}" data-act="calDay" data-k="${x.key}"><span><b>${x.d}</b> <span class="tg">${tag}</span></span><i>${label}</i></button>`;
+  };
+  box.innerHTML = `<div class="rowf" style="justify-content:space-between;align-items:center">
+      <button class="btn2" style="width:48px;padding:8px" data-act="calNav" data-d="-1" aria-label="Прошлый месяц">‹</button>
+      <div class="lbl" style="margin:0;text-align:center">Календарь работы · ${ymLabel(K)}</div>
+      <button class="btn2" style="width:48px;padding:8px" data-act="calNav" data-d="1" aria-label="Следующий месяц">›</button></div>
+    <div class="hint">Работали: <b>${M.work}</b> дн. · выходных: <b>${M.off}</b> дн. День работы окрашен цветом объекта, выходной серый. Строится сам по расходам на объекты и списаниям со склада.</div>
+    <div class="cal">${WD_RU.map(w => `<div class="wd">${w}</div>`).join('')}${'<div class="cd void"></div>'.repeat(lead)}${M.days.map(cell).join('')}</div>
+    ${M.legend.length ? `<div>${M.legend.map(l => `<div class="lg"><span class="sw" style="background:${l.color}"></span><div style="flex:1"><b>${esc(l.name)}</b>${l.addr ? ', ' + esc(l.addr) : ''}<div class="hint">${l.days ? l.days + ' дн. · ' : 'запланирован · '}с ${ddmm(l.first)} по ${ddmm(l.last)}${l.start ? ' · начало ' + ddmm(l.first) : ''}${l.end ? ' · сдан ' + ddmm(l.last) : ''}</div></div></div>`).join('')}</div>` : '<div class="hint">В этом месяце записей по объектам нет.</div>'}`;
+}
+function calNav(el){
+  let y = Math.floor(S.cal.k / 100), m = S.cal.k % 100 + Number(el.dataset.d);
+  if(m < 1){ m = 12; y--; } else if(m > 12){ m = 1; y++; }
+  S.cal.k = y * 100 + m; updateCal();
+}
+function calDay(el){
+  const M = calModel(realObjects(), S.stock, S.cal.k), x = M.days.find(z => z.key === el.dataset.k); if(!x) return;
+  const recs = [];
+  realObjects().forEach(o => txOf(o).forEach(t => { if(t.type === 'expense' && dayKey(Number(t.ts)) === x.key) recs.push(`${esc(o.name)}: ${esc(t.desc)}, ${fmt(t.amount)}`); }));
+  S.stock.forEach(r => { if(r.kind === 'out' && r.objectId && dayKey(tsNum(r.ts)) === x.key) recs.push(`${esc(r.objectName || '')}: списано ${esc(r.material)} ${fmt2(r.qty)} ${esc(r.unit || '')}`); });
+  openSheet(`<div class="sheet-h"><h3>${x.d}.${pad2(M.mo)}.${M.y}, ${WD_RU[x.dow]}</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+    <div class="col">${x.work ? x.objs.map(o => `<div class="lg"><span class="sw" style="background:${o.color}"></span><div><b>${esc(o.name)}</b>${o.addr ? '<div class="hint">' + esc(o.addr) + '</div>' : ''}${o.start ? '<div class="hint">день начала объекта</div>' : ''}${o.end ? '<div class="hint">объект сдан</div>' : ''}</div></div>`).join('') + (recs.length ? `<div class="hint">${recs.join('<br>')}</div>` : '')
+      : x.future ? '<div class="hint">Этот день ещё не наступил.</div>' : '<div class="hint">Выходной: записей по объектам в этот день нет. Если работали, но забыли внести, добавь запись с нужной датой.</div>'}</div>`);
+}
+// </calendar>
 function updateSums(){
   const m = calc();
   const row = (a, b, cls = '') => `<tr class="${cls}"><td>${a}</td><td>${b}</td></tr>`;
@@ -783,10 +975,12 @@ function updateMore(){
   $('#pin-info').textContent = LS.get('ar_pin') ? 'Код свой, 4 цифры. Хранится только на этом телефоне.' : 'Сейчас код по умолчанию: 0000. Смените его на свой.';
   const bb = $('#bio-btn'); bb.hidden = !S.bioOk; bb.textContent = LS.get('ar_bio') ? 'Выключить вход по Face ID / отпечатку' : 'Включить вход по Face ID / отпечатку';
   $('#bio-msg').textContent = S.bioOk === false ? 'На этом устройстве вход по Face ID / отпечатку недоступен.' : '';
+  const AM = { ok: 'Защита базы: устройство подтверждено сервером.', off: 'Защита базы: на сервере ещё не задан ключ Firebase, база пока открыта по общему ключу.', nodev: 'Защита базы: подключи устройство в «Мой кабинет», тогда оно получит доступ к закрытой базе.', fail: 'Защита базы: не удалось подтвердить устройство. Проверь интернет.' };
+  $('#auth-msg').textContent = live ? (AM[S.auth] || '') : '';
   const mr = $('#more-rate'); if(document.activeElement !== mr) mr.value = S.rate ? fmt(S.rate) : '';
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateStock();
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateStock(); updateCal(); updateRem(); remCheck();
 }
 
 // ───────────── записи ─────────────
@@ -1358,8 +1552,10 @@ const ACT = {
   aiApprove: el => aiApprove(el.dataset.id),
   aiReject: el => aiReject(el.dataset.id),
   edp: el => { S.edit.partner = el.dataset.p; renderPT($('#ed-pt'), S.edit.partner, 'edp'); },
-  src: el => { S.entry.src = el.dataset.s; updateEntry(); }
+  src: el => { S.entry.src = el.dataset.s; updateEntry(); },
+  calNav, calDay, remOn, remOff, remTest
 };
+document.addEventListener('change', e => { const t = e.target; if(t && t.dataset && t.dataset.ch === 'remHour') remHour(t); });
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if(!el) return;
   const f = ACT[el.dataset.act]; if(f) f(el, e);
@@ -1552,6 +1748,21 @@ async function buildReport(ExcelJS, data, K, withCache = true){
       ms.getRow(tr).eachCell({ includeEmpty: true }, (x, n) => { if(n <= 8) x.border = { top: { style: 'thin', color: { argb: INK } }, bottom: { style: 'double', color: { argb: INK } } }; });
     }
   }
+  // ── Дни: работал или выходной, на каких объектах ──
+  {
+    const M = calModel(data.objects, Array.isArray(data.stock) ? data.stock : [], K, data.now || Date.now());
+    const ds = wb.addWorksheet('Дни', { views: [{ state: 'frozen', ySplit: 1 }] });
+    ds.columns = [{ header: 'Дата', width: 12 }, { header: 'День', width: 6 }, { header: 'Статус', width: 12 }, { header: 'Объекты, адреса', width: 60 }];
+    head(ds.getRow(1)); ds.getRow(1).height = 24;
+    M.days.forEach(x => {
+      const row = ds.addRow([x.d + '.' + pad2(M.mo) + '.' + M.y, WD_RU[x.dow], x.work ? 'работали' : x.future ? '' : 'выходной',
+        x.objs.map(o => o.name + (o.addr ? ' (' + o.addr + ')' : '') + (o.start ? ', начало' : '') + (o.end ? ', сдан' : '')).join('; ')]);
+      if(x.off) row.eachCell(c => { c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E4DD' } }; c.font = { color: { argb: 'FF8A939E' } }; });
+    });
+    const t = ds.addRow(['Работали, дней', '', null, '']); t.getCell(3).value = F(`COUNTIF(C2:C${M.days.length + 1},"работали")`, M.work);
+    const u = ds.addRow(['Выходных, дней', '', null, '']); u.getCell(3).value = F(`COUNTIF(C2:C${M.days.length + 1},"выходной")`, M.off);
+    t.font = u.font = { bold: true };
+  }
   wb.views = [{ activeTab: 0 }];
   return wb;
 }
@@ -1681,7 +1892,7 @@ async function devRegister(kind){
     const j = await api(kind === 'main' ? '/register' : '/join', kind === 'main' ? { setup_code: code, name, platform: devGuess() } : { code, name, platform: devGuess() });
     LS.set('ar_dev', j.token); S.dev.token = j.token; S.dev.msg = '';
     if(j.who && j.who !== S.me){ S.me = j.who; LS.set('ar_pill', S.me); S.entry.partner = null; }
-    toast('Устройство подключено'); await cabPull(); aiPull(); updateAll();
+    toast('Устройство подключено'); await cabPull(); aiPull(); updateAll(); if(adapter && adapter.reauth) adapter.reauth();
   } catch(e){ er.textContent = e.message; }
 }
 async function devInvite(){
@@ -1801,6 +2012,9 @@ async function aiReject(id){ try { await api('/actions/reject', { id }); } catch
     conn: (c, msg) => { S.conn = c; S.connMsg = msg || ''; updateHeader(); updateAi(); }
   });
   if(S.dev.token){ cabPull(); aiPull(); }
+  if(S.rem.on && remSupported() && 'PushManager' in window){ navigator.serviceWorker.ready.then(r => r.pushManager.getSubscription()).then(sub => { S.rem.push = !!sub && S.dev.token !== ''; updateRem(); remCheck(); }).catch(() => {}); }
+  setInterval(remCheck, 60000);
+  document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') remCheck(); });
   let tick = 0;
   setInterval(() => {
     if(!S.dev.token || document.visibilityState !== 'visible') return;
