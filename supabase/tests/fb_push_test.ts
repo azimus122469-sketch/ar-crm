@@ -1,7 +1,7 @@
 import { createHandler } from '../functions/ar-mcp/core.ts';
 import { generateKeyPairSync, createVerify } from 'node:crypto';
 let fails = 0; const check = (n: string, c: any, x: any = '') => { if(!c){ fails++; console.log('FAIL', n, x); } else console.log('ok  ', n); };
-const tables: Record<string, any[]> = { ar_devices: [], ar_invites: [], ar_tokens: [], ar_actions: [], ar_chat: [], ar_push: [], ar_vapid: [{ id: 1, public_key: null, private_key: null, cron_secret: 'cron-xyz' }] };
+const tables: Record<string, any[]> = { ar_devices: [], ar_invites: [], ar_tokens: [], ar_actions: [], ar_chat: [], ar_push: [], ar_archive: [], ar_archive_data: [], ar_vapid: [{ id: 1, public_key: null, private_key: null, cron_secret: 'cron-xyz' }] };
 let clock = Date.parse('2026-11-15T09:00:00Z'), n = 0; // 14:00 в Ташкенте
 const match = (r: any, f: any) => Object.entries(f || {}).every(([k, v]) => v === null ? (r[k] == null) : r[k] === v);
 const store = {
@@ -61,6 +61,8 @@ const call = async (method: string, path: string, body?: any, headers: any = {})
   const tick = () => call('POST', '/push/tick', {}, { 'x-ar-cron': 'cron-xyz' });
   sent.length = 0;
   r = await tick(); check('до 18:00 не шлёт (сейчас 14:00)', r.j.ok && r.j.due === 0 && !sent.length, JSON.stringify(r.j));
+  check('расписание сняло копию архива', r.j.archive && r.j.archive.status === 'saved' && tables.ar_archive.length === 1, JSON.stringify(r.j.archive));
+  r = await tick(); check('архив в тот же день не дублируется', r.j.archive.status === 'fresh' && tables.ar_archive.length === 1, JSON.stringify(r.j.archive));
   clock = Date.parse('2026-11-15T13:20:00Z'); // 18:20 Ташкент
   FS.cashbox = [{ id: 'c', type: 'overhead', amount: 1, ts: Date.parse('2026-11-15T07:00:00Z') }]; // запись сегодня (12:00)
   r = await tick(); check('есть запись за сегодня: не шлёт, день отмечен', r.j.skipped === 1 && !sent.length && tables.ar_push[0].last_sent === '2026-11-15', JSON.stringify(r.j));

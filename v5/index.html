@@ -123,6 +123,10 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:40px;
 .mopt b{font-family:var(--serif);font-size:17px}
 .mopt small{font-size:12px;opacity:.8}
 .mopt.on{background:var(--ink);color:var(--paper)}
+.arow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--ink)}
+.arow b{font-family:var(--serif);font-size:17px}
+.arbtns{display:flex;gap:8px;flex-shrink:0}
+.arbtns .btn2{padding:8px 12px;width:auto}
 .chart{width:100%;display:block;height:auto}
 .chart text{font-family:var(--sans)}
 .chart .vl{font-family:var(--serif);font-weight:700}
@@ -350,6 +354,7 @@ table.t .neg{color:var(--red)}
         <button class="btn2" id="rep-share" data-act="repShare" hidden>Отправить файл…</button>
         <div class="hint" id="rep-msg"></div>
       </div>
+      <div class="card col" id="arch-card" style="margin-top:14px" hidden></div>
       </div></div>
     </section>
 
@@ -395,7 +400,7 @@ table.t .neg{color:var(--red)}
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.6</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.7</div>
       </div>
     </section>
   </main>
@@ -431,6 +436,7 @@ const KIND_LABEL = { overhead: 'общий расход', draw: 'забрал с
 const nf = new Intl.NumberFormat('ru-RU');
 const fmt = n => nf.format(Math.round(Number(n) || 0));
 const money = n => fmt(n) + ' сум';
+const negFmt = n => (Math.round(Number(n) || 0) ? '−' : '') + fmt(n); // минус только у ненулевых сумм, без «−0»
 const signed = (n, plus) => (plus ? '+' : '−') + fmt(Math.abs(n));
 const pad2 = n => String(n).padStart(2, '0');
 const stripEmoji = s => String(s || '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
@@ -999,9 +1005,9 @@ function updateSums(){
   let html = `<div class="card" style="margin-bottom:14px"><table class="t">
     ${row('Приход от клиентов', fmt(m.clients))}
     ${row('Вложили партнёры', fmt(m.contrib))}
-    ${row('Расходы по объектам', '−' + fmt(m.objExp))}
-    ${row('Общие расходы', '−' + fmt(m.overhead))}
-    ${row('Взяли себе', '−' + fmt(m.draws))}
+    ${row('Расходы по объектам', negFmt(m.objExp))}
+    ${row('Общие расходы', negFmt(m.overhead))}
+    ${row('Взяли себе', negFmt(m.draws))}
     ${row('Остаток в кассе', `<span class="${m.left < 0 ? 'neg' : ''}">${fmt(m.left)}</span>`, 'tot')}
   </table></div>
   <div class="card" style="margin-bottom:14px"><table class="t">
@@ -1013,9 +1019,9 @@ function updateSums(){
   const r3 = (a, f, cls = '') => `<tr class="${cls}"><td>${a}</td><td style="text-align:right">${f(cols[0])}</td><td style="text-align:right">${f(cols[1])}</td></tr>`;
   html += r3('Доля прибыли', x => fmt(x.share))
        + r3('Вложил', x => fmt(x.c))
-       + r3('Вложение возвращено', x => '−' + fmt(x.returned))
+       + r3('Вложение возвращено', x => negFmt(x.returned))
        + r3('Осталось вернуть вложение', x => `<b>${fmt(x.toReturn)}</b>`)
-       + r3('Взял из доли прибыли', x => '−' + fmt(x.fromShare))
+       + r3('Взял из доли прибыли', x => negFmt(x.fromShare))
        + r3('К получению', x => `<span class="${x.owed < 0 ? 'neg' : ''}">${fmt(x.owed)}</span>`, 'tot')
        + '</table><div class="hint" style="margin-top:8px">Когда партнёр забирает деньги, сначала возвращается его вложение, потом идёт доля прибыли.</div></div>';
   $('#sums').innerHTML = html;
@@ -1162,7 +1168,7 @@ function updateMore(){
   updateModelCard();
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateStock(); updateCal(); updateCharts(); updateRem(); remCheck();
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateArchive(); updateStock(); updateCal(); updateCharts(); updateRem(); remCheck();
 }
 
 // ───────────── записи ─────────────
@@ -1735,7 +1741,8 @@ const ACT = {
   aiReject: el => aiReject(el.dataset.id),
   edp: el => { S.edit.partner = el.dataset.p; renderPT($('#ed-pt'), S.edit.partner, 'edp'); },
   src: el => { S.entry.src = el.dataset.s; updateEntry(); },
-  calNav, calDay, remOn, remOff, remTest, chTab, chNav, aiPlus, aiFileDel, aiModelSet
+  calNav, calDay, remOn, remOff, remTest, chTab, chNav, aiPlus, aiFileDel, aiModelSet,
+  archNow: () => archNow(), archXlsx: el => archXlsx(el), archJson: el => archJson(el)
 };
 document.addEventListener('change', e => { const t = e.target; if(t && t.dataset && t.dataset.ch === 'remHour') remHour(t); });
 document.addEventListener('click', e => {
@@ -1983,6 +1990,73 @@ function loadExcelJS(){
   const one = u => new Promise((res, rej) => { const el = document.createElement('script'); el.src = u; el.onload = res; el.onerror = () => { el.remove(); rej(new Error('load')); }; document.head.appendChild(el); });
   return one(urls[0]).catch(() => one(urls[1])).then(() => { if(!window.ExcelJS) throw new Error('load'); });
 }
+// ───────────── архив данных ─────────────
+function saveBlob(name, blob){
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+}
+async function archPull(){
+  const A = S.arch; if(A.loading || !S.dev.token) return;
+  A.loading = true;
+  try { const j = await api('/archive'); A.list = j.months || []; A.loaded = true; A.err = ''; }
+  catch(e){ A.err = 'Архив не загрузился: ' + (e && e.message || 'нет связи'); A.loaded = true; }
+  finally { A.loading = false; updateArchive(); }
+}
+function updateArchive(){
+  const box = $('#arch-card'); if(!box) return;
+  if(!S.dev.token){ box.hidden = true; if(S.arch.loaded) S.arch = archBlank(); return; }
+  box.hidden = false;
+  const A = S.arch;
+  if(!A.loaded && !A.loading){ archPull(); }
+  const dis = A.busy ? ' disabled' : '';
+  const rows = A.list.map(x => {
+    const k = Number(x.month.slice(0, 4)) * 100 + Number(x.month.slice(5, 7)), c = x.counts || {};
+    return `<div class="arow"><div><b>${esc(ymLabel(k))}</b><div class="hint">копия ${esc(dtm(Date.parse(x.taken_at)))} · объектов ${c.objects || 0} · касса ${c.cashbox || 0} · склад ${c.stock || 0}</div></div>`
+      + `<div class="arbtns"><button class="btn2" data-act="archXlsx" data-m="${esc(x.month)}"${dis}>Excel</button><button class="btn2" data-act="archJson" data-m="${esc(x.month)}"${dis}>Копия</button></div></div>`;
+  }).join('');
+  const html = `<div class="lbl">Архив данных</div><div class="hint">Сервер сам сохраняет полную копию раз в сутки, в каждом месяце остаётся последняя. Excel и копию можно скачать в любой момент.</div>`
+    + (A.err ? `<div class="hint" style="color:var(--red)">${esc(A.err)}</div>` : '')
+    + (rows || (A.loaded && !A.err ? '<div class="hint">Копий пока нет. Первая появится в течение суток или нажми кнопку ниже.</div>' : ''))
+    + `<button class="btn" data-act="archNow"${dis}>${A.busy === 'now' ? 'Сохраняю…' : 'Сохранить копию сейчас'}</button>`
+    + (A.msg ? `<div class="hint">${esc(A.msg)}</div>` : '');
+  if(box.dataset.h !== html){ box.innerHTML = html; box.dataset.h = html; }
+}
+async function archNow(){
+  const A = S.arch; if(A.busy) return;
+  A.busy = 'now'; A.msg = ''; A.err = ''; updateArchive();
+  try {
+    const j = await api('/archive/now', {});
+    A.msg = j.status === 'fresh' ? 'Копия уже свежая, сохранена только что.' : j.status === 'saved' ? 'Копия сохранена.' : 'Копия не изменилась (данные не прочитались).';
+    A.loaded = false;
+  } catch(e){ A.err = 'Не получилось: ' + (e && e.message || 'ошибка'); }
+  finally { A.busy = ''; updateArchive(); archPull(); }
+}
+async function archXlsx(el){
+  const A = S.arch, m = el.dataset.m; if(A.busy || !m) return;
+  A.busy = m; A.msg = 'Собираю Excel…'; A.err = ''; updateArchive();
+  try {
+    const j = await api('/archive/' + encodeURIComponent(m));
+    await loadExcelJS();
+    const K = Number(m.slice(0, 4)) * 100 + Number(m.slice(5, 7));
+    const wb = await buildReport(window.ExcelJS, { objects: j.data.objects || [], cashbox: j.data.cashbox || [], stock: j.data.stock || [] }, K);
+    const buf = await wb.xlsx.writeBuffer(), name = 'AR-archive-' + m + '.xlsx';
+    saveBlob(name, new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    A.msg = 'Готово: ' + name;
+  } catch(e){
+    console.error(e); A.msg = '';
+    A.err = e && e.message === 'load' ? 'Не загрузилась библиотека Excel. Проверь интернет и повтори.' : 'Не получилось собрать Excel: ' + (e && e.message || 'ошибка');
+  } finally { A.busy = ''; updateArchive(); }
+}
+async function archJson(el){
+  const A = S.arch, m = el.dataset.m; if(A.busy || !m) return;
+  A.busy = m; A.msg = 'Готовлю копию…'; A.err = ''; updateArchive();
+  try {
+    const j = await api('/archive/' + encodeURIComponent(m)), name = 'AR-copy-' + m + '.json';
+    saveBlob(name, new Blob([JSON.stringify({ month: j.month, taken_at: j.taken_at, ...j.data }, null, 1)], { type: 'application/json' }));
+    A.msg = 'Готово: ' + name;
+  } catch(e){ A.msg = ''; A.err = 'Не получилось: ' + (e && e.message || 'ошибка'); }
+  finally { A.busy = ''; updateArchive(); }
+}
 async function repGo(){
   const K = Number($('#rep-month').value), msg = $('#rep-msg'), btn = $('#rep-go');
   btn.disabled = true; msg.textContent = 'Собираю файл…'; $('#rep-share').hidden = true;
@@ -2014,6 +2088,8 @@ S.dev = { token: LS.get('ar_dev') || '', list: [], me: '', main: false, loaded: 
 const AI_MODELS_FALLBACK = [{ id: 'gpt-6-luna', label: 'Luna', note: 'дёшево, для обычных вопросов' }, { id: 'gpt-6.1-terra', label: 'Terra', note: 'умнее, дороже примерно в 10 раз' }];
 const aiBlank = () => ({ msgs: [], actions: {}, busy: false, err: '', loaded: false, files: [], models: AI_MODELS_FALLBACK, def: '', model: LS.get('ar_model') || '', modelsLoaded: false });
 S.ai = aiBlank();
+const archBlank = () => ({ list: [], loaded: false, loading: false, busy: '', msg: '', err: '' });
+S.arch = archBlank();
 const devGuess = () => /iPhone|iPad/i.test(navigator.userAgent) ? 'iPhone' : /Android/i.test(navigator.userAgent) ? 'Android' : 'Компьютер';
 const canApprove = () => !!window.__AR_TEST || (adapter && adapter.mode === 'live' && S.conn !== 'err');
 async function api(path, body){
@@ -2025,7 +2101,7 @@ async function api(path, body){
   let j = null; try { j = await r.json(); } catch(e){}
   if(r.status === 401 && tk && !/^\/(register|join)/.test(path)){
     LS.del('ar_dev'); S.dev = { ...S.dev, token: '', list: [], tokens: [], loaded: false, msg: 'Это устройство отключено. Подключи его заново.' };
-    S.ai = aiBlank(); updateAll();
+    S.ai = aiBlank(); S.arch = archBlank(); updateAll();
   }
   if(!r.ok || (j && j.ok === false)){ const e = new Error((j && j.error) || ('Ошибка ' + r.status)); e.status = r.status; throw e; }
   return j || {};

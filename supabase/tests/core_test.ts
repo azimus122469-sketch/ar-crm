@@ -2,7 +2,7 @@ import { createHandler, TOOLS, fsDoc } from '../functions/ar-mcp/core.ts';
 let fails = 0; const check = (n: string, c: any, x: any = '') => { if(!c){ fails++; console.log('FAIL', n, x); } else console.log('ok  ', n); };
 
 // ── фейковая база ──
-const tables: Record<string, any[]> = { ar_devices: [], ar_invites: [], ar_tokens: [], ar_actions: [], ar_chat: [], ar_push: [], ar_vapid: [{ id: 1, public_key: null, private_key: null, cron_secret: 'cronsecret1' }] };
+const tables: Record<string, any[]> = { ar_devices: [], ar_invites: [], ar_tokens: [], ar_actions: [], ar_chat: [], ar_push: [], ar_archive: [], ar_archive_data: [], ar_vapid: [{ id: 1, public_key: null, private_key: null, cron_secret: 'cronsecret1' }] };
 let clock = Date.parse('2026-11-12T09:00:00Z'); let n = 0;
 const match = (r: any, f: any) => Object.entries(f || {}).every(([k, v]) => v === null ? (r[k] == null) : r[k] === v);
 const store = {
@@ -38,7 +38,8 @@ const fakeFetch: any = async (url: string, init: any) => {
   return new Response(JSON.stringify(out), { status: out ? 200 : 500 });
 };
 const envs: any = { ADMIN_SETUP_CODE: 'setup-123', OPENAI_API_KEY: 'sk-test' };
-const h = createHandler({ store: store as any, loadCollection: async (c) => FS[c], env: k => envs[k], fetch: fakeFetch, now: () => clock });
+let failStock = false;
+const h = createHandler({ store: store as any, loadCollection: async (c) => { if (c === 'stock' && failStock) throw new Error('stock down'); return FS[c]; }, env: k => envs[k], fetch: fakeFetch, now: () => clock });
 const call = async (method: string, path: string, body?: any, headers: any = {}) => { const r = await h(new Request('https://x.supabase.co/functions/v1/ar-mcp' + path, { method, headers: { 'content-type': 'application/json', ...headers }, body: body ? JSON.stringify(body) : undefined })); return { status: r.status, j: await r.json().catch(() => null) }; };
 
 // ── Firestore-декодер ──
@@ -187,5 +188,34 @@ check('декодер Firestore', d.id === 'abc' && d.n === 5 && d.t[0].amount =
   // отзыв MCP-токена
   r = await call('POST', '/tokens/revoke', { id: tables.ar_tokens[1].id }, A); check('отзыв MCP-токена', r.j.ok);
   r = await call('POST', '/call', { tool: 'get_overview' }, { 'x-ar-token': MT }); check('отозванный MCP-токен не работает', r.status === 401);
+  // ── архив ──
+  r = await call('GET', '/archive'); check('архив без токена закрыт', r.status === 401);
+  r = await call('GET', '/archive', undefined, A); check('архив пуст до первой копии', r.j.ok && r.j.months.length === 0, JSON.stringify(r.j));
+  r = await call('POST', '/archive/now', {}, A);
+  check('копия сохранена, тестовые объекты не попали', r.j.status === 'saved' && r.j.counts.objects === 1 && r.j.counts.cashbox === 3 && r.j.counts.stock === 4 && r.j.counts.stock_ok === true, JSON.stringify(r.j));
+  const mon = r.j.month;
+  r = await call('GET', '/archive', undefined, A);
+  check('список месяцев без самих данных', r.j.months.length === 1 && r.j.months[0].month === mon && r.j.months[0].data === undefined && r.j.months[0].counts.cashbox === 3, JSON.stringify(r.j));
+  r = await call('GET', '/archive/' + mon, undefined, A);
+  check('копия месяца содержит объекты, кассу и склад', r.j.ok && r.j.data.objects.length === 1 && r.j.data.objects[0].id === 'o1' && r.j.data.cashbox.length === 3 && r.j.data.stock.length === 4, JSON.stringify(r.j).slice(0, 200));
+  check('в копии нет sandbox-объекта', !JSON.stringify(r.j.data).includes('999999999'));
+  r = await call('POST', '/archive/now', {}, A); check('повторное сохранение сразу не дублирует (пауза 5 минут)', r.j.status === 'fresh' && tables.ar_archive.length === 1, JSON.stringify(r.j));
+  r = await call('GET', '/archive/2026-13x', undefined, A); check('неверный месяц отклонён', r.status === 400);
+  r = await call('GET', '/archive/2020-01', undefined, A); check('нет копии: 404', r.status === 404);
+  // склад не прочитался: прежняя копия склада сохраняется
+  clock += 6 * 60_000; failStock = true;
+  r = await call('POST', '/archive/now', {}, A);
+  check('склад недоступен: копия обновилась, склад взят из прежней', r.j.status === 'saved' && r.j.counts.stock === 4 && r.j.counts.stock_ok === false, JSON.stringify(r.j));
+  failStock = false;
+  // пустое чтение не затирает хорошую копию
+  clock += 6 * 60_000; const bak = { o: FS.objects, c: FS.cashbox, s: FS.stock }; FS.objects = []; FS.cashbox = []; FS.stock = [];
+  r = await call('POST', '/archive/now', {}, A);
+  check('пустое чтение не затирает копию', r.j.status === 'empty_skipped' && tables.ar_archive[0].counts.cashbox === 3, JSON.stringify(r.j));
+  FS.objects = bak.o; FS.cashbox = bak.c; FS.stock = bak.s;
+  // новый месяц: отдельная строка
+  clock = Date.parse('2026-12-02T09:00:00Z');
+  r = await call('POST', '/archive/now', {}, A);
+  check('новый месяц: отдельная копия, старая цела', r.j.status === 'saved' && r.j.month === '2026-12' && tables.ar_archive.length === 2 && tables.ar_archive_data.length === 2, JSON.stringify(r.j));
+  r = await call('GET', '/archive', undefined, A); check('месяцы идут от нового к старому', r.j.months[0].month === '2026-12' && r.j.months[1].month === mon, JSON.stringify(r.j.months.map((m: any) => m.month)));
   console.log(fails ? 'CORE FAILED ' + fails : 'ALL CORE TESTS PASSED'); process.exit(fails ? 1 : 0);
 })();

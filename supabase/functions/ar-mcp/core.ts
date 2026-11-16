@@ -663,6 +663,34 @@ function activeBetween(objects: Row[], cashbox: Row[], stock: Row[], t0: number,
     || objects.some((o) => (Array.isArray(o.transactions) ? o.transactions : []).some((t: any) => inR(t.ts)));
 }
 // Раз в 15 минут вызывается по расписанию. Если подошло время и за сегодня нет записей, шлёт напоминание.
+// ───────── Архив: копия данных по месяцам ─────────
+// Раз в сутки (по Ташкенту) сервер читает объекты, кассу и склад и кладёт полную копию в строку текущего месяца.
+// В месяце остаётся последняя копия. Если чтение не удалось, прежняя копия не затирается.
+const monthOf = (ms: number) => new Date(ms + TZ).toISOString().slice(0, 7);
+const ARCH_FRESH_MS = 20 * 3600_000, ARCH_MIN_GAP_MS = 5 * 60_000, ARCH_MAX_CHARS = 8_000_000;
+export async function archiveTake(d: Deps, force = false) {
+  const now = d.now(), month = monthOf(now);
+  const cur = (await d.store.select("ar_archive", { month }))[0];
+  const age = cur ? now - Date.parse(cur.taken_at) : Infinity;
+  if (age < (force ? ARCH_MIN_GAP_MS : ARCH_FRESH_MS)) return { status: "fresh", month, taken_at: cur.taken_at };
+  const { objects, cashbox } = await loadAll(d);
+  let stock: Row[] = [], stockOk = true;
+  try { stock = (await d.loadCollection("stock")) || []; } catch { stockOk = false; }
+  const prev = cur ? (await d.store.select("ar_archive_data", { month }))[0]?.data : null;
+  if (!stockOk) stock = Array.isArray(prev?.stock) ? prev.stock : []; // склад не прочитался: оставляем прежнюю копию склада
+  const counts = { objects: objects.length, cashbox: cashbox.length, stock: stock.length, stock_ok: stockOk };
+  if (!objects.length && !cashbox.length && !stock.length && cur && (cur.counts?.objects || cur.counts?.cashbox || cur.counts?.stock)) return { status: "empty_skipped", month };
+  const data = { objects, cashbox, stock };
+  if (JSON.stringify(data).length > ARCH_MAX_CHARS) throw new Error("Копия слишком большая для архива.");
+  const taken_at = isoNow(d);
+  if (cur) { await d.store.update("ar_archive", { month }, { taken_at, counts }); await d.store.update("ar_archive_data", { month }, { data }); }
+  else { await d.store.insert("ar_archive", { month, taken_at, counts }); await d.store.insert("ar_archive_data", { month, data }); }
+  return { status: "saved", month, taken_at, counts };
+}
+async function archiveTick(d: Deps) {
+  try { return await archiveTake(d); } catch (e) { return { status: "error", error: scrub((e as Error).message) }; }
+}
+
 export async function pushTick(d: Deps) {
   const subs = await d.store.select("ar_push", { enabled: true });
   const now = d.now(), loc = (s: Row) => new Date(now + (Number(s.tz_min) || 300) * 60_000);
@@ -726,7 +754,8 @@ export function createHandler(d: Deps) {
       if (path === "/push/tick" && req.method === "POST") {
         const row = (await d.store.select("ar_vapid", {}))[0];
         if (!row || !row.cron_secret || !same(req.headers.get("x-ar-cron") || "", String(row.cron_secret))) return err("нет доступа", 401);
-        return json({ ok: true, ...(await pushTick(d)) });
+        const archive = await archiveTick(d);
+        return json({ ok: true, ...(await pushTick(d)), archive });
       }
 
       // 1. Регистрация устройств: без токена, по коду
@@ -842,6 +871,21 @@ export function createHandler(d: Deps) {
         return r.length ? json({ ok: true }) : err("Токен не найден.", 404);
       }
       if (path === "/models" && req.method === "GET") return json({ ok: true, models: aiModels(d), default: pickModel(d) });
+      // Архив: список месяцев, копия месяца, сохранить сейчас
+      if (path === "/archive" && req.method === "GET") {
+        const xs = await d.store.select("ar_archive", {}, { order: "month", desc: true, limit: 60 });
+        return json({ ok: true, months: xs.map((x) => ({ month: x.month, taken_at: x.taken_at, counts: x.counts })) });
+      }
+      if (path === "/archive/now" && req.method === "POST") {
+        try { return json({ ok: true, ...(await archiveTake(d, true)) }); } catch (e) { return err("Не удалось сохранить копию: " + scrub((e as Error).message), 502); }
+      }
+      if (path.startsWith("/archive/") && req.method === "GET") {
+        const m = path.slice(9);
+        if (!/^\d{4}-\d{2}$/.test(m)) return err("Месяц указан неверно (нужен вид 2026-11).", 400);
+        const meta = (await d.store.select("ar_archive", { month: m }))[0], dat = meta ? (await d.store.select("ar_archive_data", { month: m }))[0] : null;
+        if (!meta || !dat) return err("Копии за этот месяц нет.", 404);
+        return json({ ok: true, month: m, taken_at: meta.taken_at, counts: meta.counts, data: dat.data });
+      }
       if (path === "/chat" && req.method === "GET") {
         const msgs = (await d.store.select("ar_chat", {}, { order: "created_at", desc: true, limit: 100 })).reverse();
         const acts = (await d.store.select("ar_actions", {}, { order: "created_at", desc: true, limit: 100 }));
