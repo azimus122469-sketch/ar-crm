@@ -147,7 +147,7 @@ check('декодер Firestore', d.id === 'abc' && d.n === 5 && d.t[0].amount =
   openaiCalls = []; openaiScript = [{ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'ок' }] }] }];
   r = await call('POST', '/chat/send', { content: 'привет' }, A);
   check('без выбора модели идёт luna', openaiCalls[0].model === 'gpt-6-luna', openaiCalls[0]?.model);
-  check('у запроса есть лимит ответа', openaiCalls[0].max_output_tokens === 1500);
+  check('у запроса есть лимит ответа', openaiCalls[0].max_output_tokens === 4000);
   check('ответ помечен моделью', tables.ar_chat.at(-1).model === 'gpt-6-luna');
   openaiCalls = []; openaiScript = [{ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'ок' }] }] }];
   r = await call('POST', '/chat/send', { content: 'подумай', model: 'gpt-6.1-terra' }, A);

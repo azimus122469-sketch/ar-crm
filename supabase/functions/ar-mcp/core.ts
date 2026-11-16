@@ -518,7 +518,7 @@ ${DESCRIBE}
 async function openaiCall(d: Deps, model: string, key: string, instructions: string, input: any[], timeoutMs: number) {
   const ac = new AbortController(), tm = setTimeout(() => ac.abort(), timeoutMs);
   try {
-    const r = await d.fetch("https://api.openai.com/v1/responses", { method: "POST", signal: ac.signal, headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" }, body: JSON.stringify({ model, instructions, input, tools: AI_TOOLS, max_output_tokens: 1500 }) });
+    const r = await d.fetch("https://api.openai.com/v1/responses", { method: "POST", signal: ac.signal, headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" }, body: JSON.stringify({ model, instructions, input, tools: AI_TOOLS, max_output_tokens: 4000 }) });
     const txt = await r.text(); let j: any = null; try { j = JSON.parse(txt); } catch { /* не JSON */ }
     if (!r.ok) {
       if (r.status === 401) throw new OpenAIError("OpenAI не принял ключ. Проверь секрет OPENAI_API_KEY.");
@@ -528,6 +528,7 @@ async function openaiCall(d: Deps, model: string, key: string, instructions: str
     }
     if (!j || !Array.isArray(j.output)) throw new OpenAIError("OpenAI вернул неожиданный ответ.");
     if (j.status === "failed") throw new OpenAIError("OpenAI не смог ответить: " + scrub(String(j?.error?.message || "ошибка")));
+    if (j.status === "incomplete" && !j.output.some((o: any) => o.type === "message" || o.type === "function_call")) throw new OpenAIError("Ответ упёрся в лимит длины. Задай вопрос короче или выбери Terra.");
     return j;
   } catch (e) {
     if (e instanceof OpenAIError) throw e;
