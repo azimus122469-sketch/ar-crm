@@ -108,8 +108,36 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:40px;
 .prop{border:2px solid var(--ink);border-radius:12px;padding:12px;background:var(--card);display:flex;flex-direction:column;gap:8px}
 .prop .st{font-size:12px;color:var(--faint)}
 .prop .st.bad{color:var(--red)}
-.aibar{position:sticky;bottom:calc(66px + var(--sb));display:flex;gap:8px;background:var(--paper);padding:8px 0}
+.aibar{position:sticky;bottom:calc(66px + var(--sb));display:flex;flex-direction:column;gap:6px;background:var(--paper);padding:8px 0}
+.aibar .row1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.aibar .row2{display:flex;gap:8px;align-items:stretch}
 .aibar .btn{width:auto;padding:12px 18px}
+.aibar .plus{width:48px;flex:none;padding:0;font-size:26px;line-height:1;font-weight:400}
+.aibar select.in{width:auto;max-width:100%;padding:6px 34px 6px 10px;font-size:14px;border-width:1.5px;border-radius:8px;background-position:right 10px center}
+.chip{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--ink);border-radius:20px;padding:2px 2px 2px 10px;font-size:13px;max-width:100%}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
+.chip button{border:0;background:transparent;font-size:14px;padding:2px 8px;line-height:1}
+.msg .att{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.msg .att i{font-style:normal;font-size:12px;border:1px solid var(--edge);border-radius:20px;padding:1px 8px;color:var(--soft)}
+.mopt{display:flex;justify-content:space-between;align-items:baseline;gap:10px;text-align:left;border:2px solid var(--ink);border-radius:10px;background:transparent;padding:10px 12px;width:100%}
+.mopt b{font-family:var(--serif);font-size:17px}
+.mopt small{font-size:12px;opacity:.8}
+.mopt.on{background:var(--ink);color:var(--paper)}
+.chart{width:100%;display:block;height:auto}
+.chart text{font-family:var(--sans)}
+.chart .vl{font-family:var(--serif);font-weight:700}
+.hb{display:grid;grid-template-columns:104px minmax(0,1fr) 64px;gap:8px;align-items:center;padding:5px 0;font-size:13px}
+.hb .nm{overflow-wrap:anywhere;line-height:1.2}
+.hb .bar{height:16px;background:var(--paper2);border-radius:4px;overflow:hidden}
+.hb .bar i{display:block;height:100%;border-radius:4px}
+.hb .vv{text-align:right;font-variant-numeric:tabular-nums}
+.leg .li{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--grid);font-size:14px}
+.leg .li .sw2{flex:none;width:12px;height:12px;border-radius:3px}
+.leg .li .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.leg .li .vv{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--soft)}
+.sumcols{display:block}
+.sumcol>:first-child{margin-top:0!important}
+.donut{max-width:230px;margin:0 auto}
 .dev{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--edge)}
 .dev:last-child{border-bottom:0}
 .dev .nm{font-weight:600}
@@ -184,6 +212,29 @@ table.t .neg{color:var(--red)}
 .sg .low{color:var(--red);font-weight:700}
 .sg .out{color:var(--red)}
 .sg .lt{align-items:center;font-family:var(--serif);font-weight:700;font-size:13px}
+
+@media (min-width:1000px){
+  #app{max-width:none;margin:0;padding:0 0 32px 232px}
+  .top{padding-left:32px;padding-right:32px}
+  .tabbar{top:0;bottom:0;right:auto;width:232px;border-top:0;border-right:1px solid var(--edge);padding:22px 12px;overflow:auto}
+  .tabbar::before{content:"АР · Тетрадь";display:block;font-family:var(--serif);font-weight:700;font-size:21px;padding:2px 14px 20px}
+  .tabbar .in-bar{max-width:none;margin:0;flex-direction:column;gap:4px}
+  .tabbar button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;border-radius:10px;text-align:left}
+  .tabbar button.on{background:var(--ink);color:var(--paper)}
+  .tabbar .bdg{top:50%;left:auto;right:14px;transform:translateY(-50%);background:var(--red)}
+  main{padding:0 32px}
+  .tab{padding:22px 0}
+  #tab-book,#tab-obj,#tab-stock,#tab-ai,#tab-more{max-width:780px;margin:0 auto}
+  #tab-sum.on{max-width:1240px;margin:0 auto}
+  .sumcols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:start}
+  .cal .cd{min-height:66px;font-size:10px}
+  .cal .cd b{font-size:13px}
+  .aibar{bottom:0}
+  .toast{bottom:32px}
+  .sheet{align-items:center}
+  .sheet-box{border-radius:16px;max-width:560px;padding-bottom:20px}
+  .banner{margin-left:32px;margin-right:32px}
+}
 </style>
 </head>
 <body>
@@ -286,7 +337,10 @@ table.t .neg{color:var(--red)}
 
     <section class="tab" id="tab-sum">
       <h2 class="h">Итоги</h2>
+      <div class="sumcols"><div class="sumcol">
+      <div class="card col" id="chart-card" style="margin-bottom:14px"></div>
       <div id="sums"></div>
+      </div><div class="sumcol">
       <div class="card col" id="cal-card" style="margin-top:14px"></div>
       <div class="card col" id="report-card" style="margin-top:14px">
         <div class="lbl">Отчёт за месяц, Excel</div>
@@ -296,12 +350,16 @@ table.t .neg{color:var(--red)}
         <button class="btn2" id="rep-share" data-act="repShare" hidden>Отправить файл…</button>
         <div class="hint" id="rep-msg"></div>
       </div>
+      </div></div>
     </section>
 
     <section class="tab" id="tab-ai">
       <h2 class="h">Помощник</h2>
       <div id="ai-body" class="chat"></div>
-      <div class="aibar" id="ai-bar"><input class="in" id="ai-text" placeholder="Спроси или поручи: «сколько в кассе?»" autocomplete="off" enterkeyhint="send"><button class="btn" id="ai-send" data-act="aiSend">Отправить</button></div>
+      <div class="aibar" id="ai-bar">
+        <div class="row1"><select class="in" id="ai-model" aria-label="Модель"></select><span id="ai-files" class="rowf" style="flex-wrap:wrap;gap:6px"></span></div>
+        <div class="row2"><button class="btn2 plus" data-act="aiPlus" aria-label="Приложить файл">+</button><input type="file" id="ai-file" hidden multiple accept="image/*,.pdf,.xlsx,.xlsm,.csv,.tsv,.txt"><input class="in" id="ai-text" placeholder="Спроси помощника" autocomplete="off" enterkeyhint="send"><button class="btn" id="ai-send" data-act="aiSend">Отправить</button></div>
+      </div>
     </section>
 
     <section class="tab" id="tab-more">
@@ -332,11 +390,12 @@ table.t .neg{color:var(--red)}
           <div class="hint" id="auth-msg"></div>
         </div>
         <div class="card col" id="rem-card"></div>
+        <div class="card col" id="model-card"></div>
         <div class="card col">
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.5</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.6</div>
       </div>
     </section>
   </main>
@@ -474,7 +533,7 @@ function actor(x){
 }
 const isAi = x => actor(x) === 'помощник';
 let adapter = null;
-S.stock = []; S.stockErr = ''; S.auth = '';
+S.stock = []; S.stockErr = ''; S.auth = ''; S.ch = { k: 0, v: 'wf' };
 S.stk = { view: 'left', kind: 'in', open: false, partner: null, unit: 'м', unitTouched: false, cur: 'uzs', src: 'cash' };
 const realObjects = () => S.objects.filter(o => o.sandbox !== true);
 const txOf = o => Array.isArray(o.transactions) ? o.transactions : [];
@@ -961,6 +1020,133 @@ function updateSums(){
        + '</table><div class="hint" style="margin-top:8px">Когда партнёр забирает деньги, сначала возвращается его вложение, потом идёт доля прибыли.</div></div>';
   $('#sums').innerHTML = html;
 }
+// ───────────── графики «Итогов» ─────────────
+const CH_PAL = ['#2F4A6D', '#A0564F', '#6B8F71', '#C49A3C', '#7A6A9A', '#4F8A8B', '#B8794B', '#6F7F94'];
+const CH_GRAY = '#9AA1A9', CH_IN = '#2F4A6D', CH_OUT = '#A0564F';
+const MON = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+const catLabel = c => String(c || '').replace(/^[^\p{L}\p{N}]+/u, '').trim() || 'Без категории';
+const CH_NEUTRAL = ['Без категории', 'Прочее', 'Остальное'];
+// Цвета выдаются по алфавиту всех категорий за всё время: у разных категорий цвета разные и не меняются от выбранного периода
+function catColor(name){
+  if(CH_NEUTRAL.includes(name)) return CH_GRAY;
+  const names = chartData('all', 0).cats.map(c => c.name).filter(n => !CH_NEUTRAL.includes(n)).sort((a, b) => a.localeCompare(b, 'ru'));
+  const i = names.indexOf(name);
+  if(i >= 0) return CH_PAL[i % CH_PAL.length];
+  let h = 0; for(const ch of name) h = (h * 31 + ch.codePointAt(0)) >>> 0;
+  return CH_PAL[h % CH_PAL.length];
+}
+const chShort = n => {
+  const a = Math.abs(n), s = n < 0 ? '−' : '';
+  if(a >= 1e6) return s + (a / 1e6).toFixed(1).replace('.', ',') + ' млн';
+  if(a >= 1e3) return s + Math.round(a / 1e3) + ' тыс';
+  return s + Math.round(a);
+};
+const MONF = ['январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль', 'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь'];
+const chBase = off => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth() + (off || 0), 1); };
+function chartData(per, off){
+  const nd = chBase(off);
+  const inP = ts => { if(per === 'all') return true; const d = new Date(ts); return d.getFullYear() === nd.getFullYear() && d.getMonth() === nd.getMonth(); };
+  const txs = realObjects().flatMap(txOf);
+  const inc = txs.filter(t => t.type === 'income' && inP(t.ts));
+  const exp = txs.filter(t => t.type === 'expense' && inP(t.ts));
+  const ovh = S.cashbox.filter(c => c.type === 'overhead' && inP(c.ts));
+  const sum = a => a.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+  const cats = new Map();
+  [...exp, ...ovh].forEach(x => { const k = catLabel(x.cat); cats.set(k, (cats.get(k) || 0) + (Number(x.amount) || 0)); });
+  const clients = sum(inc), objExp = sum(exp), overhead = sum(ovh);
+  return { clients, objExp, overhead, profit: clients - objExp - overhead,
+    cats: [...cats].map(([name, v]) => ({ name, v })).filter(c => c.v > 0).sort((a, b) => b.v - a.v) };
+}
+function chartMonths(){
+  const nd = new Date(), out = [];
+  for(let i = 5; i >= 0; i--){ const d = new Date(nd.getFullYear(), nd.getMonth() - i, 1); out.push({ y: d.getFullYear(), m: d.getMonth(), inc: 0, exp: 0 }); }
+  const put = (ts, key, v) => { const d = new Date(ts), r = out.find(o => o.y === d.getFullYear() && o.m === d.getMonth()); if(r) r[key] += v; };
+  realObjects().flatMap(txOf).forEach(t => { const v = Number(t.amount) || 0; if(t.type === 'income') put(t.ts, 'inc', v); else if(t.type === 'expense') put(t.ts, 'exp', v); });
+  S.cashbox.forEach(c => { if(c.type === 'overhead') put(c.ts, 'exp', Number(c.amount) || 0); });
+  return out;
+}
+function chWaterfall(d){
+  const st = [
+    { lab: 'Приход', a: 0, b: d.clients, col: CH_IN },
+    { lab: 'Объекты', a: d.clients, b: d.clients - d.objExp, col: CH_OUT },
+    { lab: 'Общие', a: d.clients - d.objExp, b: d.profit, col: CH_OUT },
+    { lab: 'Прибыль', a: 0, b: d.profit, col: d.profit >= 0 ? CH_IN : CH_OUT }
+  ];
+  const vals = st.flatMap(s => [s.a, s.b]), lo = Math.min(0, ...vals), hi = Math.max(0, ...vals) || 1;
+  const top = 26, H = 138, Y = v => top + (hi - v) / ((hi - lo) || 1) * H;
+  let g = `<line x1="14" y1="${Y(0)}" x2="346" y2="${Y(0)}" stroke="#8A939E" stroke-width="1"/>`;
+  st.forEach((s, i) => {
+    const x = 22 + i * 84, y1 = Y(Math.max(s.a, s.b)), h = Math.max(2, Math.abs(Y(s.a) - Y(s.b)));
+    const shown = i === 3 ? d.profit : (i === 0 ? d.clients : -(Math.abs(s.b - s.a)));
+    g += `<rect x="${x}" y="${y1}" width="56" height="${h}" rx="3" fill="${s.col}"/>`;
+    g += `<text class="vl" x="${x + 28}" y="${y1 - 6}" text-anchor="middle" font-size="12" fill="#16202B">${chShort(shown)}</text>`;
+    g += `<text x="${x + 28}" y="${Y(lo) + 18}" text-anchor="middle" font-size="12" fill="#4A5663">${s.lab}</text>`;
+    if(i < 2) g += `<line x1="${x + 56}" y1="${Y(s.b)}" x2="${x + 84}" y2="${Y(s.b)}" stroke="#8A939E" stroke-dasharray="3 3"/>`;
+  });
+  return `<svg class="chart" viewBox="0 0 360 ${Math.round(Y(lo)) + 30}" role="img" aria-label="Водопад: приход ${fmt(d.clients)}, расходы объектов ${fmt(d.objExp)}, общие расходы ${fmt(d.overhead)}, прибыль ${fmt(d.profit)}">${g}</svg>`;
+}
+function chMonths(ms){
+  const prof = ms.map(r => r.inc - r.exp), mx = Math.max(1, ...ms.flatMap(r => [r.inc, r.exp])), lo = Math.min(0, ...prof);
+  const top = 14, H = 124, Y = v => top + (mx - v) / ((mx - lo) || 1) * H, x0 = 58, step = 47;
+  let g = `<line x1="${x0 - 6}" y1="${top}" x2="352" y2="${top}" stroke="#DCE5EE"/><line x1="${x0 - 6}" y1="${Y(0)}" x2="352" y2="${Y(0)}" stroke="#8A939E"/>`;
+  g += `<text x="${x0 - 10}" y="${top + 4}" text-anchor="end" font-size="11" fill="#8A939E">${chShort(mx)}</text><text x="${x0 - 10}" y="${Y(0) + 4}" text-anchor="end" font-size="11" fill="#8A939E">0</text>`;
+  const pts = [];
+  ms.forEach((r, i) => {
+    const x = x0 + i * step, c = x + 17;
+    g += `<rect x="${x}" y="${Y(r.inc)}" width="16" height="${Math.max(r.inc ? 2 : 0, Y(0) - Y(r.inc))}" rx="3" fill="${CH_IN}"/>`;
+    g += `<rect x="${x + 18}" y="${Y(r.exp)}" width="16" height="${Math.max(r.exp ? 2 : 0, Y(0) - Y(r.exp))}" rx="3" fill="${CH_OUT}"/>`;
+    g += `<text x="${c}" y="${Y(lo) + 18}" text-anchor="middle" font-size="12" fill="#4A5663">${MON[r.m]}</text>`;
+    pts.push(`${c},${Y(prof[i])}`);
+  });
+  g += `<polyline points="${pts.join(' ')}" fill="none" stroke="#16202B" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach(p => { const [cx, cy] = p.split(','); g += `<circle cx="${cx}" cy="${cy}" r="4" fill="#16202B" stroke="#FFFEFA" stroke-width="2"/>`; });
+  const ly = Math.round(Y(lo)) + 40;
+  g += `<rect x="58" y="${ly - 9}" width="10" height="10" rx="2" fill="${CH_IN}"/><text x="73" y="${ly}" font-size="12" fill="#4A5663">Приход</text>`
+     + `<rect x="138" y="${ly - 9}" width="10" height="10" rx="2" fill="${CH_OUT}"/><text x="153" y="${ly}" font-size="12" fill="#4A5663">Расход</text>`
+     + `<line x1="214" y1="${ly - 4}" x2="234" y2="${ly - 4}" stroke="#16202B" stroke-width="2"/><text x="239" y="${ly}" font-size="12" fill="#4A5663">Прибыль</text>`;
+  return `<svg class="chart" viewBox="0 0 360 ${ly + 8}" role="img" aria-label="Приход, расход и прибыль по последним шести месяцам">${g}</svg>`;
+}
+function chCats(cats){
+  const mx = cats[0].v;
+  return cats.slice(0, 8).map(c => `<div class="hb"><div class="nm">${esc(c.name)}</div><div class="bar"><i style="width:${Math.max(2, c.v / mx * 100)}%;background:${catColor(c.name)}"></i></div><div class="vv">${chShort(c.v)}</div></div>`).join('');
+}
+function chPie(cats){
+  let list = cats.slice(0, 6);
+  const rest = cats.slice(6).reduce((s, c) => s + c.v, 0);
+  if(rest > 0) list = list.concat({ name: 'Остальное', v: rest });
+  const total = list.reduce((s, c) => s + c.v, 0), R = 70, r = 42;
+  const P = (rad, a) => [(80 + rad * Math.sin(a)).toFixed(2), (80 - rad * Math.cos(a)).toFixed(2)];
+  let a0 = 0, g = '';
+  if(list.length === 1) g = `<circle cx="80" cy="80" r="${(R + r) / 2}" fill="none" stroke="${catColor(list[0].name)}" stroke-width="${R - r}"/>`;
+  else list.forEach(c => {
+    const a1 = a0 + c.v / total * Math.PI * 2, [x0, y0] = P(R, a0), [x1, y1] = P(R, a1), [x2, y2] = P(r, a1), [x3, y3] = P(r, a0), big = a1 - a0 > Math.PI ? 1 : 0;
+    g += `<path d="M${x0},${y0}A${R},${R} 0 ${big} 1 ${x1},${y1}L${x2},${y2}A${r},${r} 0 ${big} 0 ${x3},${y3}Z" fill="${catColor(c.name)}" stroke="#FFFEFA" stroke-width="2"/>`;
+    a0 = a1;
+  });
+  g += `<text class="vl" x="80" y="80" text-anchor="middle" font-size="17" fill="#16202B">${chShort(total)}</text><text x="80" y="98" text-anchor="middle" font-size="11" fill="#8A939E">расходы</text>`;
+  const leg = list.map(c => `<div class="li"><span class="sw2" style="background:${catColor(c.name)}"></span><span class="nm">${esc(c.name)}</span><span class="vv">${chShort(c.v)} · ${Math.round(c.v / total * 100)}%</span></div>`).join('');
+  return `<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center"><svg class="chart" style="flex:0 0 170px;width:170px;margin:0 auto" viewBox="0 0 160 160" role="img" aria-label="Доли расходов по категориям">${g}</svg><div class="leg" style="flex:1 1 200px;min-width:0">${leg}</div></div>`;
+}
+const chState = () => S.chart || (S.chart = { kind: 'wf', per: 'all', off: 0 });
+function chTab(el){ const C = chState(); if(el.dataset.k) C.kind = el.dataset.k; if(el.dataset.p){ C.per = el.dataset.p; C.off = 0; } updateCharts(); }
+function chNav(el){ const C = chState(); C.off = Math.min(0, (C.off || 0) + Number(el.dataset.d)); updateCharts(); }
+function updateCharts(){
+  const el = $('#chart-card'); if(!el) return;
+  const C = chState();
+  const seg = (items, cur, act, key) => `<div class="seg">${items.map(([k, t]) => `<button data-act="${act}" data-${key}="${k}" class="${cur === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  let body;
+  if(C.kind === 'mo') body = chMonths(chartMonths());
+  else {
+    const d = chartData(C.per, C.off);
+    if(C.kind === 'wf') body = (d.clients || d.objExp || d.overhead) ? chWaterfall(d) : '<div class="hint">Пока нет записей за этот период.</div>';
+    else body = d.cats.length ? (C.kind === 'cat' ? chCats(d.cats) : chPie(d.cats)) : '<div class="hint">Пока нет расходов за этот период.</div>';
+  }
+  el.innerHTML = `<div class="lbl">Графики</div>`
+    + seg([['wf', 'Водопад'], ['mo', 'Месяцы'], ['cat', 'Категории'], ['pie', 'Доли']], C.kind, 'chTab', 'k')
+    + (C.kind === 'mo' ? '<div class="hint">Последние 6 месяцев.</div>' : seg([['all', 'Всё время'], ['month', 'Месяц']], C.per, 'chTab', 'p'))
+    + (C.kind !== 'mo' && C.per === 'month' ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button class="x" data-act="chNav" data-d="-1" aria-label="Месяц назад">‹</button><b>${MONF[chBase(C.off).getMonth()]} ${chBase(C.off).getFullYear()}</b><button class="x" data-act="chNav" data-d="1" aria-label="Месяц вперёд"${(C.off || 0) >= 0 ? ' disabled' : ''}>›</button></div>` : '')
+    + body;
+}
 function updateMore(){
   renderPT($('#me-pt'), S.me, 'mep');
   $('#me-name').textContent = NAMES[S.me];
@@ -973,9 +1159,10 @@ function updateMore(){
   const AM = { ok: 'Защита базы: устройство подтверждено сервером.', off: 'Защита базы: на сервере ещё не задан ключ Firebase, база пока открыта по общему ключу.', nodev: 'Защита базы: подключи устройство в «Мой кабинет», тогда оно получит доступ к закрытой базе.', fail: 'Защита базы: не удалось подтвердить устройство. Проверь интернет.' };
   $('#auth-msg').textContent = live ? (AM[S.auth] || '') : '';
   const mr = $('#more-rate'); if(document.activeElement !== mr) mr.value = S.rate ? fmt(S.rate) : '';
+  updateModelCard();
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateStock(); updateCal(); updateRem(); remCheck();
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateStock(); updateCal(); updateCharts(); updateRem(); remCheck();
 }
 
 // ───────────── записи ─────────────
@@ -1548,7 +1735,7 @@ const ACT = {
   aiReject: el => aiReject(el.dataset.id),
   edp: el => { S.edit.partner = el.dataset.p; renderPT($('#ed-pt'), S.edit.partner, 'edp'); },
   src: el => { S.entry.src = el.dataset.s; updateEntry(); },
-  calNav, calDay, remOn, remOff, remTest
+  calNav, calDay, remOn, remOff, remTest, chTab, chNav, aiPlus, aiFileDel, aiModelSet
 };
 document.addEventListener('change', e => { const t = e.target; if(t && t.dataset && t.dataset.ch === 'remHour') remHour(t); });
 document.addEventListener('click', e => {
@@ -1559,6 +1746,15 @@ $('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') closeSh
 $('#entry-text').addEventListener('input', () => { S.entry.kind = null; updateEntry(); });
 $('#entry-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); entryGo(); } });
 $('#ai-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); aiSend(); } });
+$('#ai-model').addEventListener('change', e => aiModelSet({ dataset: { id: e.target.value } }));
+$('#ai-file').addEventListener('change', async e => {
+  const list = Array.from(e.target.files || []); e.target.value = '';
+  for(const f of list){
+    if(S.ai.files.length >= 3){ toast('Не больше 3 файлов за раз'); break; }
+    try { S.ai.files.push(await aiReadFile(f)); } catch(x){ toast(x.message); }
+    updateAiBar();
+  }
+});
 $('#st-unit').addEventListener('change', e => { S.stk.unit = e.target.value; S.stk.unitTouched = true; updateStock(); });
 $('#st-obj').addEventListener('change', () => updateStock());
 $('#entry-obj').addEventListener('change', e => { S.entry.objectId = e.target.value; });
@@ -1815,7 +2011,9 @@ function repShare(){
 // Сервер: функция ar-mcp (Supabase). Здесь только экран: чат, одобрение предложений, «Мой кабинет».
 const AR_API = String(window.__AR_API || 'https://aoqmwcniuddvgydrsgij.supabase.co/functions/v1/ar-mcp').replace(/\/+$/, '');
 S.dev = { token: LS.get('ar_dev') || '', list: [], me: '', main: false, loaded: false, err: '', msg: '', tokens: [], newName: '' };
-S.ai = { msgs: [], actions: {}, busy: false, err: '', loaded: false };
+const AI_MODELS_FALLBACK = [{ id: 'gpt-6-luna', label: 'Luna', note: 'дёшево, для обычных вопросов' }, { id: 'gpt-6.1-terra', label: 'Terra', note: 'умнее, дороже примерно в 10 раз' }];
+const aiBlank = () => ({ msgs: [], actions: {}, busy: false, err: '', loaded: false, files: [], models: AI_MODELS_FALLBACK, def: '', model: LS.get('ar_model') || '', modelsLoaded: false });
+S.ai = aiBlank();
 const devGuess = () => /iPhone|iPad/i.test(navigator.userAgent) ? 'iPhone' : /Android/i.test(navigator.userAgent) ? 'Android' : 'Компьютер';
 const canApprove = () => !!window.__AR_TEST || (adapter && adapter.mode === 'live' && S.conn !== 'err');
 async function api(path, body){
@@ -1827,7 +2025,7 @@ async function api(path, body){
   let j = null; try { j = await r.json(); } catch(e){}
   if(r.status === 401 && tk && !/^\/(register|join)/.test(path)){
     LS.del('ar_dev'); S.dev = { ...S.dev, token: '', list: [], tokens: [], loaded: false, msg: 'Это устройство отключено. Подключи его заново.' };
-    S.ai = { msgs: [], actions: {}, busy: false, err: '', loaded: false }; updateAll();
+    S.ai = aiBlank(); updateAll();
   }
   if(!r.ok || (j && j.ok === false)){ const e = new Error((j && j.error) || ('Ошибка ' + r.status)); e.status = r.status; throw e; }
   return j || {};
@@ -1925,7 +2123,8 @@ async function aiPull(){
     const j = await api('/chat');
     S.ai.msgs = j.messages; S.ai.actions = Object.fromEntries(j.actions.map(a => [a.id, a])); S.ai.loaded = true; S.ai.err = '';
   } catch(e){ S.ai.err = e.message; }
-  updateAi();
+  if(!S.ai.modelsLoaded){ try { const m = await api('/models'); if(Array.isArray(m.models) && m.models.length){ S.ai.models = m.models; S.ai.def = m.default || ''; S.ai.modelsLoaded = true; } } catch(e){} }
+  updateAi(); updateModelCard();
 }
 const aiPending = () => Object.values(S.ai.actions).filter(a => a.status === 'pending').length;
 function updateAi(){
@@ -1935,13 +2134,13 @@ function updateAi(){
     bar.hidden = true;
     box.innerHTML = `<div class="empty">Помощник подключается в разделе Ещё → Мой кабинет.<br><br><button class="btn2" data-act="goMore">Открыть «Ещё»</button></div>`; return;
   }
-  bar.hidden = false;
+  bar.hidden = false; updateAiBar();
   if(!S.ai.loaded){ box.innerHTML = `<div class="empty">${S.ai.err ? esc(S.ai.err) : 'Загружаю…'}</div>`; return; }
   const stick = (window.innerHeight + window.scrollY) >= document.body.scrollHeight - 120;
   let html = S.ai.msgs.length ? '' : '<div class="empty">Спроси, сколько в кассе, или поручи запись: «Редван заплатил 50$ за клей из своих».<br>Любую запись помощник сначала предлагает, а вносится она после «Одобрить».</div>';
   S.ai.msgs.forEach(m => {
     const me = m.role === 'user';
-    html += `<div class="msg ${me ? 'me' : ''}"><div class="who">${me ? esc(NAMES[partnerOf(m.who)] || '') : 'помощник'} · ${dtm(Date.parse(m.created_at))}</div>${esc(m.content)}</div>`;
+    html += `<div class="msg ${me ? 'me' : ''}"><div class="who">${me ? esc(NAMES[partnerOf(m.who)] || '') : 'помощник' + (m.model ? ' · ' + esc(modelLabel(m.model)) : '')} · ${dtm(Date.parse(m.created_at))}</div>${esc(m.content)}${attHtml(m)}</div>`;
     const a = m.action_id ? S.ai.actions[m.action_id] : null;
     if(a){
       const lab = { pending: 'ждёт одобрения', approved: 'одобрено, внесено', rejected: 'отклонено', failed: 'не внеслось' }[a.status] || a.status;
@@ -1953,12 +2152,90 @@ function updateAi(){
   if(S.ai.err) html += `<div class="warn">${esc(S.ai.err)}</div>`;
   if(box.dataset.h !== html){ box.innerHTML = html; box.dataset.h = html; if(stick || S.ai.busy) window.scrollTo(0, document.body.scrollHeight); }
 }
+const modelLabel = id => { const m = S.ai.models.find(x => x.id === id); return m ? m.label : String(id); };
+const aiModel = () => { const ids = S.ai.models.map(m => m.id); return ids.includes(S.ai.model) ? S.ai.model : (ids.includes(S.ai.def) ? S.ai.def : ids[0]); };
+const attHtml = m => (Array.isArray(m.attachments) && m.attachments.length) ? `<div class="att">${m.attachments.map(a => `<i>${esc(a.name)}</i>`).join('')}</div>` : '';
+function aiModelSet(el){ const id = el.dataset.id; if(!S.ai.models.some(m => m.id === id)) return; S.ai.model = id; LS.set('ar_model', id); updateAiBar(); updateModelCard(); }
+function updateAiBar(){
+  const sel = $('#ai-model'), cur = aiModel();
+  const oh = S.ai.models.map(m => `<option value="${esc(m.id)}"${m.id === cur ? ' selected' : ''}>${esc(m.label)}${m.note ? ' · ' + esc(m.note) : ''}</option>`).join('');
+  if(sel.dataset.h !== oh){ sel.innerHTML = oh; sel.dataset.h = oh; }
+  const fl = $('#ai-files'), fh = S.ai.files.map((f, i) => `<span class="chip"><span>${esc(f.name)}</span><button data-act="aiFileDel" data-i="${i}" aria-label="Убрать файл">✕</button></span>`).join('');
+  if(fl.dataset.h !== fh){ fl.innerHTML = fh; fl.dataset.h = fh; }
+}
+function updateModelCard(){
+  const box = $('#model-card'); if(!box) return;
+  if(!S.dev.token){ box.hidden = true; return; }
+  box.hidden = false;
+  const cur = aiModel(), html = `<div class="lbl">Модель помощника</div><div class="hint">Чем дешевле модель, тем меньше расход. Выбор действует и в чате, можно менять перед отправкой.</div>
+    ${S.ai.models.map(m => `<button class="mopt ${m.id === cur ? 'on' : ''}" data-act="aiModelSet" data-id="${esc(m.id)}"><b>${esc(m.label)}</b><small>${esc(m.note || '')}</small></button>`).join('')}`;
+  if(box.dataset.h !== html){ box.innerHTML = html; box.dataset.h = html; }
+}
+function aiPlus(){ if(S.ai.files.length >= 3){ toast('Не больше 3 файлов за раз'); return; } $('#ai-file').click(); }
+function aiFileDel(el){ S.ai.files.splice(Number(el.dataset.i), 1); updateAiBar(); }
+const aiB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(new Error('Не удалось прочитать файл ' + f.name)); r.readAsDataURL(f); });
+async function aiImage(f){
+  let bmp; try { bmp = await createImageBitmap(f); } catch(e){ throw new Error('Не удалось открыть фото ' + f.name); }
+  let side = 1600, q = .82;
+  for(let i = 0; i < 5; i++){
+    const k = Math.min(1, side / Math.max(bmp.width, bmp.height)), w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); cx.drawImage(bmp, 0, 0, w, h);
+    const url = cv.toDataURL('image/jpeg', q);
+    if(url.length <= 1400000) return url;
+    side = Math.round(side * .75); q = Math.max(.6, q - .05);
+  }
+  throw new Error('Фото слишком большое: ' + f.name);
+}
+function aiCell(v){
+  if(v === null || v === undefined) return '';
+  if(v instanceof Date) return dayKey(v.getTime());
+  if(typeof v === 'object'){ if('result' in v) return aiCell(v.result); if(v.richText) return v.richText.map(x => x.text).join(''); if(v.text) return String(v.text); if(v.error) return String(v.error); return ''; }
+  return String(v).replace(/[;\n\r]+/g, ' ');
+}
+async function aiSheet(f){
+  if(f.size > 5 * 1024 * 1024) throw new Error('Таблица больше 5 МБ: ' + f.name);
+  await loadExcelJS();
+  const wb = new window.ExcelJS.Workbook(); await wb.xlsx.load(await f.arrayBuffer());
+  const out = []; let sheets = 0;
+  wb.eachSheet(ws => {
+    if(sheets++ >= 5) return;
+    out.push('# Лист «' + ws.name + '»');
+    let n = 0;
+    ws.eachRow({ includeEmpty: false }, row => {
+      if(n++ >= 300) return;
+      const cells = []; row.eachCell({ includeEmpty: true }, c => cells.push(aiCell(c.value)));
+      while(cells.length && cells[cells.length - 1] === '') cells.pop();
+      out.push(cells.join(';'));
+    });
+    if(n > 300) out.push('…[ещё ' + (n - 300) + ' строк не вошло]');
+  });
+  const t = out.join('\n'); if(out.length <= sheets) throw new Error('В файле нет данных: ' + f.name);
+  return t.slice(0, 28000);
+}
+async function aiReadFile(f){
+  const name = f.name || 'файл', low = name.toLowerCase(), type = f.type || '';
+  if(type.startsWith('image/') || /\.(jpe?g|png|webp|heic|heif)$/.test(low)) return { name, kind: 'image', data: await aiImage(f) };
+  if(type === 'application/pdf' || low.endsWith('.pdf')){
+    if(f.size > 3 * 1024 * 1024) throw new Error('PDF больше 3 МБ. Сожми файл или отправь нужные страницы.');
+    return { name, kind: 'pdf', data: await aiB64(f) };
+  }
+  if(low.endsWith('.xlsx') || low.endsWith('.xlsm')) return { name, kind: 'text', data: await aiSheet(f) };
+  if(low.endsWith('.xls')) throw new Error('Старый формат .xls не читается. Сохрани как .xlsx или .csv.');
+  if(/\.(csv|tsv|txt)$/.test(low) || type.startsWith('text/')){
+    if(f.size > 2e6) throw new Error('Файл больше 2 МБ: ' + name);
+    const t = (await f.text()).trim(); if(!t) throw new Error('Файл пустой: ' + name);
+    return { name, kind: 'text', data: t.slice(0, 28000) };
+  }
+  throw new Error('Такой тип файла не читается: ' + name);
+}
 async function aiSend(){
-  const inp = $('#ai-text'), text = inp.value.trim();
-  if(!text || S.ai.busy) return;
-  inp.value = ''; S.ai.busy = true; S.ai.err = '';
-  S.ai.msgs.push({ id: 'tmp', role: 'user', who: S.me, content: text, created_at: new Date().toISOString() }); updateAi();
-  try { await api('/chat/send', { content: text }); } catch(e){ S.ai.err = e.message; }
+  const inp = $('#ai-text'), text = inp.value.trim(), files = S.ai.files.slice();
+  if((!text && !files.length) || S.ai.busy) return;
+  const model = aiModel();
+  inp.value = ''; S.ai.files = []; S.ai.busy = true; S.ai.err = '';
+  S.ai.msgs.push({ id: 'tmp', role: 'user', who: S.me, content: text || 'Посмотри вложение.', attachments: files.map(f => ({ name: f.name, kind: f.kind })), created_at: new Date().toISOString() }); updateAi();
+  try { await api('/chat/send', { content: text, model, files }); } catch(e){ S.ai.err = e.message; }
   S.ai.busy = false; await aiPull();
 }
 async function applyOp(op){

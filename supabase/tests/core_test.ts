@@ -141,6 +141,45 @@ check('декодер Firestore', d.id === 'abc' && d.n === 5 && d.t[0].amount =
   // ключа нет
   delete envs.OPENAI_API_KEY; r = await call('POST', '/chat/send', { content: 'привет' }, A);
   check('без ключа ИИ понятно сообщает', /нет ключа OpenAI/.test(tables.ar_chat.at(-1).content), tables.ar_chat.at(-1).content); envs.OPENAI_API_KEY = 'sk-test';
+  // модели: список, выбор, защита от чужой модели
+  r = await call('GET', '/models', undefined, A);
+  check('список моделей: luna и terra, по умолчанию luna', r.j.ok && r.j.default === 'gpt-6-luna' && r.j.models.some((m: any) => m.id === 'gpt-6.1-terra') && r.j.models.some((m: any) => m.id === 'gpt-6-luna'), JSON.stringify(r.j));
+  openaiCalls = []; openaiScript = [{ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'ок' }] }] }];
+  r = await call('POST', '/chat/send', { content: 'привет' }, A);
+  check('без выбора модели идёт luna', openaiCalls[0].model === 'gpt-6-luna', openaiCalls[0]?.model);
+  check('у запроса есть лимит ответа', openaiCalls[0].max_output_tokens === 1500);
+  check('ответ помечен моделью', tables.ar_chat.at(-1).model === 'gpt-6-luna');
+  openaiCalls = []; openaiScript = [{ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'ок' }] }] }];
+  r = await call('POST', '/chat/send', { content: 'подумай', model: 'gpt-6.1-terra' }, A);
+  check('выбранная модель terra применена', openaiCalls[0].model === 'gpt-6.1-terra', openaiCalls[0]?.model);
+  openaiCalls = []; openaiScript = [{ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'ок' }] }] }];
+  r = await call('POST', '/chat/send', { content: 'подмена', model: 'gpt-6.1-sol-pro-max' }, A);
+  check('чужая модель не принимается, идёт модель по умолчанию', openaiCalls[0].model === 'gpt-6-luna', openaiCalls[0]?.model);
+  envs.OPENAI_MODEL = 'gpt-custom-x';
+  r = await call('GET', '/models', undefined, A); check('модель из секрета появляется в списке и становится по умолчанию', r.j.default === 'gpt-custom-x' && r.j.models.some((m: any) => m.id === 'gpt-custom-x'));
+  delete envs.OPENAI_MODEL;
+  // контекст урезан: в запрос уходит не больше 10 последних сообщений
+  for (let i = 0; i < 14; i++) tables.ar_chat.push({ id: 'h' + i, role: 'user', who: 'aziz', content: 'старое ' + i, created_at: new Date(clock++ - 1e9).toISOString() });
+  openaiCalls = []; openaiScript = [{ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'ок' }] }] }];
+  r = await call('POST', '/chat/send', { content: 'проверка истории' }, A);
+  check('история для ИИ не длиннее 10 сообщений', openaiCalls[0].input.length <= 10, String(openaiCalls[0]?.input.length));
+  // вложения
+  const jpg = 'data:image/jpeg;base64,/9j/4AAQSkZJRg==', pdf = 'JVBERi0xLjQK';
+  openaiCalls = []; openaiScript = [{ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'вижу' }] }] }];
+  r = await call('POST', '/chat/send', { content: 'что тут?', files: [{ name: 'чек.jpg', kind: 'image', data: jpg }, { name: 'смета', kind: 'pdf', data: pdf }, { name: 'цены.xlsx', kind: 'text', data: 'Багет;3240\nВставка;7800' }] }, A);
+  const last = openaiCalls[0].input.at(-1), parts = last.content;
+  check('вложения: фото ушло как input_image', Array.isArray(parts) && parts.some((x: any) => x.type === 'input_image' && x.image_url === jpg));
+  check('вложения: PDF ушёл как input_file с data URL', parts.some((x: any) => x.type === 'input_file' && x.file_data.startsWith('data:application/pdf;base64,') && x.filename === 'смета.pdf'));
+  check('вложения: таблица вставлена текстом', parts[0].type === 'input_text' && parts[0].text.includes('Багет;3240') && parts[0].text.includes('что тут?'));
+  const um = tables.ar_chat.filter(m => m.role === 'user').at(-1);
+  check('в базе только пометки о вложениях, без содержимого', um.attachments.length === 3 && !JSON.stringify(tables.ar_chat).includes('JVBERi0xLjQK') && !JSON.stringify(tables.ar_chat).includes('/9j/4AAQ'));
+  openaiCalls = []; openaiScript = [{ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: 'ок' }] }] }];
+  r = await call('POST', '/chat/send', { content: 'а ещё?' }, A);
+  check('в следующем запросе вложений нет, только пометка', !JSON.stringify(openaiCalls[0].input).includes('input_image') && JSON.stringify(openaiCalls[0].input).includes('вложения: чек.jpg'));
+  r = await call('POST', '/chat/send', { content: 'x', files: [{ name: 'a.exe', kind: 'exe', data: 'zz' }] }, A); check('неизвестный тип файла отклонён', r.status === 500 && /не поддерживается/.test(r.j.error || ''), JSON.stringify(r));
+  r = await call('POST', '/chat/send', { content: 'x', files: [{ name: 'a.jpg', kind: 'image', data: 'data:text/html;base64,PHNjcmlwdD4=' }] }, A); check('под видом фото нельзя прислать другое', r.status === 500, JSON.stringify(r));
+  r = await call('POST', '/chat/send', { content: 'x', files: [1, 2, 3, 4].map(i => ({ name: i + '.jpg', kind: 'image', data: jpg })) }, A); check('больше 3 файлов отклонено', r.status === 500 && /не больше 3/.test(r.j.error || ''));
+  r = await call('POST', '/chat/send', { content: '', files: [{ name: 'a.jpg', kind: 'image', data: jpg }] }, A); check('вложение без текста принимается', r.status === 200, JSON.stringify(r).slice(0, 200));
   // отзыв устройства
   r = await call('POST', '/devices/revoke', { id: redvanId }, A); check('отзыв устройства', r.j.ok);
   r = await call('GET', '/chat', undefined, R); check('отозванное устройство больше не имеет доступа', r.status === 401);
