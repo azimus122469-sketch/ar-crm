@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" id="vp" content="width=1280, viewport-fit=cover">
 <title>АР · Тетрадь</title>
 <meta name="color-scheme" content="light">
 <meta name="theme-color" content="#FBF9F3">
@@ -13,6 +13,83 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
+<script>
+// Оформление и вид применяются до отрисовки (без мигания). Ключи ar_*: другое приложение на этом же адресе их не затрагивает.
+window.ARUI = (function(){
+  var D = document.documentElement;
+  function g(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+  function w(k, v){ try { localStorage.setItem(k, v); return true; } catch(e){ return false; } }
+  var BGS = {
+    none:  { n: 'Без фона', c: '' },
+    sea:   { n: 'Море',     c: 'linear-gradient(135deg,#bcd7ee,#e6eff6 50%,#cfe3dc)' },
+    sand:  { n: 'Песок',    c: 'linear-gradient(135deg,#eadfc8,#f7f1e4 50%,#decfb0)' },
+    dawn:  { n: 'Рассвет',  c: 'linear-gradient(135deg,#f3d9c4,#e8b9b0 50%,#c9b8d9)' },
+    graph: { n: 'Графит',   c: 'linear-gradient(135deg,#2a3038,#414b58 50%,#232a31)' },
+    night: { n: 'Ночь',     c: 'linear-gradient(135deg,#0f1b33,#2a4478 55%,#101a2e)' },
+    forest:{ n: 'Лес',      c: 'linear-gradient(135deg,#1c3630,#3f6b5c 55%,#172a25)' },
+    dusk:  { n: 'Сумерки',  c: 'linear-gradient(135deg,#3a2d52,#8a5a7a 55%,#251f3a)' }
+  };
+  var TH = { mode: 'light', glass: false, bg: 'none', alpha: 60, blur: 14 };
+  try {
+    var t = JSON.parse(g('ar_theme') || 'null');
+    if(t && typeof t === 'object'){
+      if(t.mode === 'dark') TH.mode = 'dark';
+      TH.glass = !!t.glass;
+      if(t.bg === 'custom' || BGS[t.bg]) TH.bg = t.bg;
+      var a = +t.alpha; if(a >= 20 && a <= 100) TH.alpha = a;
+      var b = +t.blur; if(b >= 0 && b <= 40) TH.blur = b;
+    }
+  } catch(e){}
+  var UI = { mob: g('ar_view') === 'mob', zoom: 1 };
+  var z0 = parseFloat(g('ar_zoom')); if(z0 >= 0.7 && z0 <= 1.6) UI.zoom = z0;
+  var api = { BGS: BGS, TH: TH, UI: UI, onTheme: null };
+  function bgValue(){
+    if(TH.bg === 'custom'){ var u = g('ar_bgimg'); return u ? 'url("' + u + '")' : ''; }
+    return BGS[TH.bg] ? BGS[TH.bg].c : '';
+  }
+  api.applyTheme = function(){
+    var dark = TH.mode === 'dark', v = bgValue();
+    D.classList.toggle('dark', dark); D.classList.toggle('glass', !!TH.glass); D.classList.toggle('hasbg', !!v);
+    D.style.setProperty('--bgimg', v || 'none');
+    D.style.setProperty('--ga', TH.alpha + '%'); D.style.setProperty('--gb', TH.blur + 'px');
+    var m = document.querySelector('meta[name=color-scheme]'); if(m) m.setAttribute('content', dark ? 'dark' : 'light');
+    var c = document.querySelector('meta[name=theme-color]'); if(c) c.setAttribute('content', dark ? '#14181D' : '#FBF9F3');
+    if(api.onTheme) api.onTheme();
+  };
+  api.canZoom = function(){ return !UI.mob && window.innerWidth >= 900; };
+  // щипок перехватываем только на планшетах и ПК; на телефоне остаётся обычный щипок браузера
+  api.canPinch = function(){ return api.canZoom() && screen.width >= 900; };
+  api.applyZoom = function(){
+    var on = api.canZoom();
+    D.style.zoom = on && UI.zoom !== 1 ? String(UI.zoom) : '';
+    D.classList.toggle('pz', api.canPinch());
+  };
+  api.applyView = function(){
+    D.classList.toggle('mob', UI.mob);
+    var vp = document.getElementById('vp');
+    if(vp) vp.setAttribute('content', UI.mob ? 'width=device-width, initial-scale=1, viewport-fit=cover' : 'width=1280, viewport-fit=cover');
+    api.applyZoom();
+  };
+  api.saveTheme = function(){ w('ar_theme', JSON.stringify(TH)); };
+  api.setTheme = function(p){ for(var k in p) TH[k] = p[k]; api.saveTheme(); api.applyTheme(); };
+  api.setView = function(mob){ UI.mob = !!mob; w('ar_view', UI.mob ? 'mob' : 'pc'); api.applyView(); };
+  api.setZoom = function(z, live){
+    z = Math.round(Math.min(1.6, Math.max(0.7, z)) * 20) / 20; UI.zoom = z; api.applyZoom();
+    if(!live) w('ar_zoom', String(z));
+  };
+  api.setCustomBg = function(url){
+    if(!w('ar_bgimg', url)) return false;
+    TH.bg = 'custom'; api.saveTheme(); api.applyTheme(); return true;
+  };
+  var pz = null, dist = function(e){ var a = e.touches[0], b = e.touches[1]; return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); };
+  document.addEventListener('touchstart', function(e){ if(e.touches.length === 2 && api.canPinch()) pz = { d: dist(e), z: UI.zoom }; }, { passive: true });
+  document.addEventListener('touchmove', function(e){ if(pz && e.touches.length === 2){ e.preventDefault(); api.setZoom(pz.z * dist(e) / pz.d, true); if(api.onZoom) api.onZoom(); } }, { passive: false });
+  document.addEventListener('touchend', function(){ if(pz){ pz = null; w('ar_zoom', String(UI.zoom)); } });
+  window.addEventListener('resize', api.applyZoom);
+  api.applyTheme(); api.applyView();
+  return api;
+})();
+</script>
 <style>
 :root{
   --paper:#FBF9F3; --paper2:#F3F0E7; --card:#FFFEFA; --grid:#DCE5EE; --edge:#E2DDD1;
@@ -20,8 +97,14 @@
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --serif:Georgia,"Times New Roman",serif;
   --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px);
+  --card-2:#F3F0E7; --ga:60%; --gb:14px; --bgimg:none;
+}
+html.dark{
+  --paper:#14181D; --paper2:#1C2229; --card:#1A2027; --card-2:#1C2229; --grid:#2A323B; --edge:#313A44;
+  --ink:#E8ECF0; --soft:#B0B9C3; --faint:#8791A0; --blue:#7C9BFF; --red:#FF8077;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html.pz{touch-action:pan-x pan-y}
 html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.4;-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:100dvh}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -54,6 +137,7 @@ h2.h{font-family:var(--serif);font-size:22px;margin:0 0 10px}
 .cal .cd b{font-family:var(--serif);font-size:12px;font-weight:700}
 .cal .cd i{font-style:normal;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .cal .cd.off{background:#E6E4DD;color:var(--faint)}
+html.dark .cal .cd.off{background:#262D35}
 .cal .cd.fut{color:var(--faint);border-style:dashed}
 .cal .cd.plan{border-style:dashed}
 .cal .cd.today{border:2px solid var(--ink)}
@@ -82,6 +166,8 @@ h2.h{font-family:var(--serif);font-size:22px;margin:0 0 10px}
 select.in{appearance:none;-webkit-appearance:none;padding-right:40px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M2 2l6 6 6-6' fill='none' stroke='%2316202B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 14px center}
+html.dark select.in{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M2 2l6 6 6-6' fill='none' stroke='%23E8ECF0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+html.dark .sheet{background:rgba(0,0,0,.6)}
 .btn{width:100%;background:var(--blue);color:var(--paper);border:0;border-radius:10px;padding:14px;font-weight:600}
 .btn:disabled{opacity:.35}
 .btn2{width:100%;background:transparent;border:2px solid var(--ink);border-radius:10px;padding:12px;font-weight:600}
@@ -147,6 +233,7 @@ select.in{appearance:none;-webkit-appearance:none;padding-right:40px;
 .dev .nm{font-weight:600}
 .tabbar button{position:relative}
 .tabbar .bdg{position:absolute;top:4px;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:8px;background:var(--blue);color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px}
+html.dark .tabbar .bdg{color:#0E1218}
 .code{font-family:var(--serif);font-size:34px;letter-spacing:.18em;text-align:center;padding:12px;border:2px solid var(--ink);border-radius:10px;background:var(--card);user-select:all}
 .mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all;background:var(--paper2);border:1px solid var(--edge);border-radius:8px;padding:8px}
 .ratebox{display:flex;gap:10px;align-items:center}
@@ -218,27 +305,74 @@ table.t .neg{color:var(--red)}
 .sg .lt{align-items:center;font-family:var(--serif);font-weight:700;font-size:13px}
 
 @media (min-width:1000px){
-  #app{max-width:none;margin:0;padding:0 0 32px 232px}
-  .top{padding-left:32px;padding-right:32px}
-  .tabbar{top:0;bottom:0;right:auto;width:232px;border-top:0;border-right:1px solid var(--edge);padding:22px 12px;overflow:auto}
-  .tabbar::before{content:"АР · Тетрадь";display:block;font-family:var(--serif);font-weight:700;font-size:21px;padding:2px 14px 20px}
-  .tabbar .in-bar{max-width:none;margin:0;flex-direction:column;gap:4px}
-  .tabbar button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;border-radius:10px;text-align:left}
-  .tabbar button.on{background:var(--ink);color:var(--paper)}
-  .tabbar .bdg{top:50%;left:auto;right:14px;transform:translateY(-50%);background:var(--red)}
-  main{padding:0 32px}
-  .tab{padding:22px 0}
-  #tab-book,#tab-obj,#tab-stock,#tab-ai,#tab-more{max-width:780px;margin:0 auto}
-  #tab-sum.on{max-width:1240px;margin:0 auto}
-  .sumcols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:start}
-  .cal .cd{min-height:66px;font-size:10px}
-  .cal .cd b{font-size:13px}
-  .aibar{bottom:0}
-  .toast{bottom:32px}
-  .sheet{align-items:center}
-  .sheet-box{border-radius:16px;max-width:560px;padding-bottom:20px}
-  .banner{margin-left:32px;margin-right:32px}
+  html:not(.mob) #app{max-width:none;margin:0;padding:0 0 32px 232px}
+  html:not(.mob) .top{padding-left:32px;padding-right:32px}
+  html:not(.mob) .tabbar{top:0;bottom:0;right:auto;width:232px;border-top:0;border-right:1px solid var(--edge);padding:22px 12px;overflow:auto}
+  html:not(.mob) .tabbar::before{content:"АР · Тетрадь";display:block;font-family:var(--serif);font-weight:700;font-size:21px;padding:2px 14px 20px}
+  html:not(.mob) .tabbar .in-bar{max-width:none;margin:0;flex-direction:column;gap:4px}
+  html:not(.mob) .tabbar button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;border-radius:10px;text-align:left}
+  html:not(.mob) .tabbar button.on{background:var(--ink);color:var(--paper)}
+  html:not(.mob) .tabbar .bdg{top:50%;left:auto;right:14px;transform:translateY(-50%);background:var(--red)}
+  html:not(.mob) main{padding:0 32px}
+  html:not(.mob) .tab{padding:22px 0}
+  html:not(.mob) #tab-book,html:not(.mob) #tab-obj,html:not(.mob) #tab-ai,html:not(.mob) #tab-more{max-width:780px;margin:0 auto}
+  html:not(.mob) #tab-stock{max-width:1240px;margin:0 auto}
+  html:not(.mob) #tab-sum.on{max-width:1240px;margin:0 auto}
+  html:not(.mob) .sumcols{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:24px;align-items:start}
+  html:not(.mob) .cal .cd{min-height:66px;font-size:10px}
+  html:not(.mob) .cal .cd b{font-size:13px}
+  html:not(.mob) .aibar{bottom:0}
+  html:not(.mob) .toast{bottom:32px}
+  html:not(.mob) .sheet{align-items:center}
+  html:not(.mob) .sheet-box{border-radius:16px;max-width:560px;padding-bottom:20px}
+  html:not(.mob) .banner{margin-left:32px;margin-right:32px}
+  html:not(.mob) .drbar{margin-left:32px;margin-right:32px}
 }
+@media (min-width:1700px){
+  html:not(.mob) #tab-sum.on,html:not(.mob) #tab-stock{max-width:1560px}
+}
+/* мобильный вид: одна колонка, крупные элементы под палец */
+html.mob .tabbar button{padding:12px 0 10px;font-size:13px}
+html.mob .tabbar svg{width:28px;height:28px}
+html.mob .btn,html.mob .btn2{padding:16px;font-size:17px}
+html.mob .in{min-height:50px;padding:14px}
+html.mob .seg button{padding:14px 4px;font-size:15px}
+html.mob .pt button{width:54px;height:54px}
+html.mob .x{width:44px;height:44px}
+html.mob .row{padding:14px 0}
+html.mob .cal .cd{min-height:56px}
+html.mob .vbtn,html.mob .bd{height:42px}
+html.mob .bd{width:42px}
+/* шапка: переключатель вида */
+.mer{display:flex;gap:8px;align-items:center}
+.vbtn{height:34px;border:1.5px solid var(--ink);border-radius:8px;background:transparent;padding:0 10px;font-size:13px;font-weight:600;white-space:nowrap}
+/* незаконченное */
+.drbar{margin:10px 16px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dch{display:inline-flex;align-items:center;border:1.5px dashed var(--ink);border-radius:20px;max-width:100%;background:var(--card)}
+.dch button{border:0;background:transparent}
+.dch .go{padding:5px 4px 5px 12px;font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dch .no{padding:5px 11px;font-size:14px;line-height:1;color:var(--soft)}
+/* оформление */
+.swg{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.sw3{height:44px;border:2px solid var(--edge);border-radius:8px;background-color:var(--paper2);background-size:cover;background-position:center;padding:0;font-size:11px;color:var(--ink);overflow:hidden}
+.sw3.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
+.zrow{display:flex;gap:8px;align-items:center}
+.zrow .btn2{width:52px;padding:10px 0;font-size:20px}
+.zrow .zv{flex:1;text-align:center;font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--blue)}
+.rng{display:flex;flex-direction:column;gap:2px}
+.rng.dis{opacity:.4;pointer-events:none}
+/* стекло: панели полупрозрачные и размытые. Включается классом glass на <html> */
+html.hasbg{background:var(--paper)}
+html.hasbg body{background-color:transparent;background-image:var(--bgimg);background-size:cover;background-position:center;background-repeat:no-repeat;background-attachment:fixed}
+html.glass .card,html.glass .sgrid,html.glass .obj,html.glass .msg,html.glass .prop,html.glass .code,html.glass .mono{
+  background:color-mix(in srgb,var(--card) var(--ga),transparent);-webkit-backdrop-filter:blur(var(--gb));backdrop-filter:blur(var(--gb))}
+html.glass .top,html.glass .aibar,html.glass .sheet-box,html.glass .banner{
+  background:color-mix(in srgb,var(--paper) var(--ga),transparent);-webkit-backdrop-filter:blur(var(--gb));backdrop-filter:blur(var(--gb))}
+html.glass .tabbar,html.glass .msg.me{
+  background:color-mix(in srgb,var(--card-2) var(--ga),transparent);-webkit-backdrop-filter:blur(var(--gb));backdrop-filter:blur(var(--gb))}
+html.glass .in{background:color-mix(in srgb,var(--card) var(--ga),transparent)}
+html.glass .sg.h,html.glass .sg.tot{background:color-mix(in srgb,var(--card-2) 55%,transparent)}
 </style>
 </head>
 <body>
@@ -258,11 +392,12 @@ table.t .neg{color:var(--red)}
       <div class="bal" id="bal">—</div>
     </div>
     <div class="me">
-      <button class="bd" id="meBtn" data-act="goMore" aria-label="Кто работает"></button>
+      <div class="mer"><button class="vbtn" id="viewBtn" data-act="viewToggle" aria-label="Вид: ПК или мобильная"></button><button class="bd" id="meBtn" data-act="goMore" aria-label="Кто работает"></button></div>
       <div class="conn" id="conn"></div>
     </div>
   </header>
   <div class="banner" id="banner" hidden></div>
+  <div class="drbar" id="dr-bar" hidden></div>
 
   <main>
     <section class="tab on" id="tab-book">
@@ -394,13 +529,25 @@ table.t .neg{color:var(--red)}
           <div class="hint" id="bio-msg"></div>
           <div class="hint" id="auth-msg"></div>
         </div>
+        <div class="card col" id="look-card">
+          <div class="lbl">Оформление и вид</div>
+          <div class="fl"><span class="hint">Тема</span><div class="seg" id="lk-mode"><button data-act="thMode" data-v="light">Светлая</button><button data-act="thMode" data-v="dark">Тёмная</button></div></div>
+          <div class="fl"><span class="hint">Стекло (полупрозрачные панели)</span><div class="seg" id="lk-glass"><button data-act="thGlass" data-v="0">Выкл</button><button data-act="thGlass" data-v="1">Вкл</button></div></div>
+          <div class="fl"><span class="hint">Фон (виден при включённом стекле)</span><div class="swg" id="lk-bgs"></div>
+            <input type="file" id="lk-file" accept="image/*" hidden></div>
+          <div class="rng" id="lk-ra"><span class="hint">Прозрачность: <b id="lk-av"></b></span><input type="range" id="lk-a" min="0" max="80" step="5"></div>
+          <div class="rng" id="lk-rb"><span class="hint">Размытие: <b id="lk-bv"></b></span><input type="range" id="lk-b" min="0" max="30" step="1"></div>
+          <div class="hint">Настоящая прозрачность окна (чтобы сквозь приложение было видно другое окно) в браузере и PWA невозможна. Это размытие внутри самой страницы. На тёмном фоне включай тёмную тему.</div>
+          <div class="fl"><span class="hint">Вид</span><div class="seg" id="lk-view"><button data-act="viewSet" data-v="pc">ПК</button><button data-act="viewSet" data-v="mob">Мобильная</button></div></div>
+          <div class="fl"><span class="hint">Масштаб (режим ПК, экран от 900 px)</span><div class="zrow"><button class="btn2" data-act="zoomDown" aria-label="Меньше">−</button><button class="btn3 zv" data-act="zoomReset" id="lk-z">100%</button><button class="btn2" data-act="zoomUp" aria-label="Больше">+</button></div></div>
+        </div>
         <div class="card col" id="rem-card"></div>
         <div class="card col" id="model-card"></div>
         <div class="card col">
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.7</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.8</div>
       </div>
     </section>
   </main>
@@ -934,7 +1081,7 @@ function updateRem(){
 // <calendar>
 // Календарь работы: строится сам. День рабочий, если в нём есть расход по объекту, списание материала на объект,
 // дата начала объекта или сдача. День без таких записей, прошедший, считается выходным.
-const CAL_COLORS = ['#BCCBEA', '#E2CFAE', '#BFDDB8', '#EBC3C9', '#CFC3EA', '#B2DADD', '#EBDB9C', '#D3BBA9', '#F0C9A6', '#C5CED8'];
+let CAL_COLORS = ['#BCCBEA', '#E2CFAE', '#BFDDB8', '#EBC3C9', '#CFC3EA', '#B2DADD', '#EBDB9C', '#D3BBA9', '#F0C9A6', '#C5CED8'];
 const WD_RU = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 function calModel(objects, stock, K, now = Date.now()){
   const y = Math.floor(K / 100), mo = K % 100, n = new Date(y, mo, 0).getDate();
@@ -1027,8 +1174,16 @@ function updateSums(){
   $('#sums').innerHTML = html;
 }
 // ───────────── графики «Итогов» ─────────────
-const CH_PAL = ['#2F4A6D', '#A0564F', '#6B8F71', '#C49A3C', '#7A6A9A', '#4F8A8B', '#B8794B', '#6F7F94'];
-const CH_GRAY = '#9AA1A9', CH_IN = '#2F4A6D', CH_OUT = '#A0564F';
+const CH_LIGHT = ['#2F4A6D', '#A0564F', '#6B8F71', '#C49A3C', '#7A6A9A', '#4F8A8B', '#B8794B', '#6F7F94'];
+const CH_DARK = ['#7FA3D6', '#D98C84', '#8FBF96', '#E0B861', '#A99BD0', '#76BDBE', '#DDA074', '#9AACC4'];
+const CAL_LIGHT = CAL_COLORS.slice(), CAL_DARK = ['#2F4468', '#5B4A2C', '#2F5233', '#5C3340', '#473B66', '#2B5557', '#5A5128', '#553F2F', '#60402A', '#3E4856'];
+let CH_PAL = CH_LIGHT, CH_GRAY = '#9AA1A9', CH_IN = '#2F4A6D', CH_OUT = '#A0564F';
+function themeColors(){
+  const d = document.documentElement.classList.contains('dark');
+  CH_PAL = d ? CH_DARK : CH_LIGHT; CH_IN = d ? '#7FA3D6' : '#2F4A6D'; CH_OUT = d ? '#D98C84' : '#A0564F';
+  CH_GRAY = d ? '#7C8591' : '#9AA1A9'; CAL_COLORS = d ? CAL_DARK : CAL_LIGHT;
+}
+themeColors();
 const MON = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
 const catLabel = c => String(c || '').replace(/^[^\p{L}\p{N}]+/u, '').trim() || 'Без категории';
 const CH_NEUTRAL = ['Без категории', 'Прочее', 'Остальное'];
@@ -1080,36 +1235,36 @@ function chWaterfall(d){
   ];
   const vals = st.flatMap(s => [s.a, s.b]), lo = Math.min(0, ...vals), hi = Math.max(0, ...vals) || 1;
   const top = 26, H = 138, Y = v => top + (hi - v) / ((hi - lo) || 1) * H;
-  let g = `<line x1="14" y1="${Y(0)}" x2="346" y2="${Y(0)}" stroke="#8A939E" stroke-width="1"/>`;
+  let g = `<line x1="14" y1="${Y(0)}" x2="346" y2="${Y(0)}" stroke="var(--faint)" stroke-width="1"/>`;
   st.forEach((s, i) => {
     const x = 22 + i * 84, y1 = Y(Math.max(s.a, s.b)), h = Math.max(2, Math.abs(Y(s.a) - Y(s.b)));
     const shown = i === 3 ? d.profit : (i === 0 ? d.clients : -(Math.abs(s.b - s.a)));
     g += `<rect x="${x}" y="${y1}" width="56" height="${h}" rx="3" fill="${s.col}"/>`;
-    g += `<text class="vl" x="${x + 28}" y="${y1 - 6}" text-anchor="middle" font-size="12" fill="#16202B">${chShort(shown)}</text>`;
-    g += `<text x="${x + 28}" y="${Y(lo) + 18}" text-anchor="middle" font-size="12" fill="#4A5663">${s.lab}</text>`;
-    if(i < 2) g += `<line x1="${x + 56}" y1="${Y(s.b)}" x2="${x + 84}" y2="${Y(s.b)}" stroke="#8A939E" stroke-dasharray="3 3"/>`;
+    g += `<text class="vl" x="${x + 28}" y="${y1 - 6}" text-anchor="middle" font-size="12" fill="var(--ink)">${chShort(shown)}</text>`;
+    g += `<text x="${x + 28}" y="${Y(lo) + 18}" text-anchor="middle" font-size="12" fill="var(--soft)">${s.lab}</text>`;
+    if(i < 2) g += `<line x1="${x + 56}" y1="${Y(s.b)}" x2="${x + 84}" y2="${Y(s.b)}" stroke="var(--faint)" stroke-dasharray="3 3"/>`;
   });
   return `<svg class="chart" viewBox="0 0 360 ${Math.round(Y(lo)) + 30}" role="img" aria-label="Водопад: приход ${fmt(d.clients)}, расходы объектов ${fmt(d.objExp)}, общие расходы ${fmt(d.overhead)}, прибыль ${fmt(d.profit)}">${g}</svg>`;
 }
 function chMonths(ms){
   const prof = ms.map(r => r.inc - r.exp), mx = Math.max(1, ...ms.flatMap(r => [r.inc, r.exp])), lo = Math.min(0, ...prof);
   const top = 14, H = 124, Y = v => top + (mx - v) / ((mx - lo) || 1) * H, x0 = 58, step = 47;
-  let g = `<line x1="${x0 - 6}" y1="${top}" x2="352" y2="${top}" stroke="#DCE5EE"/><line x1="${x0 - 6}" y1="${Y(0)}" x2="352" y2="${Y(0)}" stroke="#8A939E"/>`;
-  g += `<text x="${x0 - 10}" y="${top + 4}" text-anchor="end" font-size="11" fill="#8A939E">${chShort(mx)}</text><text x="${x0 - 10}" y="${Y(0) + 4}" text-anchor="end" font-size="11" fill="#8A939E">0</text>`;
+  let g = `<line x1="${x0 - 6}" y1="${top}" x2="352" y2="${top}" stroke="var(--grid)"/><line x1="${x0 - 6}" y1="${Y(0)}" x2="352" y2="${Y(0)}" stroke="var(--faint)"/>`;
+  g += `<text x="${x0 - 10}" y="${top + 4}" text-anchor="end" font-size="11" fill="var(--faint)">${chShort(mx)}</text><text x="${x0 - 10}" y="${Y(0) + 4}" text-anchor="end" font-size="11" fill="var(--faint)">0</text>`;
   const pts = [];
   ms.forEach((r, i) => {
     const x = x0 + i * step, c = x + 17;
     g += `<rect x="${x}" y="${Y(r.inc)}" width="16" height="${Math.max(r.inc ? 2 : 0, Y(0) - Y(r.inc))}" rx="3" fill="${CH_IN}"/>`;
     g += `<rect x="${x + 18}" y="${Y(r.exp)}" width="16" height="${Math.max(r.exp ? 2 : 0, Y(0) - Y(r.exp))}" rx="3" fill="${CH_OUT}"/>`;
-    g += `<text x="${c}" y="${Y(lo) + 18}" text-anchor="middle" font-size="12" fill="#4A5663">${MON[r.m]}</text>`;
+    g += `<text x="${c}" y="${Y(lo) + 18}" text-anchor="middle" font-size="12" fill="var(--soft)">${MON[r.m]}</text>`;
     pts.push(`${c},${Y(prof[i])}`);
   });
-  g += `<polyline points="${pts.join(' ')}" fill="none" stroke="#16202B" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-  pts.forEach(p => { const [cx, cy] = p.split(','); g += `<circle cx="${cx}" cy="${cy}" r="4" fill="#16202B" stroke="#FFFEFA" stroke-width="2"/>`; });
+  g += `<polyline points="${pts.join(' ')}" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach(p => { const [cx, cy] = p.split(','); g += `<circle cx="${cx}" cy="${cy}" r="4" fill="var(--ink)" stroke="var(--card)" stroke-width="2"/>`; });
   const ly = Math.round(Y(lo)) + 40;
-  g += `<rect x="58" y="${ly - 9}" width="10" height="10" rx="2" fill="${CH_IN}"/><text x="73" y="${ly}" font-size="12" fill="#4A5663">Приход</text>`
-     + `<rect x="138" y="${ly - 9}" width="10" height="10" rx="2" fill="${CH_OUT}"/><text x="153" y="${ly}" font-size="12" fill="#4A5663">Расход</text>`
-     + `<line x1="214" y1="${ly - 4}" x2="234" y2="${ly - 4}" stroke="#16202B" stroke-width="2"/><text x="239" y="${ly}" font-size="12" fill="#4A5663">Прибыль</text>`;
+  g += `<rect x="58" y="${ly - 9}" width="10" height="10" rx="2" fill="${CH_IN}"/><text x="73" y="${ly}" font-size="12" fill="var(--soft)">Приход</text>`
+     + `<rect x="138" y="${ly - 9}" width="10" height="10" rx="2" fill="${CH_OUT}"/><text x="153" y="${ly}" font-size="12" fill="var(--soft)">Расход</text>`
+     + `<line x1="214" y1="${ly - 4}" x2="234" y2="${ly - 4}" stroke="var(--ink)" stroke-width="2"/><text x="239" y="${ly}" font-size="12" fill="var(--soft)">Прибыль</text>`;
   return `<svg class="chart" viewBox="0 0 360 ${ly + 8}" role="img" aria-label="Приход, расход и прибыль по последним шести месяцам">${g}</svg>`;
 }
 function chCats(cats){
@@ -1126,10 +1281,10 @@ function chPie(cats){
   if(list.length === 1) g = `<circle cx="80" cy="80" r="${(R + r) / 2}" fill="none" stroke="${catColor(list[0].name)}" stroke-width="${R - r}"/>`;
   else list.forEach(c => {
     const a1 = a0 + c.v / total * Math.PI * 2, [x0, y0] = P(R, a0), [x1, y1] = P(R, a1), [x2, y2] = P(r, a1), [x3, y3] = P(r, a0), big = a1 - a0 > Math.PI ? 1 : 0;
-    g += `<path d="M${x0},${y0}A${R},${R} 0 ${big} 1 ${x1},${y1}L${x2},${y2}A${r},${r} 0 ${big} 0 ${x3},${y3}Z" fill="${catColor(c.name)}" stroke="#FFFEFA" stroke-width="2"/>`;
+    g += `<path d="M${x0},${y0}A${R},${R} 0 ${big} 1 ${x1},${y1}L${x2},${y2}A${r},${r} 0 ${big} 0 ${x3},${y3}Z" fill="${catColor(c.name)}" stroke="var(--card)" stroke-width="2"/>`;
     a0 = a1;
   });
-  g += `<text class="vl" x="80" y="80" text-anchor="middle" font-size="17" fill="#16202B">${chShort(total)}</text><text x="80" y="98" text-anchor="middle" font-size="11" fill="#8A939E">расходы</text>`;
+  g += `<text class="vl" x="80" y="80" text-anchor="middle" font-size="17" fill="var(--ink)">${chShort(total)}</text><text x="80" y="98" text-anchor="middle" font-size="11" fill="var(--faint)">расходы</text>`;
   const leg = list.map(c => `<div class="li"><span class="sw2" style="background:${catColor(c.name)}"></span><span class="nm">${esc(c.name)}</span><span class="vv">${chShort(c.v)} · ${Math.round(c.v / total * 100)}%</span></div>`).join('');
   return `<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center"><svg class="chart" style="flex:0 0 170px;width:170px;margin:0 auto" viewBox="0 0 160 160" role="img" aria-label="Доли расходов по категориям">${g}</svg><div class="leg" style="flex:1 1 200px;min-width:0">${leg}</div></div>`;
 }
@@ -1165,10 +1320,10 @@ function updateMore(){
   const AM = { ok: 'Защита базы: устройство подтверждено сервером.', off: 'Защита базы: на сервере ещё не задан ключ Firebase, база пока открыта по общему ключу.', nodev: 'Защита базы: подключи устройство в «Мой кабинет», тогда оно получит доступ к закрытой базе.', fail: 'Защита базы: не удалось подтвердить устройство. Проверь интернет.' };
   $('#auth-msg').textContent = live ? (AM[S.auth] || '') : '';
   const mr = $('#more-rate'); if(document.activeElement !== mr) mr.value = S.rate ? fmt(S.rate) : '';
-  updateModelCard();
+  updateModelCard(); updateLook();
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateArchive(); updateStock(); updateCal(); updateCharts(); updateRem(); remCheck();
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateArchive(); updateStock(); updateCal(); updateCharts(); updateRem(); remCheck(); drRender();
 }
 
 // ───────────── записи ─────────────
@@ -1244,6 +1399,7 @@ function openEdit(key){
       <button class="btn" data-act="saveEdit">Сохранить</button>
     </div>`);
   renderPT($('#ed-pt'), S.edit.partner, 'edp');
+  drBegin();
 }
 function saveEdit(){
   const it = S.sheet && S.sheet.kind === 'edit' ? findItem(S.sheet.key) : null; if(!it) return;
@@ -1268,7 +1424,13 @@ function saveEdit(){
 
 // ───────────── окно объекта ─────────────
 function openSheet(html){ $('#sheet-box').innerHTML = html; $('#sheet').hidden = false; }
-function closeSheet(){ $('#sheet').hidden = true; S.sheet = null; $('#sheet-box').innerHTML = ''; }
+// closeSheet() — окно закрыто по делу (записали, удалили): черновик этого окна стирается.
+// dismissSheet() — закрыли крестиком или кликом мимо: введённое сохраняется как «незаконченное».
+function closeSheet(keep){
+  if(keep !== true){ const k = drSheetKey(); if(k) drDrop(k); }
+  $('#sheet').hidden = true; S.sheet = null; $('#sheet-box').innerHTML = ''; drRender();
+}
+function dismissSheet(){ const k = drSheetKey(); if(k) drSaveForm(k); closeSheet(true); }
 function openObj(id){
   const o = S.objects.find(x => x.id === id); if(!o) return;
   S.sheet = { kind: 'obj', id }; S.sheetTx.type = 'expense';
@@ -1280,6 +1442,7 @@ function openObj(id){
       <div id="sh-tx"></div>
     </div>`);
   renderObjSheet();
+  drBegin();
 }
 function renderObjSheet(){
   const o = S.objects.find(x => x.id === (S.sheet && S.sheet.id)); if(!o){ closeSheet(); return; }
@@ -1375,6 +1538,7 @@ function openNewObj(){
     </div>`);
   $('#no-date').value = dayKey(Date.now());
   renderNewObj();
+  drBegin();
 }
 function renderNewObj(){
   $$('#no-type button').forEach(b => b.classList.toggle('on', b.dataset.t === NEW.type));
@@ -1692,6 +1856,171 @@ async function bioToggle(){
   updateMore();
 }
 
+// ───────────── незаконченное (черновики) ─────────────
+// Что начато в форме и брошено (закрыли окно, кликнули мимо, ушли из приложения), сохраняется и показывается чипом «Незаконченное».
+const DR_KEY = 'ar_drafts';
+const DR = {
+  entry: { title: 'Запись', core: ['entry-text'], ids: ['entry-text', 'entry-rate'], inline: true },
+  stock: { title: 'Склад', core: ['st-mat', 'st-qty', 'st-price'], ids: ['st-mat', 'st-qty', 'st-price', 'st-rate', 'st-date', 'st-obj'], inline: true },
+  ai:    { title: 'Помощник', core: ['ai-text'], ids: ['ai-text'], inline: true },
+  new:   { title: 'Новый объект', core: ['no-name', 'no-addr', 'no-area', 'no-adv', 'no-note'], ids: ['no-name', 'no-addr', 'no-area', 'no-date', 'no-adv', 'no-note'] },
+  obj:   { title: 'Запись в объекте', core: ['sh-text'], ids: ['sh-text', 'sh-rate'] },
+  edit:  { title: 'Правка записи', core: ['ed-desc', 'ed-amt', 'ed-rate'], ids: ['ed-desc', 'ed-amt', 'ed-rate'] }
+};
+const drKind = k => String(k).split(':')[0];
+const drVal = id => { const e = document.getElementById(id); return e ? String(e.value) : ''; };
+function drAll(){
+  try { const j = JSON.parse(LS.get(DR_KEY) || '{}'); return j && typeof j === 'object' && !Array.isArray(j) ? j : {}; } catch(e){ return {}; }
+}
+function drPut(all){
+  const o = {}; Object.keys(all).filter(k => DR[drKind(k)]).sort((a, b) => (all[b].t || 0) - (all[a].t || 0)).slice(0, 20).forEach(k => { o[k] = all[k]; });
+  LS.set(DR_KEY, JSON.stringify(o));
+}
+function drDrop(k){ const all = drAll(); if(k in all){ delete all[k]; drPut(all); } }
+function drSheetKey(){
+  const sh = S.sheet; if(!sh) return null;
+  if(sh.kind === 'new') return 'new';
+  if(sh.kind === 'obj') return 'obj:' + sh.id;
+  if(sh.kind === 'edit') return 'edit:' + sh.key;
+  return null;
+}
+function drState(kind){
+  if(kind === 'entry') return { k: S.entry.kind, p: S.entry.partner, s: S.entry.src, o: S.entry.objectId };
+  if(kind === 'stock') return { k: S.stk.kind, c: S.stk.cur, s: S.stk.src, p: S.stk.partner, u: S.stk.unit };
+  if(kind === 'new') return { t: NEW.type, p: NEW.partner };
+  if(kind === 'obj') return { t: S.sheetTx.type };
+  if(kind === 'edit') return { p: S.edit && S.edit.partner };
+  return {};
+}
+function drSetState(kind, x){
+  x = x || {};
+  if(kind === 'entry'){ S.entry.kind = x.k || null; S.entry.partner = x.p || null; S.entry.src = x.s || 'cash'; S.entry.objectId = x.o || ''; }
+  if(kind === 'stock'){ S.stk.kind = x.k || 'in'; S.stk.cur = x.c || 'uzs'; S.stk.src = x.s || 'cash'; S.stk.partner = x.p || null; if(x.u){ S.stk.unit = x.u; S.stk.unitTouched = true; } }
+  if(kind === 'new'){ NEW.type = x.t === 'project' ? 'project' : 'measure'; NEW.partner = x.p || S.me; }
+  if(kind === 'obj'){ S.sheetTx.type = ['income', 'expense', 'info'].includes(x.t) ? x.t : 'expense'; }
+  if(kind === 'edit' && x.p && S.edit) S.edit.partner = x.p;
+}
+const drSnap = kind => { const o = {}; DR[kind].core.forEach(id => { o[id] = drVal(id); }); return o; };
+function drChanged(kind){
+  const base = DR[kind].inline ? {} : (S.drBase || {}), cur = drSnap(kind);
+  return Object.keys(cur).some(id => cur[id].trim() !== String(base[id] || '').trim());
+}
+// сохранить (или стереть, если форма снова пустая)
+function drSaveForm(k){
+  const kind = drKind(k); if(!DR[kind]) return;
+  const all = drAll();
+  if(drChanged(kind)){
+    const f = {}; DR[kind].ids.forEach(id => { if(document.getElementById(id)) f[id] = drVal(id); });
+    all[k] = { t: Date.now(), f, s: drState(kind) };
+  } else delete all[k];
+  drPut(all);
+}
+// Встроенные формы (запись, склад, чат) пишутся по мере ввода
+function drSync(){
+  ['entry', 'stock', 'ai'].forEach(k => drSaveForm(k));
+  const sk = drSheetKey(); // окно открыто, но приложение сворачивают: сохраняем на всякий случай
+  if(sk && document.visibilityState === 'hidden') drSaveForm(sk);
+}
+let drTimer = 0;
+function drSoon(){ clearTimeout(drTimer); drTimer = setTimeout(() => { drSync(); drRender(); }, 250); }
+function drFill(d){ Object.keys(d.f || {}).forEach(id => { const e = document.getElementById(id); if(e && 'value' in e) e.value = d.f[id]; }); }
+// открыли окно: запомнить исходное состояние и подставить сохранённое
+function drBegin(){
+  const k = drSheetKey(); if(!k) return;
+  const kind = drKind(k); S.drBase = drSnap(kind);
+  const d = drAll()[k]; if(!d) return;
+  drSetState(kind, d.s); drFill(d);
+  if(kind === 'new') renderNewObj();
+  if(kind === 'obj') updateSheetEntry();
+  if(kind === 'edit' && $('#ed-pt')) renderPT($('#ed-pt'), S.edit.partner, 'edp');
+}
+// запуск приложения: вернуть встроенные формы
+function drRestore(){
+  const all = drAll();
+  ['entry', 'stock', 'ai'].forEach(kind => { const d = all[kind]; if(d){ drSetState(kind, d.s); drFill(d); } });
+}
+const drShort = (t, n = 22) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+function drLabel(k, d){
+  const kind = drKind(k), first = (DR[kind].core.map(id => (d.f || {})[id]).find(v => v && String(v).trim())) || '';
+  let t = DR[kind].title;
+  if(kind === 'obj'){ const o = S.objects.find(x => String(x.id) === k.slice(4)); if(o) t = drShort(o.name, 18); }
+  return t + (first ? ' · ' + drShort(first) : '');
+}
+let drHtml = '';
+function drRender(){
+  const el = $('#dr-bar'); if(!el) return;
+  const all = drAll(), cur = drSheetKey();
+  const items = Object.keys(all).filter(k => DR[drKind(k)] && k !== cur && !(drKind(k) === 'entry' || drKind(k) === 'ai') && !(drKind(k) === 'stock' && S.stk.open))
+    .sort((a, b) => (all[b].t || 0) - (all[a].t || 0));
+  const html = items.length ? '<span class="lbl">Незаконченное</span>' + items.map(k =>
+    `<span class="dch"><button class="go" data-act="drOpen" data-k="${esc(k)}">${esc(drLabel(k, all[k]))}</button><button class="no" data-act="drDel" data-k="${esc(k)}" aria-label="Удалить черновик">✕</button></span>`).join('') : '';
+  if(html === drHtml) return;
+  drHtml = html; el.innerHTML = html; el.hidden = !html;
+}
+function drOpen(k){
+  const kind = drKind(k);
+  if(kind === 'stock'){
+    setTab('stock'); const d = drAll().stock; stockOpen(S.stk.kind || 'in');
+    if(d && d.f && d.f['st-obj'] && $('#st-obj')) $('#st-obj').value = d.f['st-obj'];
+    updateStock(); return;
+  }
+  if(kind === 'new'){ setTab('book'); openNewObj(); return; }
+  if(kind === 'obj'){
+    const o = S.objects.find(x => String(x.id) === k.slice(4));
+    if(!o){ drDrop(k); drRender(); toast('Этот объект уже удалён'); return; }
+    openObj(o.id); return;
+  }
+  if(kind === 'edit'){
+    if(!findItem(k.slice(5))){ drDrop(k); drRender(); toast('Эта запись уже удалена'); return; }
+    openEdit(k.slice(5));
+  }
+}
+function drDel(k){
+  drDrop(k);
+  if(drKind(k) === 'stock'){ stockClear(); S.stk.partner = null; updateStock(); }
+  drRender();
+}
+
+// ───────────── оформление и вид ─────────────
+function updateLook(){
+  if(!window.ARUI || !$('#lk-mode')) return;
+  const { TH, UI, BGS } = ARUI;
+  $$('#lk-mode button').forEach(b => b.classList.toggle('on', b.dataset.v === TH.mode));
+  $$('#lk-glass button').forEach(b => b.classList.toggle('on', (b.dataset.v === '1') === !!TH.glass));
+  $$('#lk-view button').forEach(b => b.classList.toggle('on', (b.dataset.v === 'mob') === !!UI.mob));
+  const bgs = $('#lk-bgs'), keys = Object.keys(BGS).concat(['custom']), sig = keys.join() + (ARUI.TH.bg === 'custom');
+  if(bgs.dataset.h !== sig){
+    bgs.dataset.h = sig;
+    bgs.innerHTML = keys.map(k => k === 'custom'
+      ? '<button class="sw3" data-act="thBg" data-v="custom">Своё…</button>'
+      : `<button class="sw3" data-act="thBg" data-v="${k}" style="${BGS[k].c ? 'background-image:' + BGS[k].c : ''}" title="${esc(BGS[k].n)}">${BGS[k].c ? '' : 'нет'}</button>`).join('');
+  }
+  $$('#lk-bgs .sw3').forEach(b => b.classList.toggle('on', b.dataset.v === TH.bg));
+  const a = $('#lk-a'), bl = $('#lk-b');
+  if(document.activeElement !== a) a.value = 100 - TH.alpha;
+  if(document.activeElement !== bl) bl.value = TH.blur;
+  $('#lk-av').textContent = (100 - TH.alpha) + '%'; $('#lk-bv').textContent = TH.blur + ' px';
+  $('#lk-ra').classList.toggle('dis', !TH.glass); $('#lk-rb').classList.toggle('dis', !TH.glass);
+  $('#lk-z').textContent = Math.round(UI.zoom * 100) + '%';
+  const vb = $('#viewBtn'); if(vb) vb.textContent = UI.mob ? 'Мобильная' : 'ПК';
+}
+function lookBgFile(file){
+  if(!file) return;
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+    if(!ARUI.setCustomBg(c.toDataURL('image/jpeg', 0.8))) toast('Не влезло в память браузера. Выбери картинку поменьше');
+    updateLook(); updateAll();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); toast('Не получилось открыть картинку'); };
+  img.src = url;
+}
+ARUI.onTheme = () => { themeColors(); if(!$('#app').hidden){ try { updateAll(); } catch(e){} } };
+ARUI.onZoom = () => updateLook();
+themeColors();
+
 // ───────────── события ─────────────
 const ACT = {
   tab: el => setTab(el.dataset.t),
@@ -1702,7 +2031,7 @@ const ACT = {
   filter: el => { S.filter = el.dataset.f; updateObjects(); },
   openObj: el => openObj(el.dataset.id),
   newObj: openNewObj,
-  closeSheet,
+  closeSheet: dismissSheet,
   setStatus: el => setStatus(el.dataset.s),
   txType: el => { S.sheetTx.type = el.dataset.t; updateSheetEntry(); },
   addTx: addSheetTx,
@@ -1742,14 +2071,26 @@ const ACT = {
   edp: el => { S.edit.partner = el.dataset.p; renderPT($('#ed-pt'), S.edit.partner, 'edp'); },
   src: el => { S.entry.src = el.dataset.s; updateEntry(); },
   calNav, calDay, remOn, remOff, remTest, chTab, chNav, aiPlus, aiFileDel, aiModelSet,
-  archNow: () => archNow(), archXlsx: el => archXlsx(el), archJson: el => archJson(el)
+  archNow: () => archNow(), archXlsx: el => archXlsx(el), archJson: el => archJson(el),
+  drOpen: el => drOpen(el.dataset.k), drDel: el => drDel(el.dataset.k),
+  thMode: el => { ARUI.setTheme({ mode: el.dataset.v }); updateLook(); },
+  thGlass: el => { ARUI.setTheme({ glass: el.dataset.v === '1' }); updateLook(); },
+  thBg: el => {
+    if(el.dataset.v === 'custom'){ if(ARUI.TH.bg !== 'custom' && !LS.get('ar_bgimg')){ $('#lk-file').click(); return; } ARUI.setTheme({ bg: 'custom' }); $('#lk-file').click(); updateLook(); return; }
+    ARUI.setTheme({ bg: el.dataset.v }); updateLook();
+  },
+  viewSet: el => { ARUI.setView(el.dataset.v === 'mob'); updateLook(); },
+  viewToggle: () => { ARUI.setView(!ARUI.UI.mob); updateLook(); toast(ARUI.UI.mob ? 'Мобильный вид' : 'Вид для ПК'); },
+  zoomDown: () => { ARUI.setZoom(ARUI.UI.zoom - 0.05); updateLook(); },
+  zoomUp: () => { ARUI.setZoom(ARUI.UI.zoom + 0.05); updateLook(); },
+  zoomReset: () => { ARUI.setZoom(1); updateLook(); }
 };
 document.addEventListener('change', e => { const t = e.target; if(t && t.dataset && t.dataset.ch === 'remHour') remHour(t); });
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-act]'); if(!el) return;
   const f = ACT[el.dataset.act]; if(f) f(el, e);
 });
-$('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') closeSheet(); });
+$('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') dismissSheet(); });
 $('#entry-text').addEventListener('input', () => { S.entry.kind = null; updateEntry(); });
 $('#entry-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); entryGo(); } });
 $('#ai-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); aiSend(); } });
@@ -1765,8 +2106,14 @@ $('#ai-file').addEventListener('change', async e => {
 $('#st-unit').addEventListener('change', e => { S.stk.unit = e.target.value; S.stk.unitTouched = true; updateStock(); });
 $('#st-obj').addEventListener('change', () => updateStock());
 $('#entry-obj').addEventListener('change', e => { S.entry.objectId = e.target.value; });
+$('#lk-file').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; lookBgFile(f); });
+['input', 'change', 'click', 'keyup'].forEach(ev => document.addEventListener(ev, drSoon, true));
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'hidden'){ clearTimeout(drTimer); drSync(); } });
+window.addEventListener('pagehide', () => { clearTimeout(drTimer); drSync(); });
 document.addEventListener('input', e => {
   const id = e.target.id;
+  if(id === 'lk-a'){ ARUI.setTheme({ alpha: 100 - Number(e.target.value) }); updateLook(); }
+  if(id === 'lk-b'){ ARUI.setTheme({ blur: Number(e.target.value) }); updateLook(); }
   if(id && id.startsWith('st-')){
     if(id === 'st-rate'){ const v = numOf(e.target.value); S.rate = v > 0 ? v : 0; LS.set('ar_rate', S.rate ? String(S.rate) : ''); }
     updateStock();
@@ -2349,6 +2696,7 @@ async function aiReject(id){ try { await api('/actions/reject', { id }); } catch
   if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
   if(!DEMO) await lockGate();
   $('#app').hidden = false;
+  drRestore();
   updateAll();
   adapter = DEMO ? demoAdapter() : await liveAdapter().catch(e => { console.error(e); return offlineAdapter(e); });
   bioAvailable().then(ok => { S.bioOk = ok; updateMore(); });
