@@ -373,6 +373,14 @@ html.glass .tabbar,html.glass .msg.me{
   background:color-mix(in srgb,var(--card-2) var(--ga),transparent);-webkit-backdrop-filter:blur(var(--gb));backdrop-filter:blur(var(--gb))}
 html.glass .in{background-color:color-mix(in srgb,var(--card) var(--ga),transparent)}
 html.glass .sg.h,html.glass .sg.tot{background:color-mix(in srgb,var(--card-2) 55%,transparent)}
+.sm-g{display:grid;grid-template-columns:1fr 1.3fr 1.3fr;gap:8px;align-items:start}
+.sm-g .in{padding:10px 8px}
+.sm-sum{padding:11px 0;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sm-int{border-top:1px dashed var(--faint);padding-top:8px;opacity:.95}
+.sm-priv{border:2px dashed var(--faint);background:transparent}
+.sm-tag{font-size:12px;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
+.sm-frame{width:100%;height:56vh;border:1px solid var(--edge);border-radius:10px;background:#fff}
+textarea.in{resize:vertical;font-family:inherit}
 </style>
 </head>
 <body>
@@ -474,6 +482,17 @@ html.glass .sg.h,html.glass .sg.tot{background:color-mix(in srgb,var(--card-2) 5
       <div id="st-body"></div>
     </section>
 
+    <section class="tab" id="tab-smeta">
+      <h2 class="h">Смета</h2>
+      <div class="seg" id="sm-view" style="margin-bottom:12px">
+        <button data-act="smView" data-v="est">Сметы</button>
+        <button data-act="smView" data-v="price">Прайс</button>
+        <button data-act="smView" data-v="debt">Долги</button>
+      </div>
+      <div class="hint" id="sm-err" hidden style="color:var(--red);margin-bottom:10px"></div>
+      <div id="sm-body"></div>
+    </section>
+
     <section class="tab" id="tab-sum">
       <h2 class="h">Итоги</h2>
       <div class="sumcols"><div class="sumcol">
@@ -547,7 +566,7 @@ html.glass .sg.h,html.glass .sg.tot{background:color-mix(in srgb,var(--card-2) 5
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.8</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.9</div>
       </div>
     </section>
   </main>
@@ -556,6 +575,7 @@ html.glass .sg.h,html.glass .sg.tot{background:color-mix(in srgb,var(--card-2) 5
     <button data-act="tab" data-t="book" class="on"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Тетрадь</button>
     <button data-act="tab" data-t="obj"><svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M9 20v-6h6v6"/></svg>Объекты</button>
     <button data-act="tab" data-t="stock"><svg viewBox="0 0 24 24"><path d="M3 9l9-5 9 5v11H3z"/><path d="M8 20v-6h8v6M8 14h8"/></svg>Склад</button>
+    <button data-act="tab" data-t="smeta"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 12h7M9 16h7"/></svg>Смета</button>
     <button data-act="tab" data-t="sum"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Итоги</button>
     <button data-act="tab" data-t="ai"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5z"/></svg>Помощник<span class="bdg" id="ai-badge" hidden></span></button>
     <button data-act="tab" data-t="more"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>Ещё</button>
@@ -638,7 +658,8 @@ function parseLine(raw, rate){
     [/связь|интернет|телефон/, '📱 Связь / интернет'],
     [/аренд|склад/, '🏢 Аренда / склад'],
     [/налог|документ/, '📄 Налоги / документы'],
-    [/инструмент|перфоратор|бур\b|дрель/, '🛠 Инструмент']
+    [/инструмент|перфоратор|бур\b|дрель/, '🛠 Инструмент'],
+    [/непредвиден|штраф|поломк/, '⚠️ Непредвиденное']
   ];
   for(const [r, c] of catRules){ if(r.test(low)){ out.cat = c; break; } }
   return out;
@@ -767,12 +788,18 @@ async function liveAdapter(){
         unsubs.push(fs.onSnapshot(fs.query(fs.collection(db, 'stock'), fs.orderBy('ts', 'desc')),
           snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.stock(a, ''); },
           err => { console.error('stock', err); on.stock(null, diagnose(err)); }));
+        unsubs.push(fs.onSnapshot(fs.query(fs.collection(db, 'smeta'), fs.orderBy('ts', 'desc')),
+          snap => { const a = []; snap.forEach(d => a.push({ id: d.id, ...d.data() })); on.smeta(a, ''); },
+          err => { console.error('smeta', err); on.smeta(null, diagnose(err)); }));
       };
       this.reauth = start;
       return start();
     },
     addStock: rec => fs.addDoc(fs.collection(db, 'stock'), { ...rec, createdAt: fs.serverTimestamp() }),
     deleteStock: id => fs.deleteDoc(fs.doc(db, 'stock', id)),
+    addSmeta: rec => fs.addDoc(fs.collection(db, 'smeta'), { ...rec, createdAt: fs.serverTimestamp() }).then(r => r.id),
+    updateSmeta: (id, patch) => fs.updateDoc(fs.doc(db, 'smeta', id), patch),
+    deleteSmeta: id => fs.deleteDoc(fs.doc(db, 'smeta', id)),
     addCash: rec => fs.addDoc(fs.collection(db, 'cashbox'), { ...rec, createdAt: fs.serverTimestamp() }),
     deleteCash: id => fs.deleteDoc(fs.doc(db, 'cashbox', id)),
     updateCash: (id, patch) => fs.updateDoc(fs.doc(db, 'cashbox', id), patch),
@@ -790,7 +817,7 @@ async function liveAdapter(){
 function offlineAdapter(e){
   const fail = () => Promise.reject(new Error('нет связи с базой'));
   return { mode: 'live', subscribe(on){ on.conn('err', 'Не удалось загрузить базу. Проверь интернет и открой приложение заново.'); },
-    addCash: fail, addStock: fail, deleteStock: fail, deleteCash: fail, updateCash: fail, editTx: fail, addObject: fail, addTx: fail, removeTx: fail, setStatus: fail };
+    addCash: fail, addStock: fail, addSmeta: fail, updateSmeta: fail, deleteSmeta: fail, deleteStock: fail, deleteCash: fail, updateCash: fail, editTx: fail, addObject: fail, addTx: fail, removeTx: fail, setStatus: fail };
 }
 // Демо: всё в памяти, в базу ничего не пишется
 function demoAdapter(){
@@ -829,14 +856,32 @@ function demoAdapter(){
     { id: 'k6', kind: 'out', sid: 'ds6', ts: now - 1 * D, material: 'Площадка 60–110', unit: 'шт', qty: 85, price: 3500, sum: 297500, partner: 'redvan', createdBy: 'redvan' },
     { id: 'k7', kind: 'min', ts: now - 6 * D, material: 'Площадка 60–110', min: 20, createdBy: 'redvan' }
   ];
+  // Смета (демо): цифры условные, только чтобы посмотреть, как это выглядит
+  let smeta = [
+    { id: 'p1', kind: 'price', name: 'Полотно и монтаж (демо)', group: 'Полотно', unit: 'м²', cur: 'uzs', buy: 45000, sell: 110000, ts: now - 9 * D },
+    { id: 'p2', kind: 'price', name: 'Парящий (демо)', group: 'Багет и профили', unit: 'пог.м', cur: 'uzs', buy: 38000, sell: 80000, ts: now - 9 * D + 1 },
+    { id: 'p3', kind: 'price', name: 'Спот (демо)', group: 'Свет', unit: 'шт', cur: 'uzs', buy: 12000, sell: 30000, ts: now - 9 * D + 2 },
+    { id: 'p4', kind: 'price', name: 'Профиль в долларах (демо)', group: 'Багет и профили', unit: 'пог.м', cur: 'usd', buy: 2, sell: 5, ts: now - 9 * D + 3 },
+    { id: 'e1', kind: 'est', no: 1, name: 'Квартира, Чиланзар (демо)', client: 'Иванов', addr: 'ул. Пример, 12', objectId: 'o1', rate: 12000, terms: 'Цена действительна 7 дней.', ts: now - 3 * D,
+      lines: [ { pid: 'p1', name: 'Полотно и монтаж (демо)', unit: 'м²', cur: 'uzs', buy: 45000, sell: 110000, qty: 24 },
+               { pid: 'p2', name: 'Парящий (демо)', unit: 'пог.м', cur: 'uzs', buy: 38000, sell: 80000, qty: 20 },
+               { pid: 'p3', name: 'Спот (демо)', unit: 'шт', cur: 'uzs', buy: 12000, sell: 30000, qty: 8 } ],
+      costs: [ { name: 'Транспорт', sum: 60000 } ] },
+    { id: 'd1', kind: 'debt', dir: 'owed', who: 'Петров (демо)', amount: 1500000, note: 'остаток по старому объекту', ts: now - 40 * D },
+    { id: 'd2', kind: 'debt', dir: 'owe', who: 'Поставщик профиля (демо)', amount: 2000000, note: 'за материал', ts: now - 20 * D },
+    { id: 'd3', kind: 'debtpay', debtId: 'd2', amount: 500000, ts: now - 10 * D }
+  ];
   let sub = null;
-  const emit = () => { if(!sub) return; sub.objects(JSON.parse(JSON.stringify(objects))); sub.cash(JSON.parse(JSON.stringify(cash))); if(sub.stock) sub.stock(JSON.parse(JSON.stringify(stock)), ''); };
+  const emit = () => { if(!sub) return; sub.objects(JSON.parse(JSON.stringify(objects))); sub.cash(JSON.parse(JSON.stringify(cash))); if(sub.stock) sub.stock(JSON.parse(JSON.stringify(stock)), ''); if(sub.smeta) sub.smeta(JSON.parse(JSON.stringify(smeta)), ''); };
   const ok = () => { emit(); return Promise.resolve(); };
   return {
     mode: 'demo',
     subscribe(on){ sub = on; on.conn('demo'); emit(); },
     addStock(rec){ stock.unshift({ id: uid(), ...rec }); stock.sort((a, b) => b.ts - a.ts); return ok(); },
     deleteStock(id){ stock = stock.filter(r => r.id !== id); return ok(); },
+    addSmeta(rec){ const id = uid(); smeta.unshift({ id, ...rec }); emit(); return Promise.resolve(id); },
+    updateSmeta(id, patch){ const r = smeta.find(x => x.id === id); if(r) Object.assign(r, patch); return ok(); },
+    deleteSmeta(id){ smeta = smeta.filter(r => r.id !== id); return ok(); },
     addCash(rec){ cash.unshift({ id: uid(), ...rec }); cash.sort((a, b) => b.ts - a.ts); return ok(); },
     deleteCash(id){ cash = cash.filter(c => c.id !== id); return ok(); },
     updateCash(id, patch){ const c = cash.find(x => x.id === id); if(c) Object.assign(c, patch); return ok(); },
@@ -1171,7 +1216,7 @@ function updateSums(){
        + r3('Взял из доли прибыли', x => negFmt(x.fromShare))
        + r3('К получению', x => `<span class="${x.owed < 0 ? 'neg' : ''}">${fmt(x.owed)}</span>`, 'tot')
        + '</table><div class="hint" style="margin-top:8px">Когда партнёр забирает деньги, сначала возвращается его вложение, потом идёт доля прибыли.</div></div>';
-  $('#sums').innerHTML = html;
+  $('#sums').innerHTML = html + smDebtSummary();
 }
 // ───────────── графики «Итогов» ─────────────
 const CH_LIGHT = ['#2F4A6D', '#A0564F', '#6B8F71', '#C49A3C', '#7A6A9A', '#4F8A8B', '#B8794B', '#6F7F94'];
@@ -1323,7 +1368,7 @@ function updateMore(){
   updateModelCard(); updateLook();
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateArchive(); updateStock(); updateCal(); updateCharts(); updateRem(); remCheck(); drRender();
+  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateArchive(); updateStock(); updateSmeta(); updateCal(); updateCharts(); updateRem(); remCheck(); drRender();
 }
 
 // ───────────── записи ─────────────
@@ -2691,6 +2736,460 @@ async function aiApprove(id){
 }
 async function aiReject(id){ try { await api('/actions/reject', { id }); } catch(e){ toast(e.message); } aiPull(); }
 
+// ───────────── Смета, прайс, долги ─────────────
+// <smeta>
+// Коллекция «smeta» в базе, поле kind: price (позиция прайса: закупка и продажа), est (смета объекта),
+// debt (долг), debtpay (платёж по долгу). Склад не трогаем: прайс — это плановые цены, склад — факт покупки.
+// Цены закупки и маржа есть только внутри приложения. Документ для клиента собирает smClientDoc: он не читает ни закупку, ни затраты.
+S.smeta = []; S.smetaErr = '';
+S.sm = { view: 'est', edit: null, built: false, dir: 'owed', pf: null, last: { body: '' } };
+const SM_UNITS = ['м²', 'пог.м', 'шт', 'компл.'];
+const SM_GROUPS = ['Полотно', 'Багет и профили', 'Гардины', 'Разделители', 'Свет', 'Работы и прочее'];
+// Только названия типовых позиций (по справочнику «Замера»). Цены вписывает владелец, мы их не придумываем.
+const SM_SEED = [
+  ['Полотно и монтаж', 0, 'м²'],
+  ['ПВХ багет простой', 1, 'пог.м'], ['Теневой ПВХ', 1, 'пог.м'], ['Теневой алюминий', 1, 'пог.м'], ['Теневой краб', 1, 'пог.м'],
+  ['Алюминиевый простой', 1, 'пог.м'], ['Парящий', 1, 'пог.м'], ['Парящий большой', 1, 'пог.м'], ['Раунд', 1, 'пог.м'],
+  ['Ёжик (клипса)', 1, 'пог.м'], ['Переход уровня', 1, 'пог.м'],
+  ['ПК-14 однорядная', 2, 'пог.м'], ['ПК-14 двухрядная', 2, 'пог.м'], ['ПК-14 трёхрядная', 2, 'пог.м'],
+  ['ПК-15 однорядная', 2, 'пог.м'], ['ПК-15 двухрядная', 2, 'пог.м'], ['ПК-15 трёхрядная', 2, 'пог.м'],
+  ['Гардина ПК-12', 2, 'пог.м'], ['Ниша-обрыв', 2, 'пог.м'], ['Ниша с загибом', 2, 'пог.м'], ['Накладной карниз', 2, 'пог.м'],
+  ['Теневой разделитель', 3, 'пог.м'], ['Разделитель со вставкой', 3, 'пог.м'], ['Разделитель со вставкой алюминиевый', 3, 'пог.м'], ['Слот-система', 3, 'пог.м'],
+  ['Спот', 4, 'шт'], ['Люстра', 4, 'шт'], ['Световая линия', 4, 'пог.м'], ['Трековая шина', 4, 'пог.м'], ['Накладной трек', 4, 'пог.м'],
+  ['Обход трубы', 5, 'шт'], ['Скругление угла', 5, 'шт'], ['Отверстие под технику', 5, 'шт']
+];
+const SM_TERMS = 'Цена действительна 7 дней.';
+const smKind = k => S.smeta.filter(r => r.kind === k);
+const smNum = v => { const x = numOf(v); return isNaN(x) ? 0 : x; };
+const smIn = n => (Number(n) ? String(Math.round(Number(n) * 100) / 100).replace('.', ',') : '');
+const dateTs = v => /^\d{4}-\d{2}-\d{2}$/.test(v) ? (v === todayStr() ? Date.now() : new Date(v + 'T12:00:00').getTime()) : NaN;
+const smPrice = (v, cur) => (cur === 'usd' ? '$' + fmt2(v) : fmt(v));
+function smFirm(){ try { const f = JSON.parse(LS.get('ar_firm') || 'null'); return { name: (f && f.name) || '', phone: (f && f.phone) || '' }; } catch(e){ return { name: '', phone: '' }; } }
+
+// Расчёт сметы. Цены в строке — снимок на момент добавления: прайс потом меняется, старые сметы остаются как были.
+function smCalc(E){
+  const rate = Number(E.rate) || 0;
+  const u = (v, cur) => (cur === 'usd' ? (Number(v) || 0) * rate : (Number(v) || 0));
+  let client = 0, buy = 0;
+  const rows = (E.lines || []).map(l => {
+    const q = Number(l.qty) || 0, sellU = u(l.sell, l.cur), buyU = u(l.buy, l.cur);
+    const s = Math.round(q * sellU), b = Math.round(q * buyU);
+    client += s; buy += b;
+    return { name: l.name || '', unit: l.unit || '', q, sellU, buyU, s, b };
+  });
+  const other = (E.costs || []).reduce((a, c) => a + (Number(c.sum) || 0), 0);
+  const cost = buy + other, margin = client - cost;
+  const used = rows.filter(r => r.q > 0);
+  return {
+    rows, client, buy, other, cost, margin, pct: client > 0 ? margin / client * 100 : 0,
+    noRate: !rate && (E.lines || []).some(l => l.cur === 'usd' && Number(l.qty) > 0),
+    noSell: used.filter(r => !(r.sellU > 0)).length,
+    noBuy: used.filter(r => !(r.buyU > 0)).length
+  };
+}
+
+// ── список смет ──
+function smEstList(){
+  const ests = smKind('est').sort((a, b) => (b.no || 0) - (a.no || 0));
+  const f = smFirm();
+  let h = `<button class="btn" data-act="smNewEst" style="margin-bottom:12px">Новая смета</button>`;
+  if(!ests.length) h += `<div class="empty">Смет пока нет.<br>Сначала заполни «Прайс», потом создай смету.</div>`;
+  h += ests.map(e => {
+    const c = smCalc(e);
+    return `<button class="obj" data-act="smOpenEst" data-id="${esc(e.id)}">
+      <div class="ot"><span>${esc(e.name)}</span><span class="st">№ ${esc(e.no || '')}</span></div>
+      <div class="om">${esc(e.client || '')}${e.client && e.addr ? ' · ' : ''}${esc(e.addr || '')}</div>
+      <div class="ob">Клиенту ${fmt(c.client)} · затраты ${fmt(c.cost)} · остаётся <b class="${c.margin < 0 ? 'neg' : ''}">${fmt(c.margin)}</b> (${Math.round(c.pct)}%)</div></button>`;
+  }).join('');
+  h += `<div class="card col" style="margin-top:16px"><div class="lbl">Шапка сметы для клиента</div>
+    <div class="fl"><span class="hint">Название фирмы</span><input class="in" data-sm="firmName" value="${esc(f.name)}" placeholder="Натяжные потолки"></div>
+    <div class="fl"><span class="hint">Телефон</span><input class="in" data-sm="firmPhone" inputmode="tel" value="${esc(f.phone)}" placeholder="+998 ..."></div></div>`;
+  return h;
+}
+
+// ── прайс ──
+function smPriceList(){
+  const ps = smKind('price');
+  let h = `<div class="hint" style="margin-bottom:10px">Закупка — сколько позиция стоит вам. Продажа — сколько вы берёте с клиента. Эти цены видите только вы. Склад ведётся отдельно.</div>
+    <div class="two" style="margin-bottom:12px"><button class="btn" data-act="smNewPrice">+ Позиция</button>
+    <button class="btn2" data-act="smSeed">Добавить типовые позиции</button></div>`;
+  if(!ps.length) return h + `<div class="empty">Прайс пуст.<br>«Типовые позиции» добавит названия профилей, гардин, света и работ — цены впишешь сам.</div>`;
+  const groups = SM_GROUPS.concat([...new Set(ps.map(p => p.group).filter(g => g && !SM_GROUPS.includes(g)))]);
+  groups.forEach(g => {
+    const xs = ps.filter(p => (p.group || SM_GROUPS[5]) === g).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+    if(!xs.length) return;
+    h += `<div class="lbl" style="margin:14px 0 6px">${esc(g)}</div>`;
+    h += xs.map(p => {
+      const nb = !(Number(p.sell) > 0), mk = Number(p.buy) > 0 && Number(p.sell) > 0 ? Math.round((p.sell - p.buy) / p.buy * 100) + '%' : '';
+      return `<button class="obj" data-act="smOpenPrice" data-id="${esc(p.id)}">
+        <div class="ot"><span>${esc(p.name)}</span><span class="st">${esc(p.unit)}</span></div>
+        <div class="ob">${nb ? '<span class="neg">цена продажи не задана</span>' : `Закупка ${smPrice(p.buy, p.cur)} · Продажа <b>${smPrice(p.sell, p.cur)}</b>${mk ? ' · наценка ' + mk : ''}`}${p.cur === 'usd' ? ' <span class="hint">($)</span>' : ''}</div></button>`;
+    }).join('');
+  });
+  return h;
+}
+function smPriceForm(id){
+  const p = id ? smKind('price').find(x => x.id === id) : null;
+  S.sheet = { kind: 'sm' }; S.sm.pf = { id: id || '', cur: (p && p.cur) || 'uzs' };
+  const grp = (p && p.group) || SM_GROUPS[1], unit = (p && p.unit) || 'пог.м';
+  openSheet(`<div class="col">
+    <div class="rowf"><h2 class="h" style="margin:0;flex:1">${p ? 'Позиция прайса' : 'Новая позиция'}</h2><button class="btn3" data-act="closeSheet">Закрыть</button></div>
+    <div class="fl"><span class="hint">Название</span><input class="in" id="sp-name" value="${esc(p ? p.name : '')}" autocomplete="off" placeholder="например: Парящий профиль"></div>
+    <div class="two">
+      <div class="fl"><span class="hint">Группа</span><select class="in" id="sp-group">${SM_GROUPS.map(g => `<option${g === grp ? ' selected' : ''}>${esc(g)}</option>`).join('')}${grp && !SM_GROUPS.includes(grp) ? `<option selected>${esc(grp)}</option>` : ''}</select></div>
+      <div class="fl"><span class="hint">Единица</span><select class="in" id="sp-unit">${SM_UNITS.map(x => `<option${x === unit ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select></div>
+    </div>
+    <div class="fl"><span class="hint">Валюта цен</span><div class="seg" id="sp-cur"><button data-act="smPriceCur" data-c="uzs">Сум</button><button data-act="smPriceCur" data-c="usd">Доллар</button></div></div>
+    <div class="two">
+      <div class="fl"><span class="hint">Закупка (для себя)</span><input class="in" id="sp-buy" inputmode="decimal" autocomplete="off" value="${esc(smIn(p && p.buy))}" placeholder="0"></div>
+      <div class="fl"><span class="hint">Продажа (клиенту)</span><input class="in" id="sp-sell" inputmode="decimal" autocomplete="off" value="${esc(smIn(p && p.sell))}" placeholder="0"></div>
+    </div>
+    <div class="hint" id="sp-mk"></div>
+    <div class="two">${p ? '<button class="btn2" data-act="smPriceDel">Удалить</button>' : '<span></span>'}<button class="btn" data-act="smPriceSave">Сохранить</button></div>
+  </div>`);
+  smPriceCurUi();
+}
+function smPriceCurUi(){
+  $$('#sp-cur button').forEach(b => b.classList.toggle('on', b.dataset.c === S.sm.pf.cur));
+  const mk = $('#sp-mk'); if(!mk) return;
+  const b = smNum(($('#sp-buy') || {}).value), s = smNum(($('#sp-sell') || {}).value);
+  mk.textContent = b > 0 && s > 0 ? `Наценка ${Math.round((s - b) / b * 100)}%, с единицы остаётся ${fmt2(s - b)}${S.sm.pf.cur === 'usd' ? ' $' : ' сум'}` : '';
+}
+function smPriceSave(){
+  const pf = S.sm.pf, name = $('#sp-name').value.replace(/\s+/g, ' ').trim();
+  const bRaw = $('#sp-buy').value.trim(), sRaw = $('#sp-sell').value.trim();
+  if(!name){ toast('Впиши название'); return; }
+  if((bRaw && isNaN(numOf(bRaw))) || (sRaw && isNaN(numOf(sRaw)))){ toast('Цена: только число'); return; }
+  const old = pf.id ? smKind('price').find(x => x.id === pf.id) : null;
+  const rec = { kind: 'price', name, group: $('#sp-group').value, unit: $('#sp-unit').value, cur: pf.cur, buy: smNum(bRaw), sell: smNum(sRaw), ts: old ? (tsNum(old.ts) || Date.now()) : Date.now(), createdBy: old ? (old.createdBy || S.me) : S.me };
+  guard(() => pf.id ? adapter.updateSmeta(pf.id, rec) : adapter.addSmeta(rec), 'Позиция сохранена');
+  closeSheet();
+}
+function smPriceDel(){
+  const id = S.sm.pf && S.sm.pf.id; if(!id) return;
+  if(!confirm('Удалить позицию из прайса? В уже составленных сметах она останется.')) return;
+  guard(() => adapter.deleteSmeta(id), 'Удалено'); closeSheet();
+}
+function smSeed(){
+  const have = new Set(smKind('price').map(p => matKey(p.name)));
+  const add = SM_SEED.filter(x => !have.has(matKey(x[0])));
+  if(!add.length){ toast('Все типовые позиции уже есть'); return; }
+  const now = Date.now();
+  guard(() => Promise.all(add.map((x, i) => adapter.addSmeta({ kind: 'price', name: x[0], group: SM_GROUPS[x[1]], unit: x[2], cur: 'uzs', buy: 0, sell: 0, ts: now + i, createdBy: S.me }))), 'Добавлено позиций: ' + add.length + '. Впиши цены');
+}
+
+// ── редактор сметы ──
+function smNewEst(){
+  const nos = smKind('est').map(e => Number(e.no) || 0);
+  S.sm.edit = { no: Math.max(0, ...nos) + 1, name: '', client: '', addr: '', objectId: '', rate: S.rate || 0, lines: [], costs: [], terms: SM_TERMS, ts: Date.now() };
+  S.sm.built = false; updateSmeta();
+}
+function smOpenEst(id){
+  const e = smKind('est').find(x => x.id === id); if(!e) return;
+  S.sm.edit = JSON.parse(JSON.stringify({ lines: [], costs: [], ...e }));
+  S.sm.built = false; updateSmeta(); window.scrollTo(0, 0);
+}
+function smBack(){ S.sm.edit = null; S.sm.built = false; S.sm.last.body = ''; updateSmeta(); }
+function smLineHtml(l, i){
+  const usd = l.cur === 'usd' ? ', $' : '';
+  const head = l.custom
+    ? `<input class="in" data-sm="lname" data-i="${i}" value="${esc(l.name)}" placeholder="Название позиции"><select class="in" data-sm="lunit" data-i="${i}" style="max-width:110px">${SM_UNITS.map(x => `<option${x === l.unit ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>`
+    : `<b style="flex:1">${esc(l.name)}</b>`;
+  return `<div class="card col" style="margin-bottom:8px">
+    <div class="rowf">${head}<button class="link-del" data-act="smDelLine" data-i="${i}">убрать</button></div>
+    <div class="sm-g">
+      <div class="fl"><span class="hint">Кол-во, ${esc(l.unit)}</span><input class="in" inputmode="decimal" autocomplete="off" data-sm="qty" data-i="${i}" value="${esc(smIn(l.qty))}" placeholder="0"></div>
+      <div class="fl"><span class="hint">Цена клиенту${usd}</span><input class="in" inputmode="decimal" autocomplete="off" data-sm="sell" data-i="${i}" value="${esc(smIn(l.sell))}" placeholder="0"></div>
+      <div class="fl"><span class="hint">Сумма, сум</span><div class="sm-sum" id="sm-ls-${i}">—</div></div>
+    </div>
+    <div class="sm-g sm-int"><div class="fl"><span class="hint">Закупка${usd}</span><input class="in" inputmode="decimal" autocomplete="off" data-sm="buy" data-i="${i}" value="${esc(smIn(l.buy))}" placeholder="0"></div>
+      <div class="fl"><span class="hint">Затраты, сум</span><div class="sm-sum" id="sm-lb-${i}">—</div></div><span class="sm-tag" style="align-self:end;padding-bottom:12px">только для нас</span></div>
+  </div>`;
+}
+function smEditRender(){
+  const E = S.sm.edit; if(!E) return;
+  S.sm.built = true;
+  const prices = smKind('price');
+  const groups = SM_GROUPS.concat([...new Set(prices.map(p => p.group).filter(g => g && !SM_GROUPS.includes(g)))]);
+  const opts = groups.map(g => {
+    const xs = prices.filter(p => (p.group || SM_GROUPS[5]) === g).sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+    return xs.length ? `<optgroup label="${esc(g)}">${xs.map(p => `<option value="${esc(p.id)}">${esc(p.name)}, ${esc(p.unit)}</option>`).join('')}</optgroup>` : '';
+  }).join('');
+  const objOpts = '<option value="">Не привязана</option>' + realObjects().filter(o => o.status !== 'cancelled').map(o => `<option value="${esc(o.id)}"${o.id === E.objectId ? ' selected' : ''}>${esc(o.name)}</option>`).join('');
+  const costs = (E.costs || []).map((c, i) => `<div class="rowf"><input class="in" data-sm="cname" data-i="${i}" value="${esc(c.name)}" placeholder="Что (транспорт, доставка…)"><input class="in" inputmode="decimal" autocomplete="off" data-sm="csum" data-i="${i}" value="${esc(smIn(c.sum))}" placeholder="сумма" style="max-width:130px"><button class="link-del" data-act="smDelCost" data-i="${i}">×</button></div>`).join('');
+  $('#sm-body').innerHTML = `
+    <div class="rowf" style="margin-bottom:10px"><button class="btn3" data-act="smBack">← Все сметы</button><span class="hint" style="margin-left:auto">Смета № ${esc(E.no || '')}</span></div>
+    <div class="card col">
+      <div class="fl"><span class="hint">Объект</span><input class="in" data-sm="name" value="${esc(E.name)}" placeholder="например: Квартира, Чиланзар"></div>
+      <div class="two"><div class="fl"><span class="hint">Заказчик</span><input class="in" data-sm="client" value="${esc(E.client || '')}"></div>
+        <div class="fl"><span class="hint">Адрес</span><input class="in" data-sm="addr" value="${esc(E.addr || '')}"></div></div>
+      <div class="fl"><span class="hint">Объект в Тетради (для сравнения «план и факт»)</span><select class="in" data-sm="objectId">${objOpts}</select></div>
+    </div>
+    <div class="lbl" style="margin:16px 0 6px">Позиции (клиент видит название, количество, цену и сумму)</div>
+    ${(E.lines || []).map(smLineHtml).join('')}
+    <select class="in" id="sm-add"><option value="">+ Добавить позицию…</option>${opts}<option value="__custom">Своя позиция (нет в прайсе)</option></select>
+    ${prices.length ? '' : '<div class="hint" style="margin-top:6px">Прайс пуст: можно добавить «Свою позицию» или сначала заполнить вкладку «Прайс».</div>'}
+    <div class="card col sm-priv" style="margin-top:16px">
+      <div class="sm-tag">Только для нас · клиент этого не увидит</div>
+      <div class="lbl">Прочие расходы по объекту</div>
+      ${costs}
+      <button class="btn2" data-act="smAddCost">+ Расход (транспорт, доставка…)</button>
+      <div class="fl"><span class="hint">Курс, сум за $1 (для позиций в долларах)</span><input class="in" inputmode="numeric" autocomplete="off" data-sm="rate" value="${esc(E.rate ? fmt(E.rate) : '')}" placeholder="например 12 000"></div>
+      <table class="t" style="margin-top:4px">
+        <tr><td>Цена для клиента</td><td id="sm-t-client">—</td></tr>
+        <tr><td>Материалы по закупке</td><td id="sm-t-buy">—</td></tr>
+        <tr><td>Прочие расходы</td><td id="sm-t-other">—</td></tr>
+        <tr class="tot"><td>Нужно на реализацию</td><td id="sm-t-cost">—</td></tr>
+        <tr class="tot"><td>Остаётся (маржа)</td><td id="sm-t-margin">—</td></tr>
+        <tr><td>Маржинальность</td><td id="sm-t-pct">—</td></tr>
+      </table>
+      <div class="warn" id="sm-warn"></div>
+    </div>
+    <div id="sm-pf"></div>
+    <div class="card col" style="margin-top:14px"><div class="fl"><span class="hint">Условия в смете для клиента (каждая строка отдельным пунктом)</span><textarea class="in" data-sm="terms" rows="3">${esc(E.terms || '')}</textarea></div></div>
+    <div class="col" style="margin-top:14px">
+      <button class="btn" data-act="smSave">Сохранить смету</button>
+      <button class="btn2" data-act="smClient">Смета для клиента</button>
+      ${E.id ? '<button class="btn3" data-act="smDel" style="color:var(--red)">Удалить смету</button>' : ''}
+    </div>`;
+  smTotals(); smPlanFact();
+}
+function smTotals(){
+  const E = S.sm.edit; if(!E) return;
+  const c = smCalc(E), set = (id, v, cls) => { const el = document.getElementById(id); if(el){ el.textContent = v; if(cls !== undefined) el.className = cls; } };
+  c.rows.forEach((r, i) => { set('sm-ls-' + i, fmt(r.s)); set('sm-lb-' + i, fmt(r.b)); });
+  set('sm-t-client', fmt(c.client)); set('sm-t-buy', fmt(c.buy)); set('sm-t-other', fmt(c.other)); set('sm-t-cost', fmt(c.cost));
+  set('sm-t-margin', fmt(c.margin), c.margin < 0 ? 'neg' : ''); set('sm-t-pct', c.client > 0 ? Math.round(c.pct * 10) / 10 + ' %' : '—');
+  const w = [];
+  if(c.noRate) w.push('Есть позиции в долларах, а курс не задан: их сумма считается как 0.');
+  if(c.noSell) w.push(`У позиций без цены продажи: ${c.noSell}. Клиент получит их бесплатно.`);
+  if(c.noBuy) w.push(`У позиций без закупки: ${c.noBuy}. Маржа завышена.`);
+  set('sm-warn', w.join(' '));
+}
+// План и факт: сколько заложено и сколько реально ушло по объекту из Тетради (расходы объекта + списания со склада).
+function smPlanFact(){
+  const box = $('#sm-pf'); if(!box) return;
+  const E = S.sm.edit, o = realObjects().find(x => x.id === E.objectId);
+  if(!o){ box.innerHTML = ''; return; }
+  const c = smCalc(E), txs = txOf(o), inc = sumT(txs, 'income'), exp = sumT(txs, 'expense');
+  const stk = S.stock.filter(r => r.kind === 'out' && r.objectId === o.id).reduce((a, r) => a + (Number(r.sum) || 0), 0);
+  const fact = exp + stk, row = (a, b, cls = '') => `<tr class="${cls}"><td>${a}</td><td>${b}</td></tr>`;
+  box.innerHTML = `<div class="card col" style="margin-top:14px"><div class="sm-tag">Только для нас · план и факт · ${esc(o.name)}</div><table class="t">
+    ${row('Клиенту по смете', fmt(c.client))}
+    ${row('Получено от клиента', fmt(inc))}
+    ${row('Осталось получить', `<span class="${c.client - inc < 0 ? 'neg' : ''}">${fmt(c.client - inc)}</span>`)}
+    ${row('Затраты по плану', fmt(c.cost))}
+    ${row('Факт: расходы объекта', fmt(exp))}
+    ${row('Факт: списано со склада', fmt(stk))}
+    ${row('Факт всего', fmt(fact), 'tot')}
+    ${row('План минус факт', `<span class="${c.cost - fact < 0 ? 'neg' : ''}">${fmt(c.cost - fact)}</span>`)}
+    ${row('Маржа по факту', `<span class="${c.client - fact < 0 ? 'neg' : ''}">${fmt(c.client - fact)}</span>`, 'tot')}
+  </table><div class="hint">Склад идёт по средней цене закупки. Минус в «План минус факт» — потратили больше плана.</div></div>`;
+}
+function smField(t){
+  const E = S.sm.edit, k = t.dataset.sm, i = Number(t.dataset.i);
+  if(k === 'firmName' || k === 'firmPhone'){ const f = smFirm(); if(k === 'firmName') f.name = t.value; else f.phone = t.value; LS.set('ar_firm', JSON.stringify(f)); return; }
+  if(!E) return;
+  if(['name', 'client', 'addr', 'terms', 'objectId'].includes(k)){ E[k] = t.value; if(k === 'objectId') smPlanFact(); return; }
+  if(k === 'rate'){ E.rate = smNum(t.value); smTotals(); return; }
+  const l = E.lines[i], c = E.costs[i];
+  if(k === 'qty' && l) l.qty = smNum(t.value);
+  else if(k === 'sell' && l) l.sell = smNum(t.value);
+  else if(k === 'buy' && l) l.buy = smNum(t.value);
+  else if(k === 'lname' && l) l.name = t.value;
+  else if(k === 'lunit' && l){ l.unit = t.value; }
+  else if(k === 'cname' && c) c.name = t.value;
+  else if(k === 'csum' && c) c.sum = smNum(t.value);
+  smTotals();
+}
+function smAddLine(v){
+  const E = S.sm.edit; if(!E || !v) return;
+  if(v === '__custom') E.lines.push({ custom: true, name: '', unit: 'шт', cur: 'uzs', buy: 0, sell: 0, qty: 0 });
+  else {
+    const p = smKind('price').find(x => x.id === v); if(!p) return;
+    E.lines.push({ pid: p.id, name: p.name, unit: p.unit, cur: p.cur || 'uzs', buy: Number(p.buy) || 0, sell: Number(p.sell) || 0, qty: 0 });
+  }
+  smEditRender();
+  const i = E.lines.length - 1, el = document.querySelector(`[data-sm="${E.lines[i].custom ? 'lname' : 'qty'}"][data-i="${i}"]`);
+  if(el) el.focus();
+}
+function smSave(){
+  const E = S.sm.edit; if(!E) return;
+  const name = String(E.name || '').replace(/\s+/g, ' ').trim();
+  if(!name){ toast('Впиши название объекта'); return; }
+  if(E.lines.some(l => l.custom && !String(l.name).trim())){ toast('У своей позиции нет названия'); return; }
+  const rec = JSON.parse(JSON.stringify({ kind: 'est', no: E.no || 1, name, client: E.client || '', addr: E.addr || '', objectId: E.objectId || '', rate: Number(E.rate) || 0,
+    lines: E.lines, costs: (E.costs || []).filter(c => c.name || Number(c.sum)), terms: E.terms || '', ts: E.ts || Date.now(), createdBy: E.createdBy || S.me, upd: Date.now(), editedBy: S.me }));
+  guard(() => E.id ? adapter.updateSmeta(E.id, rec) : adapter.addSmeta(rec), 'Смета сохранена');
+  smBack();
+}
+function smDel(){
+  const E = S.sm.edit; if(!E || !E.id) return;
+  if(!confirm('Удалить смету «' + (E.name || '') + '»?')) return;
+  const id = E.id; smBack(); guard(() => adapter.deleteSmeta(id), 'Смета удалена');
+}
+
+// ── смета для клиента ──
+// Здесь используются только название, количество, единица, цена продажи и сумма. Закупки, затрат и маржи в документе нет.
+function smClientDoc(E, tools){
+  const c = smCalc(E), rows = c.rows.filter(r => r.q > 0), f = smFirm();
+  const date = new Date(E.ts || Date.now()).toLocaleDateString('ru-RU');
+  const terms = String(E.terms || '').split('\n').map(s => s.trim()).filter(Boolean);
+  const n2 = x => fmt2(x);
+  const css = `*{box-sizing:border-box}body{margin:0;background:#fff;color:#16202B;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+.pg{max-width:820px;margin:0 auto}.hd{background:#16202B;color:#fff;padding:22px 26px;display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:4px solid #C69A3B}
+.hd .f{font-size:22px;font-weight:700}.hd .ph{color:#B8C0CA;margin-top:4px}.hd .no{text-align:right}.hd .no b{display:block;font-size:20px;color:#E7C26A}.hd .no span{color:#B8C0CA}
+.bd{padding:22px 26px}h1{font-size:20px;margin:0 0 14px}.meta{background:#F3F4F6;border-radius:10px;padding:12px 16px;margin-bottom:18px}
+.meta div{display:flex;gap:14px;padding:3px 0}.meta span{color:#6B7480;min-width:96px}.meta b{font-weight:600}
+table{width:100%;border-collapse:collapse}th{background:#16202B;color:#fff;text-align:left;padding:9px 10px;font-weight:600;font-size:13px}
+td{padding:10px;border-bottom:1px solid #E5E7EB;vertical-align:top}.c{text-align:center;white-space:nowrap}.r{text-align:right;white-space:nowrap}th.c{text-align:center}th.r{text-align:right}
+tr:nth-child(even) td{background:#FAFAFB}.tot{margin-top:18px;border:2px solid #C69A3B;background:#FFF6E1;border-radius:10px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.tot span{font-weight:700;letter-spacing:.03em;color:#6B4A0B}.tot b{font-size:24px;white-space:nowrap}h3{font-size:13px;color:#6B7480;text-transform:uppercase;letter-spacing:.05em;margin:22px 0 6px}
+ul{margin:0;padding-left:18px}li{margin:4px 0}.tools{position:sticky;top:0;background:#F3F4F6;padding:10px 26px;display:flex;gap:10px;border-bottom:1px solid #E5E7EB}
+.tools button{padding:9px 16px;border:0;border-radius:8px;background:#16202B;color:#fff;font-weight:600}
+@media(max-width:560px){.hd{padding:16px}.hd .f{font-size:18px}.hd .no b{font-size:16px}.bd{padding:16px 12px}th,td{padding:8px 4px;font-size:12.5px}th{font-size:11.5px}.meta div{flex-direction:column;gap:0}.tot{padding:12px}.tot b{font-size:19px}.tools{padding:10px 12px}}
+@page{margin:12mm}@media print{.tools{display:none}}`;
+  return `<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Смета № ${esc(E.no || '')} — ${esc(E.name)}</title><style>${css}</style></head><body>
+${tools ? '<div class="tools"><button onclick="window.print()">Печать / сохранить в PDF</button></div>' : ''}
+<div class="pg"><div class="hd"><div><div class="f">${esc(f.name || 'Натяжные потолки')}</div>${f.phone ? `<div class="ph">${esc(f.phone)}</div>` : ''}</div><div class="no"><b>Смета № ${esc(E.no || '')}</b><span>от ${esc(date)}</span></div></div>
+<div class="bd"><h1>Расчёт стоимости</h1>
+<div class="meta"><div><span>Объект</span><b>${esc(E.name)}</b></div>${E.client ? `<div><span>Заказчик</span><b>${esc(E.client)}</b></div>` : ''}${E.addr ? `<div><span>Адрес</span><b>${esc(E.addr)}</b></div>` : ''}</div>
+<table><tr><th class="c">№</th><th>Наименование</th><th class="c">Кол-во</th><th class="c">Ед.</th><th class="r">Цена, сум</th><th class="r">Сумма, сум</th></tr>
+${rows.map((r, i) => `<tr><td class="c">${i + 1}</td><td>${esc(r.name)}</td><td class="c">${n2(r.q)}</td><td class="c">${esc(r.unit)}</td><td class="r">${fmt(r.sellU)}</td><td class="r"><b>${fmt(r.s)}</b></td></tr>`).join('')}</table>
+<div class="tot"><span>ИТОГО К ОПЛАТЕ</span><b>${fmt(c.client)} сум</b></div>
+${terms.length ? `<h3>Условия</h3><ul>${terms.map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+</div></div></body></html>`;
+}
+function smClient(){
+  const E = S.sm.edit; if(!E) return;
+  if(!smCalc(E).rows.some(r => r.q > 0)){ toast('Добавь позиции с количеством'); return; }
+  S.sheet = { kind: 'sm' };
+  openSheet(`<div class="col"><div class="rowf"><h2 class="h" style="margin:0;flex:1">Смета для клиента</h2><button class="btn3" data-act="closeSheet">Закрыть</button></div>
+    <div class="hint">Закупки, затрат и маржи в этом документе нет.</div>
+    <iframe id="sm-frame" class="sm-frame" sandbox></iframe>
+    <div class="two"><button class="btn" data-act="smOpenDoc">Открыть для печати</button><button class="btn2" data-act="smDlDoc">Скачать файл</button></div></div>`);
+  $('#sm-frame').srcdoc = smClientDoc(E, false);
+}
+function smOpenDoc(){
+  const E = S.sm.edit; if(!E) return;
+  const url = URL.createObjectURL(new Blob([smClientDoc(E, true)], { type: 'text/html' }));
+  if(!window.open(url, '_blank')) toast('Браузер не открыл окно. Нажми «Скачать файл»');
+}
+function smDlDoc(){
+  const E = S.sm.edit; if(!E) return;
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([smClientDoc(E, true)], { type: 'text/html' }));
+  a.download = 'Смета ' + (E.no || '') + ' ' + String(E.name || '').replace(/[^\p{L}\p{N} _-]+/gu, '').trim() + '.html';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+// ── долги ──
+const smPaid = d => smKind('debtpay').filter(p => p.debtId === d.id).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+const smRem = d => (Number(d.amount) || 0) - smPaid(d);
+function smDebtTotals(){
+  const ds = smKind('debt'), t = x => ds.filter(d => d.dir === x).reduce((a, d) => a + Math.max(0, smRem(d)), 0);
+  return { owed: t('owed'), owe: t('owe'), n: ds.length };
+}
+function smDebtList(){
+  const dir = S.sm.dir, T = smDebtTotals(), ds = smKind('debt').filter(d => d.dir === dir);
+  const act = ds.filter(d => smRem(d) > 0).sort((a, b) => tsNum(a.ts) - tsNum(b.ts)), done = ds.filter(d => smRem(d) <= 0);
+  const item = d => { const rem = smRem(d), paid = smPaid(d);
+    return `<button class="obj" data-act="smOpenDebt" data-id="${esc(d.id)}"><div class="ot"><span>${esc(d.who)}</span><span class="st">${rem > 0 ? fmt(rem) : 'погашен'}</span></div>
+      <div class="om">${esc(d.note || '')}${d.note ? ' · ' : ''}${dayTitle(tsNum(d.ts))}</div>
+      <div class="ob">Всего ${fmt(d.amount)}${paid ? ' · оплачено ' + fmt(paid) : ''}</div></button>`; };
+  let h = `<div class="seg" id="sm-dir" style="margin-bottom:12px"><button data-act="smDir" data-d="owed" class="${dir === 'owed' ? 'on' : ''}">Мне должны · ${fmt(T.owed)}</button><button data-act="smDir" data-d="owe" class="${dir === 'owe' ? 'on' : ''}">Я должен · ${fmt(T.owe)}</button></div>
+    <button class="btn" data-act="smNewDebt" style="margin-bottom:12px">+ Новый долг</button>`;
+  h += act.length ? act.map(item).join('') : `<div class="empty">${dir === 'owed' ? 'Вам никто не должен.' : 'Вы никому не должны.'}</div>`;
+  if(done.length) h += `<div class="lbl" style="margin:16px 0 6px">Погашенные</div>` + done.map(item).join('');
+  h += `<div class="hint" style="margin-top:12px">Долги ведутся отдельно: на кассу и прибыль они не влияют. Когда деньги реально пришли или ушли, внеси это в Тетрадь как обычно.</div>`;
+  return h;
+}
+function smDebtForm(){
+  S.sheet = { kind: 'sm' };
+  const owed = S.sm.dir === 'owed';
+  openSheet(`<div class="col"><div class="rowf"><h2 class="h" style="margin:0;flex:1">${owed ? 'Мне должны' : 'Я должен'}</h2><button class="btn3" data-act="closeSheet">Закрыть</button></div>
+    <div class="fl"><span class="hint">${owed ? 'Кто должен (клиент, объект)' : 'Кому должен (поставщик, человек)'}</span><input class="in" id="sd-who" autocomplete="off"></div>
+    <div class="fl"><span class="hint">Сумма, сум</span><input class="in" id="sd-amt" inputmode="decimal" autocomplete="off" placeholder="например 2 500 000 или 2,5 млн"></div>
+    <div class="fl"><span class="hint">За что (необязательно)</span><input class="in" id="sd-note" autocomplete="off" placeholder="например: остаток по объекту на Чиланзаре"></div>
+    <div class="fl"><span class="hint">Дата</span><input class="in" id="sd-date" type="date" value="${todayStr()}"></div>
+    <button class="btn" data-act="smDebtSave">Записать</button></div>`);
+}
+function smDebtSave(){
+  const who = $('#sd-who').value.replace(/\s+/g, ' ').trim(), amt = numOf($('#sd-amt').value), ts = dateTs($('#sd-date').value);
+  if(!who){ toast('Впиши, кто или кому'); return; }
+  if(isNaN(amt) || amt <= 0){ toast('Сумма: число больше нуля'); return; }
+  if(isNaN(ts)){ toast('Выбери дату'); return; }
+  const rec = { kind: 'debt', dir: S.sm.dir, who, amount: amt, note: $('#sd-note').value.trim(), ts, createdBy: S.me };
+  guard(() => adapter.addSmeta(rec), 'Долг записан'); closeSheet();
+}
+function smDebtOpen(id){ if(!smKind('debt').some(x => x.id === id)) return; S.sheet = { kind: 'sm', debt: id }; smDebtSheet(); }
+function smDebtSheet(){
+  const d = smKind('debt').find(x => x.id === (S.sheet && S.sheet.debt)); if(!d){ closeSheet(); return; }
+  const ps = smKind('debtpay').filter(p => p.debtId === d.id).sort((a, b) => tsNum(a.ts) - tsNum(b.ts)), rem = smRem(d);
+  openSheet(`<div class="col"><div class="rowf"><h2 class="h" style="margin:0;flex:1">${esc(d.who)}</h2><button class="btn3" data-act="closeSheet">Закрыть</button></div>
+    <div class="hint">${d.dir === 'owed' ? 'Мне должны' : 'Я должен'} · ${dayTitle(tsNum(d.ts))}${d.note ? ' · ' + esc(d.note) : ''}</div>
+    <table class="t"><tr><td>Сумма долга</td><td>${fmt(d.amount)}</td></tr>
+      ${ps.map(p => `<tr><td>Платёж ${dayTitle(tsNum(p.ts))} <button class="link-del" data-act="smPayDel" data-id="${esc(p.id)}">удалить</button></td><td>−${fmt(p.amount)}</td></tr>`).join('')}
+      <tr class="tot"><td>Остаток</td><td>${fmt(Math.max(0, rem))}</td></tr></table>
+    ${rem > 0 ? `<div class="two"><div class="fl"><span class="hint">Платёж, сум</span><input class="in" id="sd-pay" inputmode="decimal" autocomplete="off" placeholder="${fmt(rem)}"></div>
+      <div class="fl"><span class="hint">Дата</span><input class="in" id="sd-pdate" type="date" value="${todayStr()}"></div></div>
+      <button class="btn" data-act="smDebtPay">Внести платёж</button>` : '<div class="hint">Долг погашен.</div>'}
+    <button class="btn3" data-act="smDebtDel" style="color:var(--red)">Удалить долг</button></div>`);
+}
+function smDebtPay(){
+  const d = smKind('debt').find(x => x.id === S.sheet.debt); if(!d) return;
+  const rem = smRem(d), raw = $('#sd-pay').value.trim(), amt = raw ? numOf(raw) : rem, ts = dateTs($('#sd-pdate').value);
+  if(isNaN(amt) || amt <= 0){ toast('Сумма: число больше нуля'); return; }
+  if(amt > rem + 0.5){ toast('Платёж больше остатка долга: ' + fmt(rem)); return; }
+  if(isNaN(ts)){ toast('Выбери дату'); return; }
+  guard(() => adapter.addSmeta({ kind: 'debtpay', debtId: d.id, amount: amt, ts, createdBy: S.me }), 'Платёж внесён');
+}
+function smDebtDel(){
+  const d = smKind('debt').find(x => x.id === S.sheet.debt); if(!d) return;
+  if(!confirm('Удалить долг «' + d.who + '» вместе с платежами?')) return;
+  const ids = smKind('debtpay').filter(p => p.debtId === d.id).map(p => p.id);
+  guard(() => Promise.all([adapter.deleteSmeta(d.id), ...ids.map(i => adapter.deleteSmeta(i))]), 'Долг удалён'); closeSheet();
+}
+// Карточка «Долги» в «Итогах»
+function smDebtSummary(){
+  const T = smDebtTotals(); if(!T.n) return '';
+  return `<div class="lbl" style="margin:14px 0 6px">Долги</div><div class="card"><table class="t">
+    <tr><td>Мне должны</td><td>${fmt(T.owed)}</td></tr><tr><td>Я должен</td><td>${negFmt(T.owe)}</td></tr></table>
+    <div class="hint" style="margin-top:8px">Ведутся отдельно, в кассу и прибыль выше не входят.</div></div>`;
+}
+
+// ── экран «Смета» ──
+function updateSmeta(){
+  const root = $('#tab-smeta'); if(!root) return;
+  $$('#sm-view button').forEach(b => b.classList.toggle('on', b.dataset.v === S.sm.view));
+  const er = $('#sm-err'); er.hidden = !S.smetaErr; er.textContent = S.smetaErr ? 'Смета не загрузилась: ' + S.smetaErr + ' Для неё нужна коллекция «smeta» (правила Firestore).' : '';
+  if(S.sm.view === 'est' && S.sm.edit){ if(!S.sm.built) smEditRender(); else smPlanFact(); }
+  else {
+    const html = S.sm.view === 'price' ? smPriceList() : S.sm.view === 'debt' ? smDebtList() : smEstList();
+    // список не перерисовываем зря: иначе обновление из базы сбило бы поле, в которое сейчас пишут
+    if(S.sm.last.body !== html || S.sm.last.view !== S.sm.view){ $('#sm-body').innerHTML = html; S.sm.last = { body: html, view: S.sm.view }; }
+  }
+  if(S.sheet && S.sheet.kind === 'sm' && S.sheet.debt && !$('#sheet').hidden) smDebtSheet();
+}
+Object.assign(ACT, {
+  smView: el => { S.sm.view = el.dataset.v; S.sm.built = false; S.sm.last = { body: '' }; updateSmeta(); },
+  smNewEst, smOpenEst: el => smOpenEst(el.dataset.id), smBack, smSave, smDel, smClient, smOpenDoc, smDlDoc,
+  smDelLine: el => { S.sm.edit.lines.splice(Number(el.dataset.i), 1); smEditRender(); },
+  smAddCost: () => { S.sm.edit.costs.push({ name: '', sum: 0 }); smEditRender(); const i = S.sm.edit.costs.length - 1, x = document.querySelector(`[data-sm="cname"][data-i="${i}"]`); if(x) x.focus(); },
+  smDelCost: el => { S.sm.edit.costs.splice(Number(el.dataset.i), 1); smEditRender(); },
+  smNewPrice: () => smPriceForm(''), smOpenPrice: el => smPriceForm(el.dataset.id), smPriceSave, smPriceDel, smSeed,
+  smPriceCur: el => { S.sm.pf.cur = el.dataset.c; smPriceCurUi(); },
+  smDir: el => { S.sm.dir = el.dataset.d; S.sm.last = { body: '' }; updateSmeta(); },
+  smNewDebt: smDebtForm, smDebtSave, smOpenDebt: el => smDebtOpen(el.dataset.id), smDebtPay, smDebtDel,
+  smPayDel: el => { if(confirm('Удалить платёж?')) guard(() => adapter.deleteSmeta(el.dataset.id), 'Платёж удалён'); }
+});
+document.addEventListener('input', e => { const t = e.target; if(t && t.dataset && t.dataset.sm) smField(t); if(t && (t.id === 'sp-buy' || t.id === 'sp-sell')) smPriceCurUi(); });
+document.addEventListener('change', e => {
+  const t = e.target; if(!t || !t.dataset) return;
+  if(t.dataset.sm && t.tagName === 'SELECT') smField(t);
+  if(t.id === 'sm-add'){ const v = t.value; t.value = ''; smAddLine(v); }
+});
+// </smeta>
+
 // ───────────── запуск ─────────────
 (async function boot(){
   if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
@@ -2705,6 +3204,7 @@ async function aiReject(id){ try { await api('/actions/reject', { id }); } catch
     objects: a => { S.objects = a; updateAll(); },
     cash: a => { S.cashbox = a; updateAll(); },
     stock: (a, err) => { if(a) S.stock = a; S.stockErr = err || ''; updateAll(); },
+    smeta: (a, err) => { if(a) S.smeta = a; S.smetaErr = err || ''; updateAll(); },
     conn: (c, msg) => { S.conn = c; S.connMsg = msg || ''; updateHeader(); updateAi(); }
   });
   if(S.dev.token){ cabPull(); aiPull(); }
