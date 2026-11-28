@@ -332,8 +332,9 @@ table.t .neg{color:var(--red)}
   html:not(.mob) #tab-sum.on,html:not(.mob) #tab-stock{max-width:1560px}
 }
 /* мобильный вид: одна колонка, крупные элементы под палец */
-html.mob .tabbar button{padding:12px 0 10px;font-size:13px}
-html.mob .tabbar svg{width:28px;height:28px}
+html.mob .tabbar button{padding:10px 0 9px;font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mob .tabbar button.on{font-weight:600;letter-spacing:-.2px}
+html.mob .tabbar svg{width:26px;height:26px}
 html.mob .btn,html.mob .btn2{padding:16px;font-size:17px}
 html.mob .in{min-height:50px;padding:14px}
 html.mob .seg button{padding:14px 4px;font-size:15px}
@@ -381,6 +382,21 @@ html.glass .sg.h,html.glass .sg.tot{background:color-mix(in srgb,var(--card-2) 5
 .sm-tag{font-size:12px;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
 .sm-frame{width:100%;height:56vh;border:1px solid var(--edge);border-radius:10px;background:#fff}
 textarea.in{resize:vertical;font-family:inherit}
+/* живость: короткие плавные переходы, без цвета и без шума */
+@keyframes arUp{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+@keyframes arFade{from{opacity:0}to{opacity:1}}
+@keyframes arPop{from{transform:translate(-50%,10px);opacity:0}to{transform:translate(-50%,0);opacity:1}}
+.sheet:not([hidden]){animation:arFade .16s ease-out}
+.sheet:not([hidden]) .sheet-box{animation:arUp .2s ease-out}
+html:not(.mob) .sheet:not([hidden]) .sheet-box{animation:arFade .18s ease-out}
+.toast:not([hidden]){animation:arPop .18s ease-out}
+.tab.on{animation:arFade .18s ease-out}
+.btn,.btn2,.pt button,.seg button,.obj,.sg,.tabbar button,.vbtn,.x{transition:transform .08s ease,background-color .15s,opacity .15s}
+.btn:active,.btn2:active,.pt button:active,.obj:active,.vbtn:active,.x:active{transform:scale(.97)}
+.row{transition:background-color .15s}
+.row.open{background:color-mix(in srgb,var(--paper2) 70%,transparent)}
+.bal{transition:color .2s}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -566,7 +582,7 @@ textarea.in{resize:vertical;font-family:inherit}
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.9</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.10</div>
       </div>
     </section>
   </main>
@@ -979,7 +995,8 @@ function updateObjOptions(){
   const sel = $('#entry-obj'); const cur = S.entry.objectId;
   const opts = ['<option value="">Общий расход, без объекта</option>'].concat(
     realObjects().filter(o => o.status !== 'cancelled' && o.status !== 'done').map(o => `<option value="${esc(o.id)}">${esc(o.name)}</option>`));
-  sel.innerHTML = opts.join('');
+  const oh = opts.join('');
+  if(sel.dataset.h !== oh){ sel.innerHTML = oh; sel.dataset.h = oh; }
   sel.value = realObjects().some(o => o.id === cur) ? cur : '';
   S.entry.objectId = sel.value;
 }
@@ -1011,6 +1028,7 @@ function updateEntry(){
   if(p.usd) bits.push(p.rate ? '$' + fmt2(p.usd) + ' по ' + fmt(p.rate) : '<span class="warn">курс?</span>');
   bits.push(p.desc ? esc(p.desc) : '<span class="warn">за что?</span>');
   bits.push(KIND_LABEL[kind] + (src === 'own' ? ' из своих' : ''));
+  if(kind === 'overhead' && !S.entry.objectId && p.cat && !/Прочее/.test(p.cat)) bits.push('<span class="hint">' + esc(stripEmoji(p.cat)) + '</span>');
   let warns = p.warn.filter(w => !(p.dollars && /курс/.test(w))).map(w => `<div class="warn">${esc(w)}</div>`).join('');
   if(p.amount){
     const m = calc(), have = Math.max(m.left, 0);
@@ -1114,13 +1132,14 @@ function updateRem(){
   const box = $('#rem-card'); if(!box) return;
   if(box.contains(document.activeElement) && document.activeElement.tagName === 'SELECT') return;
   const hrs = [16, 17, 18, 19, 20, 21, 22];
-  box.innerHTML = `<div class="lbl">Напоминание внести данные</div>
+  const html = `<div class="lbl">Напоминание внести данные</div>
     <div class="hint">Если к выбранному времени за день нет ни одной записи, на этот телефон придёт уведомление. Настройка своя на каждом телефоне.</div>
     <div class="fl"><span class="hint">Время напоминания</span><select class="in" id="rem-hour" data-ch="remHour">${hrs.map(h => `<option value="${h}" ${h === S.rem.hour ? 'selected' : ''}>${pad2(h)}:00</option>`).join('')}</select></div>
     <button class="btn${S.rem.on ? '2' : ''}" data-act="${S.rem.on ? 'remOff' : 'remOn'}" ${S.rem.busy ? 'disabled' : ''}>${S.rem.on ? 'Выключить напоминание' : 'Включить напоминание'}</button>
     ${S.rem.on ? '<button class="btn2" data-act="remTest">Проверить уведомление</button>' : ''}
     <div class="hint">${S.rem.on ? (S.rem.push ? 'Включено, приходит и при закрытом приложении.' : 'Включено, работает пока приложение открыто.') : 'Выключено.'}${S.rem.msg ? '<br>' + esc(S.rem.msg) : ''}</div>
     <div class="hint">iPhone: уведомления работают, только если приложение добавлено «На экран Домой» и открыто с иконки.</div>`;
+  if(box.dataset.h !== html){ box.innerHTML = html; box.dataset.h = html; }
 }
 // </remind>
 // <calendar>
@@ -1373,9 +1392,9 @@ function updateAll(){
 
 // ───────────── записи ─────────────
 function newId(){ return Date.now() + Math.floor(Math.random() * 1000); }
-async function guard(promiseFn, okMsg){
+async function guard(promiseFn, okMsg, onFail){
   try { const p = promiseFn(); if(okMsg) toast(okMsg); await p; }
-  catch(e){ console.error(e); toast('Не сохранилось: ' + (e.code || e.message || 'ошибка')); }
+  catch(e){ console.error(e); toast('Не сохранилось: ' + (e.code || e.message || 'ошибка')); if(onFail) try { onFail(); } catch(x){} }
 }
 const usdFields = p => (p && p.usd ? { usd: p.usd, rate: p.rate } : {});
 function entryGo(){
@@ -1404,8 +1423,10 @@ function entryGo(){
     const rec = { type: kind, desc: p.desc, amount: p.amount, partner, cat: kind === 'overhead' ? p.cat : '', createdBy: S.me, ts: now, ...uf };
     job = () => adapter.addCash(rec);
   }
+  const keepText = $('#entry-text').value;
   $('#entry-text').value = ''; S.entry.kind = null; S.entry.src = 'cash';
-  guard(job, 'Записано');
+  // не записалось: возвращаем текст в поле, чтобы не набирать заново
+  guard(job, 'Записано', () => { const f = $('#entry-text'); if(!f.value){ f.value = keepText; updateEntry(); } });
   updateEntry();
 }
 function findItem(key){ return feedItems().find(i => i.key === key); }
@@ -1550,8 +1571,9 @@ function addSheetTx(){
     const p = parseLine(raw, S.rate); if(!p || !p.amount || !p.desc) return;
     tx = { id: newId(), ts: Date.now(), desc: p.desc, amount: p.amount, type, cat: guessTxCat(type, p.desc), createdBy: S.me, locked: false, ...usdFields(p) };
   }
+  const keepTx = $('#sh-text').value;
   $('#sh-text').value = ''; updateSheetEntry();
-  guard(() => adapter.addTx(o.id, tx), 'Записано');
+  guard(() => adapter.addTx(o.id, tx), 'Записано', () => { const f = $('#sh-text'); if(f && !f.value){ f.value = keepTx; updateSheetEntry(); } });
 }
 function delSheetTx(id){
   const o = S.objects.find(x => x.id === S.sheet.id); if(!o) return;
@@ -1873,6 +1895,12 @@ function lockGate(){
         setTimeout(() => { buf = ''; dots(); }, 350);
       }, 120);
     };
+    // на ПК код можно набирать с клавиатуры
+    document.addEventListener('keydown', function kd(e){
+      if(L.hidden){ document.removeEventListener('keydown', kd); return; }
+      if(/^\d$/.test(e.key)) $('#lock-pad').querySelector(`[data-k="${e.key}"]`).click();
+      else if(e.key === 'Backspace') $('#lock-pad').querySelector('[data-k="⌫"]').click();
+    });
     const tryBio = async () => { try { if(await bioCheck()) open(); } catch(e){} };
     if(LS.get('ar_bio')){ bio.hidden = false; bio.onclick = tryBio; }
     dots(); L.hidden = false;
@@ -2136,6 +2164,7 @@ document.addEventListener('click', e => {
   const f = ACT[el.dataset.act]; if(f) f(el, e);
 });
 $('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') dismissSheet(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#sheet').hidden) dismissSheet(); });
 $('#entry-text').addEventListener('input', () => { S.entry.kind = null; updateEntry(); });
 $('#entry-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); entryGo(); } });
 $('#ai-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); aiSend(); } });
@@ -2522,10 +2551,11 @@ function updateCabinet(){
       <button class="btn" data-act="devReg">Подключить первое устройство (код настройки)</button>
       <button class="btn2" data-act="devJoin">Подключить по приглашению</button>
       <div class="hint" id="dev-err"></div>`;
-    tb.hidden = true; return;
+    box.dataset.h = ''; tb.hidden = true; tb.dataset.h = ''; return;
   }
+  if(document.activeElement && (box.contains(document.activeElement) || tb.contains(document.activeElement)) && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
   const act = d.list.filter(x => !x.revoked_at), old = d.list.filter(x => x.revoked_at);
-  box.innerHTML = `<div class="lbl">Мой кабинет</div>
+  const html1 = `<div class="lbl">Мой кабинет</div>
     <div class="hint">${d.loaded ? 'Устройств подключено: <b>' + act.length + '</b>' + '' : 'Загружаю…'}</div>
     ${d.err ? `<div class="warn">${esc(d.err)}</div>` : ''}
     <div>${act.map(x => `<div class="dev"><div class="bd">${LET[partnerOf(x.who)]}</div><div style="flex:1"><div class="nm">${esc(x.name)}${x.me ? ' · это устройство' : ''}</div>
@@ -2533,14 +2563,16 @@ function updateCabinet(){
       ${d.main && !x.me ? `<button class="link-del" data-act="devRevoke" data-id="${esc(x.id)}">Отключить</button>` : ''}</div>`).join('')}</div>
     ${old.length ? `<div class="hint">Отключено: ${old.length}</div>` : ''}
     ${d.main ? '<button class="btn2" data-act="devInvite">Пригласить телефон партнёра</button>' : ''}`;
+  if(box.dataset.h !== html1){ box.innerHTML = html1; box.dataset.h = html1; }
   if(!d.main){ tb.hidden = true; return; }
   tb.hidden = false;
-  tb.innerHTML = `<div class="lbl">Токены для Claude и n8n</div>
+  const html2 = `<div class="lbl">Токены для Claude и n8n</div>
     <div class="hint">Один токен подходит и для Claude (MCP), и для n8n (HTTP). Помощник читает данные свободно, а менять их только предлагает: запись вносится после твоего «Одобрить».</div>
     <div>${d.tokens.map(x => `<div class="dev"><div style="flex:1"><div class="nm">${esc(x.name)}${x.revoked_at ? ' · отозван' : ''}</div><div class="hint">создан ${dtm(Date.parse(x.created_at))}${x.last_used_at ? ' · использован ' + dtm(Date.parse(x.last_used_at)) : ' · не использовался'}</div></div>
       ${x.revoked_at ? '' : `<button class="link-del" data-act="tokRevoke" data-id="${esc(x.id)}">Отозвать</button>`}</div>`).join('') || '<div class="hint">Токенов пока нет.</div>'}</div>
     <input class="in" id="tok-name" placeholder="Название, например Claude или n8n" autocomplete="off">
     <button class="btn" data-act="tokCreate">Создать токен</button>`;
+  if(tb.dataset.h !== html2){ tb.innerHTML = html2; tb.dataset.h = html2; }
 }
 function copyText(t){
   try { navigator.clipboard.writeText(t).then(() => toast('Скопировано'), () => toast('Не удалось скопировать')); } catch(e){ toast('Не удалось скопировать'); }
@@ -3166,9 +3198,15 @@ function updateSmeta(){
   else {
     const html = S.sm.view === 'price' ? smPriceList() : S.sm.view === 'debt' ? smDebtList() : smEstList();
     // список не перерисовываем зря: иначе обновление из базы сбило бы поле, в которое сейчас пишут
-    if(S.sm.last.body !== html || S.sm.last.view !== S.sm.view){ $('#sm-body').innerHTML = html; S.sm.last = { body: html, view: S.sm.view }; }
+    const typing = document.activeElement && $('#sm-body').contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && S.sm.last.view === S.sm.view;
+    if(!typing && (S.sm.last.body !== html || S.sm.last.view !== S.sm.view)){ $('#sm-body').innerHTML = html; S.sm.last = { body: html, view: S.sm.view }; }
   }
-  if(S.sheet && S.sheet.kind === 'sm' && S.sheet.debt && !$('#sheet').hidden) smDebtSheet();
+  // окно долга перерисовываем, только если данные изменились и пользователь в нём ничего не печатает
+  if(S.sheet && S.sheet.kind === 'sm' && S.sheet.debt && !$('#sheet').hidden){
+    const ae = document.activeElement, busy = ae && $('#sheet-box').contains(ae) && /INPUT|TEXTAREA/.test(ae.tagName);
+    const d = smKind('debt').find(x => x.id === S.sheet.debt), sig = d ? JSON.stringify([d, smKind('debtpay').filter(p => p.debtId === d.id)]) : '';
+    if(!busy && S.sheet.sig !== sig){ smDebtSheet(); S.sheet.sig = sig; }
+  }
 }
 Object.assign(ACT, {
   smView: el => { S.sm.view = el.dataset.v; S.sm.built = false; S.sm.last = { body: '' }; updateSmeta(); },
