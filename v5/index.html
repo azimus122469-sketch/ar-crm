@@ -582,7 +582,7 @@ html:not(.mob) .sheet:not([hidden]) .sheet-box{animation:arFade .18s ease-out}
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.10</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.11</div>
       </div>
     </section>
   </main>
@@ -1879,7 +1879,7 @@ function lockGate(){
     const dots = err => { $('#lock-dots').innerHTML = [0, 1, 2, 3].map(i => `<div class="dot ${i < buf.length ? 'on' : ''} ${err ? 'err' : ''}"></div>`).join(''); };
     const open = () => { L.hidden = true; resolve(); };
     $('#lock-title').textContent = 'Введите код';
-    $('#lock-sub').textContent = LS.get('ar_pin') ? '' : 'Код по умолчанию 0000. Смените его: Ещё, «Вход в приложение».';
+    $('#lock-sub').textContent = '';
     $('#lock-pad').innerHTML = ['1','2','3','4','5','6','7','8','9','','0','⌫'].map(k => k === '' ? '<span></span>' : `<button data-k="${k}">${k}</button>`).join('');
     $('#lock-pad').onclick = e => {
       const b = e.target.closest('button'); if(!b || wait) return;
@@ -3052,7 +3052,7 @@ function smSave(){
   if(E.lines.some(l => l.custom && !String(l.name).trim())){ toast('У своей позиции нет названия'); return; }
   const rec = JSON.parse(JSON.stringify({ kind: 'est', no: E.no || 1, name, client: E.client || '', addr: E.addr || '', objectId: E.objectId || '', rate: Number(E.rate) || 0,
     lines: E.lines, costs: (E.costs || []).filter(c => c.name || Number(c.sum)), terms: E.terms || '', ts: E.ts || Date.now(), createdBy: E.createdBy || S.me, upd: Date.now(), editedBy: S.me }));
-  guard(() => E.id ? adapter.updateSmeta(E.id, rec) : adapter.addSmeta(rec), 'Смета сохранена');
+  guard(() => E.id ? adapter.updateSmeta(E.id, rec) : adapter.addSmeta(rec), 'Смета сохранена', () => { S.sm.edit = E; S.sm.built = false; updateSmeta(); });
   smBack();
 }
 function smDel(){
