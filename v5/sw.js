@@ -1,7 +1,7 @@
 // АР · Тетрадь v5 — service worker.
 // Сеть в приоритете, кэш только на случай, когда интернета нет. Принимает фоновые уведомления (Web Push).
 // Область действия — только папка v5, старую CRM не затрагивает.
-const CACHE = 'ar-v5-14';
+const CACHE = 'ar-v5-15';
 
 self.addEventListener('install', () => { self.skipWaiting(); });
 

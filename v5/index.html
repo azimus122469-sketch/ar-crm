@@ -5,7 +5,7 @@
 <meta name="viewport" id="vp" content="width=1280, viewport-fit=cover">
 <title>АР · Тетрадь</title>
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="#FBF9F3">
+<meta name="theme-color" content="#EEF0F3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -53,7 +53,7 @@ window.ARUI = (function(){
     D.style.setProperty('--bgimg', v || 'none');
     D.style.setProperty('--ga', TH.alpha + '%'); D.style.setProperty('--gb', TH.blur + 'px');
     var m = document.querySelector('meta[name=color-scheme]'); if(m) m.setAttribute('content', dark ? 'dark' : 'light');
-    var c = document.querySelector('meta[name=theme-color]'); if(c) c.setAttribute('content', dark ? '#14181D' : '#FBF9F3');
+    var c = document.querySelector('meta[name=theme-color]'); if(c) c.setAttribute('content', dark ? '#0E1115' : '#EEF0F3');
     if(api.onTheme) api.onTheme();
   };
   api.canZoom = function(){ return !UI.mob && window.innerWidth >= 900; };
@@ -92,16 +92,18 @@ window.ARUI = (function(){
 </script>
 <style>
 :root{
-  --paper:#FBF9F3; --paper2:#F3F0E7; --card:#FFFEFA; --grid:#DCE5EE; --edge:#E2DDD1;
-  --ink:#16202B; --soft:#4A5663; --faint:#8A939E; --blue:#1F3A93; --red:#B23A32;
+  --paper:#EEF0F3; --paper2:#E4E7EC; --card:#FFFFFF; --grid:#E6E9EE; --edge:#DDE1E7; --chip:#E4E7EC;
+  --ink:#0F1419; --soft:#5F6A76; --faint:#8A939E; --blue:#0F1419; --red:#B23A32; --green:#17794B;
+  --r:20px; --r2:14px; --sh:0 1px 2px rgba(15,20,25,.04),0 8px 24px -14px rgba(15,20,25,.18);
   --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  --serif:Georgia,"Times New Roman",serif;
+  --serif:var(--sans);
   --sb:env(safe-area-inset-bottom,0px); --st:env(safe-area-inset-top,0px);
-  --card-2:#F3F0E7; --ga:60%; --gb:14px; --bgimg:none;
+  --card-2:#E4E7EC; --ga:60%; --gb:14px; --bgimg:none;
 }
 html.dark{
-  --paper:#14181D; --paper2:#1C2229; --card:#1A2027; --card-2:#1C2229; --grid:#2A323B; --edge:#313A44;
-  --ink:#E8ECF0; --soft:#B0B9C3; --faint:#8791A0; --blue:#7C9BFF; --red:#FF8077;
+  --paper:#0E1115; --paper2:#1E242B; --card:#171B21; --card-2:#1E242B; --grid:#262C34; --edge:#2B323B; --chip:#222830;
+  --ink:#ECEFF3; --soft:#A3ACB7; --faint:#7C8591; --blue:#ECEFF3; --red:#FF8B80; --green:#6FD39F;
+  --sh:0 8px 24px -14px rgba(0,0,0,.6);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html.pz{touch-action:pan-x pan-y}
@@ -112,31 +114,31 @@ input,select,textarea{font-size:16px}
 button{cursor:pointer}
 [hidden]{display:none!important}
 
-#app{max-width:640px;margin:0 auto;padding-bottom:calc(84px + var(--sb))}
-.top{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--edge);
+#app{max-width:640px;margin:0 auto;padding-bottom:calc(104px + var(--sb))}
+.top{position:sticky;top:0;z-index:20;background:var(--paper);
   padding:calc(10px + var(--st)) 16px 10px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
 .lbl{font-size:12px;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
-.bal{font-family:var(--serif);font-size:32px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.bal{white-space:nowrap;font-size:34px;font-weight:700;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
 .bal.neg{color:var(--red)}
-.bal small{font-family:var(--sans);font-size:14px;font-weight:400;color:var(--soft)}
+.bal small{font-family:var(--sans);white-space:nowrap;font-size:14px;font-weight:400;color:var(--soft)}
 .me{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
 .conn{font-size:12px;color:var(--soft)}
 .conn.err{color:var(--red)}
-.bd{flex:none;width:34px;height:34px;border:2px solid var(--ink);border-radius:8px;display:grid;place-items:center;
-  font-family:var(--serif);font-weight:700;font-size:17px;background:transparent;padding:0}
-.banner{margin:12px 16px 0;padding:10px 12px;border:1px solid var(--ink);border-radius:10px;background:var(--paper2);font-size:14px}
-.banner.err{border-color:var(--red);color:var(--red)}
+.bd{flex:none;width:36px;height:36px;border:0;border-radius:50%;display:grid;place-items:center;
+  font-weight:700;font-size:15px;background:var(--chip);color:var(--ink);padding:0}
+.banner{margin:12px 16px 0;padding:12px 14px;border:0;border-radius:var(--r2);background:var(--card);box-shadow:var(--sh);font-size:14px}
+.banner.err{color:var(--red)}
 
 .tab{display:none;padding:14px 16px}
 .tab.on{display:block}
-h2.h{font-family:var(--serif);font-size:22px;margin:0 0 10px}
+h2.h{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:0 0 12px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 .cal .wd{font-size:11px;color:var(--faint);text-align:center;padding:2px 0}
-.cal .cd{min-height:50px;border:1px solid var(--edge);border-radius:6px;padding:3px 3px 2px;text-align:left;background:transparent;color:var(--ink);
+.cal .cd{min-height:50px;border:1px solid var(--edge);border-radius:10px;padding:3px 3px 2px;text-align:left;background:transparent;color:var(--ink);
   display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;font-size:9px;line-height:1.15;min-width:0}
-.cal .cd b{font-family:var(--serif);font-size:12px;font-weight:700}
+.cal .cd b{font-size:12px;font-weight:700}
 .cal .cd i{font-style:normal;word-break:break-word;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.cal .cd.off{background:#E6E4DD;color:var(--faint)}
+.cal .cd.off{background:var(--chip);color:var(--faint);border-color:transparent}
 html.dark .cal .cd.off{background:#262D35}
 .cal .cd.fut{color:var(--faint);border-style:dashed}
 .cal .cd.plan{border-style:dashed}
@@ -144,8 +146,8 @@ html.dark .cal .cd.off{background:#262D35}
 .cal .cd.void{border:0;background:transparent;pointer-events:none}
 .cal .cd .tg{font-size:8px;font-weight:700;letter-spacing:.02em}
 .lg{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--edge);font-size:14px}
-.lg .sw{flex:none;width:16px;height:16px;border:1px solid var(--ink);border-radius:4px;margin-top:2px}
-.card{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:14px}
+.lg .sw{flex:none;width:16px;height:16px;border:0;border-radius:6px;margin-top:2px}
+.card{background:var(--card);border:0;border-radius:var(--r);box-shadow:var(--sh);padding:16px}
 .col{display:flex;flex-direction:column;gap:10px}
 .rowf{display:flex;gap:10px;align-items:center}
 .sp{flex:1}
@@ -153,73 +155,75 @@ html.dark .cal .cd.off{background:#262D35}
 .warn{font-size:14px;color:var(--red)}
 
 .pt{display:flex;gap:8px}
-.pt button{width:48px;height:48px;border:2px solid var(--ink);border-radius:10px;background:transparent;
-  font-family:var(--serif);font-size:22px;font-weight:700}
+.pt button{width:46px;height:46px;border:0;border-radius:50%;background:var(--chip);color:var(--soft);
+  font-size:18px;font-weight:700}
 .pt button.on{background:var(--ink);color:var(--paper)}
-.seg{display:flex;border:1px solid var(--ink);border-radius:10px;overflow:hidden;flex:1}
-.seg button{flex:1;padding:10px 4px;background:transparent;border:0;border-right:1px solid var(--ink);font-size:14px;min-width:0}
-.seg button:last-child{border-right:0}
-.seg button.on{background:var(--ink);color:var(--paper)}
+.seg{display:flex;gap:2px;background:var(--chip);border-radius:14px;padding:3px;flex:1}
+.seg button{flex:1;padding:9px 4px;background:transparent;border:0;border-radius:11px;font-size:14px;color:var(--soft);min-width:0}
+.seg button.on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(15,20,25,.16)}
 .seg.dis{opacity:.4;pointer-events:none}
-.in{width:100%;border:2px solid var(--ink);border-radius:10px;background:var(--card);padding:12px 14px;outline:none}
-.in:focus{border-color:var(--blue)}
+.in{width:100%;border:1.5px solid var(--edge);border-radius:14px;background:var(--card);padding:12px 14px;outline:none}
+.in:focus{border-color:var(--ink)}
 select.in{appearance:none;-webkit-appearance:none;padding-right:40px;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M2 2l6 6 6-6' fill='none' stroke='%2316202B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 14px center}
 html.dark select.in{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='10' viewBox='0 0 16 10'%3E%3Cpath d='M2 2l6 6 6-6' fill='none' stroke='%23E8ECF0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
 html.dark .sheet{background:rgba(0,0,0,.6)}
-.btn{width:100%;background:var(--blue);color:var(--paper);border:0;border-radius:10px;padding:14px;font-weight:600}
+.btn{width:100%;background:var(--blue);color:var(--paper);border:0;border-radius:14px;padding:14px;font-weight:600}
 .btn:disabled{opacity:.35}
-.btn2{width:100%;background:transparent;border:2px solid var(--ink);border-radius:10px;padding:12px;font-weight:600}
-.btn3{background:transparent;border:0;color:var(--blue);padding:8px 0;font-weight:600;text-align:left}
+.btn2{width:100%;background:var(--chip);border:0;border-radius:14px;padding:13px;font-weight:600}
+.btn3{background:transparent;border:0;color:var(--ink);padding:8px 0;font-weight:600;text-align:left;text-decoration:underline;text-decoration-color:var(--edge);text-underline-offset:4px}
 .prev{min-height:44px;padding:8px 0;font-size:15px}
 .prev b{font-weight:600}
 
-.day{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 4px;padding-bottom:4px;border-bottom:2px solid var(--ink);font-family:var(--serif);font-weight:700;font-size:18px}
+.day{display:flex;justify-content:space-between;align-items:baseline;margin:20px 6px 8px;font-weight:700;font-size:15px}
 .day span{font-family:var(--sans);font-weight:400;font-size:13px;color:var(--faint)}
-.row{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--grid)}
+.dg{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden}
+.dg .row:last-child{border-bottom:0}
+.row{display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-bottom:1px solid var(--grid)}
 .rb{flex:1;min-width:0}
 .rd{overflow-wrap:anywhere}
 .rt{font-size:13px;color:var(--soft)}
 .ra{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ra.pos{color:var(--green)}
 .row .acts{display:none;margin-top:6px}
 .row.open .acts{display:block}
 .link-del{background:transparent;border:0;color:var(--red);padding:4px 0;font-size:14px;font-weight:600}
 .link-ed{background:transparent;border:0;color:var(--blue);padding:4px 16px 4px 0;font-size:14px;font-weight:600}
 .sig{font-size:12px;color:var(--faint);margin-top:1px}
 .chat{display:flex;flex-direction:column;gap:10px;padding-bottom:10px}
-.msg{max-width:88%;padding:10px 12px;border:1px solid var(--edge);border-radius:12px;background:var(--card);font-size:15px;white-space:pre-wrap;word-break:break-word}
-.msg.me{align-self:flex-end;background:var(--paper2)}
+.msg{max-width:88%;padding:11px 14px;border:0;border-radius:18px;box-shadow:var(--sh);background:var(--card);font-size:15px;white-space:pre-wrap;word-break:break-word}
+.msg.me{align-self:flex-end;background:var(--chip);box-shadow:none}
 .msg .who{font-size:11px;color:var(--faint);margin-bottom:2px}
-.prop{border:2px solid var(--ink);border-radius:12px;padding:12px;background:var(--card);display:flex;flex-direction:column;gap:8px}
+.prop{border:1.5px solid var(--edge);border-radius:var(--r);padding:14px;background:var(--card);display:flex;flex-direction:column;gap:8px}
 .prop .st{font-size:12px;color:var(--faint)}
 .prop .st.bad{color:var(--red)}
-.aibar{position:sticky;bottom:calc(66px + var(--sb));display:flex;flex-direction:column;gap:6px;background:var(--paper);padding:8px 0}
+.aibar{position:sticky;bottom:calc(84px + var(--sb));display:flex;flex-direction:column;gap:6px;background:var(--paper);padding:8px 0}
 .aibar .row1{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .aibar .row2{display:flex;gap:8px;align-items:stretch}
 .aibar .btn{width:auto;padding:12px 18px}
 .aibar .plus{width:48px;flex:none;padding:0;font-size:26px;line-height:1;font-weight:400}
 .aibar select.in{width:auto;max-width:100%;padding:6px 34px 6px 10px;font-size:14px;border-width:1.5px;border-radius:8px;background-position:right 10px center}
-.chip{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--ink);border-radius:20px;padding:2px 2px 2px 10px;font-size:13px;max-width:100%}
+.chip{display:inline-flex;gap:4px;align-items:center;background:var(--chip);border-radius:20px;padding:2px 2px 2px 10px;font-size:13px;max-width:100%}
 .chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:150px}
 .chip button{border:0;background:transparent;font-size:14px;padding:2px 8px;line-height:1}
 .msg .att{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
 .msg .att i{font-style:normal;font-size:12px;border:1px solid var(--edge);border-radius:20px;padding:1px 8px;color:var(--soft)}
-.mopt{display:flex;justify-content:space-between;align-items:baseline;gap:10px;text-align:left;border:2px solid var(--ink);border-radius:10px;background:transparent;padding:10px 12px;width:100%}
-.mopt b{font-family:var(--serif);font-size:17px}
+.mopt{display:flex;justify-content:space-between;align-items:baseline;gap:10px;text-align:left;border:0;border-radius:var(--r2);background:var(--chip);padding:12px 14px;width:100%}
+.mopt b{font-size:17px}
 .mopt small{font-size:12px;opacity:.8}
 .mopt.on{background:var(--ink);color:var(--paper)}
-.arow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--ink)}
-.arow b{font-family:var(--serif);font-size:17px}
+.arow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--grid)}
+.arow b{font-size:16px}
 .arbtns{display:flex;gap:8px;flex-shrink:0}
 .arbtns .btn2{padding:8px 12px;width:auto}
 .chart{width:100%;display:block;height:auto}
 .chart text{font-family:var(--sans)}
-.chart .vl{font-family:var(--serif);font-weight:700}
+.chart .vl{font-weight:700}
 .hb{display:grid;grid-template-columns:104px minmax(0,1fr) 64px;gap:8px;align-items:center;padding:5px 0;font-size:13px}
 .hb .nm{overflow-wrap:anywhere;line-height:1.2}
-.hb .bar{height:16px;background:var(--paper2);border-radius:4px;overflow:hidden}
-.hb .bar i{display:block;height:100%;border-radius:4px}
+.hb .bar{height:14px;background:var(--chip);border-radius:7px;overflow:hidden}
+.hb .bar i{display:block;height:100%;border-radius:7px}
 .hb .vv{text-align:right;font-variant-numeric:tabular-nums}
 .leg .li{display:flex;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--grid);font-size:14px}
 .leg .li .sw2{flex:none;width:12px;height:12px;border-radius:3px}
@@ -234,19 +238,19 @@ html.dark .sheet{background:rgba(0,0,0,.6)}
 .tabbar button{position:relative}
 .tabbar .bdg{position:absolute;top:4px;left:calc(50% + 6px);min-width:16px;height:16px;border-radius:8px;background:var(--blue);color:#fff;font-size:10px;line-height:16px;text-align:center;padding:0 4px}
 html.dark .tabbar .bdg{color:#0E1218}
-.code{font-family:var(--serif);font-size:34px;letter-spacing:.18em;text-align:center;padding:12px;border:2px solid var(--ink);border-radius:10px;background:var(--card);user-select:all}
-.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all;background:var(--paper2);border:1px solid var(--edge);border-radius:8px;padding:8px}
+.code{font-size:34px;font-weight:700;letter-spacing:.18em;text-align:center;padding:14px;border:0;border-radius:var(--r2);background:var(--card);user-select:all}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;word-break:break-all;background:var(--chip);border:0;border-radius:12px;padding:10px}
 .ratebox{display:flex;gap:10px;align-items:center}
 .ratebox .hint{white-space:nowrap}
 .warnbox{font-size:14px;color:var(--red);margin-top:4px}
 .warnbox button{background:transparent;border:0;color:var(--blue);font-weight:600;padding:2px 0;text-align:left;font-size:14px}
 .empty{padding:28px 0;text-align:center;color:var(--soft)}
 
-.obj{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.obj{display:block;width:100%;text-align:left;background:var(--card);border:0;box-shadow:var(--sh);border-radius:var(--r);padding:14px 16px;margin-bottom:10px}
 .obj .ot{display:flex;justify-content:space-between;gap:10px;font-weight:600}
 .obj .om{font-size:13px;color:var(--soft);margin-top:2px}
 .obj .ob{font-size:14px;margin-top:6px;font-variant-numeric:tabular-nums}
-.st{font-size:12px;border:1px solid var(--ink);border-radius:20px;padding:1px 10px;white-space:nowrap;font-weight:400}
+.st{font-size:12px;background:var(--chip);border:0;border-radius:20px;padding:2px 10px;white-space:nowrap;font-weight:500}
 
 table.t{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
 table.t td,table.t th{padding:9px 0;border-bottom:1px solid var(--grid);text-align:left;font-weight:400}
@@ -255,63 +259,64 @@ table.t th{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spa
 table.t tr.tot td{border-bottom:2px solid var(--ink);font-weight:700}
 table.t .neg{color:var(--red)}
 
-.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--paper2);border-top:1px solid var(--edge);padding-bottom:var(--sb)}
-.tabbar .in-bar{max-width:640px;margin:0 auto;display:flex}
+.tabbar{position:fixed;left:10px;right:10px;bottom:calc(10px + var(--sb));z-index:30;background:var(--card);border:0;border-radius:24px;box-shadow:0 10px 30px -12px rgba(15,20,25,.35),0 0 0 1px var(--grid)}
+.tabbar .in-bar{max-width:620px;margin:0 auto;display:flex;padding:2px 2px}
 .tabbar button{flex:1;background:transparent;border:0;padding:9px 0 8px;color:var(--faint);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
 .tabbar button.on{color:var(--ink);font-weight:600}
+.tabbar button{border-radius:18px}
 .tabbar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 
 .sheet{position:fixed;inset:0;z-index:50;background:rgba(22,32,43,.45);display:flex;align-items:flex-end;justify-content:center}
-.sheet-box{background:var(--paper);width:100%;max-width:640px;max-height:92vh;max-height:92dvh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(20px + var(--sb))}
+.sheet-box{background:var(--paper);width:100%;max-width:640px;max-height:92vh;max-height:92dvh;overflow:auto;overscroll-behavior:contain;border-radius:26px 26px 0 0;padding:16px 16px calc(20px + var(--sb))}
 .sheet-h{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
-.sheet-h h3{font-family:var(--serif);font-size:22px;margin:0}
-.x{background:transparent;border:2px solid var(--ink);border-radius:8px;width:36px;height:36px;font-size:18px;line-height:1;flex:none}
+.sheet-h h3{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0}
+.x{background:var(--chip);border:0;border-radius:50%;width:36px;height:36px;font-size:16px;line-height:1;flex:none}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--grid);font-size:15px}
 .kv span:first-child{color:var(--soft)}
 .kv span:last-child{text-align:right;overflow-wrap:anywhere}
 
 #lock{position:fixed;inset:0;z-index:100;background:var(--paper);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:24px}
-#lock h1{font-family:var(--serif);font-size:24px;margin:0;text-align:center}
+#lock h1{font-size:24px;font-weight:700;margin:0;text-align:center}
 .dots{display:flex;gap:14px}
 .dot{width:16px;height:16px;border-radius:50%;border:2px solid var(--ink)}
 .dot.on{background:var(--ink)}
 .dot.err{border-color:var(--red);background:var(--red)}
 .pad{display:grid;grid-template-columns:repeat(3,72px);gap:14px}
-.pad button{width:72px;height:72px;border-radius:50%;border:2px solid var(--ink);background:transparent;font-family:var(--serif);font-size:26px;font-weight:700}
-.pad button:active{background:var(--paper2)}
+.pad button{width:72px;height:72px;border-radius:50%;border:0;background:var(--chip);font-size:26px;font-weight:600}
+.pad button:active{background:var(--edge)}
 
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(96px + var(--sb));z-index:80;background:var(--ink);color:var(--paper);
-  padding:10px 16px;border-radius:10px;font-size:14px;max-width:90vw;text-align:center}
-.demo-tag{border:1px solid var(--ink);border-radius:20px;padding:0 8px;font-size:12px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + var(--sb));z-index:80;background:var(--ink);color:var(--paper);
+  padding:11px 18px;border-radius:16px;font-size:14px;max-width:90vw;text-align:center;box-shadow:0 10px 30px -10px rgba(0,0,0,.4)}
+.demo-tag{background:var(--chip);border-radius:20px;padding:0 8px;font-size:12px}
 
 .fl{display:flex;flex-direction:column;gap:4px;min-width:0}
 .fl>.hint{font-size:12px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.sgrid{border:1px solid var(--edge);background:var(--card);border-radius:12px;overflow:hidden}
+.sgrid{border:0;box-shadow:var(--sh);background:var(--card);border-radius:var(--r);overflow:hidden}
 .sg{display:grid;align-items:stretch;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--grid);padding:0;font-variant-numeric:tabular-nums}
 .sg>div{padding:9px 8px;min-width:0;display:flex;flex-direction:column;justify-content:center}
 .sg>div+div{border-left:1px solid var(--grid)}
 .sg.l{grid-template-columns:26px minmax(0,1fr) 56px 82px 58px}
 .sg.j{grid-template-columns:28px minmax(0,1fr) 66px 58px 58px}
-.sg.h{background:var(--paper2);border-bottom:1.5px solid var(--ink);font-size:12px;font-weight:700}
+.sg.h{background:var(--chip);border-bottom:0;font-size:12px;font-weight:700}
 .sg.h>div{padding:8px}
 .sg .r{align-items:flex-end;text-align:right}
-.sg .num{font-family:var(--serif);font-size:14px}
+.sg .num{font-size:14px;font-weight:600}
 .sg .nm{font-weight:600;overflow-wrap:anywhere}
 .sg .sub{font-size:11px;color:var(--soft)}
-.sg.tot{border-top:3px double var(--ink);border-bottom:0;font-weight:700;background:var(--paper2)}
+.sg.tot{border-top:1.5px solid var(--edge);border-bottom:0;font-weight:700;background:var(--chip)}
 .sg .low{color:var(--red);font-weight:700}
 .sg .out{color:var(--red)}
-.sg .lt{align-items:center;font-family:var(--serif);font-weight:700;font-size:13px}
+.sg .lt{align-items:center;font-weight:700;font-size:13px}
 
 @media (min-width:1000px){
   html:not(.mob) #app{max-width:none;margin:0;padding:0 0 32px 232px}
   html:not(.mob) .top{padding-left:32px;padding-right:32px}
-  html:not(.mob) .tabbar{top:0;bottom:0;right:auto;width:232px;border-top:0;border-right:1px solid var(--edge);padding:22px 12px;overflow:auto}
-  html:not(.mob) .tabbar::before{content:"АР · Тетрадь";display:block;font-family:var(--serif);font-weight:700;font-size:21px;padding:2px 14px 20px}
-  html:not(.mob) .tabbar .in-bar{max-width:none;margin:0;flex-direction:column;gap:4px}
+  html:not(.mob) .tabbar{top:0;bottom:0;left:0;right:auto;width:232px;border-radius:0;box-shadow:1px 0 0 var(--grid);padding:22px 12px;overflow:auto}
+  html:not(.mob) .tabbar::before{content:"АР · Тетрадь";display:block;font-weight:700;font-size:21px;letter-spacing:-.02em;padding:2px 14px 20px}
+  html:not(.mob) .tabbar .in-bar{max-width:none;margin:0;flex-direction:column;gap:4px;padding:0}
   html:not(.mob) .tabbar button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:15px;border-radius:10px;text-align:left}
-  html:not(.mob) .tabbar button.on{background:var(--ink);color:var(--paper)}
+  html:not(.mob) .tabbar button.on{background:var(--chip);color:var(--ink)}
   html:not(.mob) .tabbar .bdg{top:50%;left:auto;right:14px;transform:translateY(-50%);background:var(--red)}
   html:not(.mob) main{padding:0 32px}
   html:not(.mob) .tab{padding:22px 0}
@@ -322,9 +327,10 @@ table.t .neg{color:var(--red)}
   html:not(.mob) .cal .cd{min-height:66px;font-size:10px}
   html:not(.mob) .cal .cd b{font-size:13px}
   html:not(.mob) .aibar{bottom:0}
+  html:not(.mob) #app{padding-bottom:32px}
   html:not(.mob) .toast{bottom:32px}
   html:not(.mob) .sheet{align-items:center}
-  html:not(.mob) .sheet-box{border-radius:16px;max-width:560px;padding-bottom:20px}
+  html:not(.mob) .sheet-box{border-radius:26px;max-width:560px;padding-bottom:20px}
   html:not(.mob) .banner{margin-left:32px;margin-right:32px}
   html:not(.mob) .drbar{margin-left:32px;margin-right:32px}
 }
@@ -332,7 +338,7 @@ table.t .neg{color:var(--red)}
   html:not(.mob) #tab-sum.on,html:not(.mob) #tab-stock{max-width:1560px}
 }
 /* мобильный вид: одна колонка, крупные элементы под палец */
-html.mob .tabbar button{padding:10px 0 9px;font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.mob .tabbar button{padding:10px 0 9px;font-size:10.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 html.mob .tabbar button.on{font-weight:600;letter-spacing:-.2px}
 html.mob .tabbar svg{width:26px;height:26px}
 html.mob .btn,html.mob .btn2{padding:16px;font-size:17px}
@@ -344,18 +350,19 @@ html.mob .row{padding:14px 0}
 html.mob .cal .cd{min-height:56px}
 html.mob .vbtn,html.mob .bd{height:42px}
 html.mob .bd{width:42px}
+html.mob .vbtn{border-radius:21px}
 /* шапка: переключатель вида */
 .mer{display:flex;gap:8px;align-items:center}
-.vbtn{height:34px;border:1.5px solid var(--ink);border-radius:8px;background:transparent;padding:0 10px;font-size:13px;font-weight:600;white-space:nowrap}
+.vbtn{height:36px;border:0;border-radius:18px;background:var(--chip);padding:0 14px;font-size:13px;font-weight:600;white-space:nowrap}
 /* незаконченное */
 .drbar{margin:10px 16px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.dch{display:inline-flex;align-items:center;border:1.5px dashed var(--ink);border-radius:20px;max-width:100%;background:var(--card)}
+.dch{display:inline-flex;align-items:center;border:1.5px dashed var(--faint);border-radius:20px;max-width:100%;background:var(--card)}
 .dch button{border:0;background:transparent}
 .dch .go{padding:5px 4px 5px 12px;font-size:13px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dch .no{padding:5px 11px;font-size:14px;line-height:1;color:var(--soft)}
 /* оформление */
 .swg{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
-.sw3{height:44px;border:2px solid var(--edge);border-radius:8px;background-color:var(--paper2);background-size:cover;background-position:center;padding:0;font-size:11px;color:var(--ink);overflow:hidden}
+.sw3{height:44px;border:2px solid transparent;border-radius:14px;background-color:var(--paper2);background-size:cover;background-position:center;padding:0;font-size:11px;color:var(--ink);overflow:hidden}
 .sw3.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--paper),0 0 0 4px var(--ink)}
 .zrow{display:flex;gap:8px;align-items:center}
 .zrow .btn2{width:52px;padding:10px 0;font-size:20px}
@@ -378,10 +385,20 @@ html.glass .sg.h,html.glass .sg.tot{background:color-mix(in srgb,var(--card-2) 5
 .sm-g .in{padding:10px 8px}
 .sm-sum{padding:11px 0;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .sm-int{border-top:1px dashed var(--faint);padding-top:8px;opacity:.95}
-.sm-priv{border:2px dashed var(--faint);background:transparent}
+.sm-priv{border:1.5px dashed var(--faint);background:transparent;box-shadow:none}
 .sm-tag{font-size:12px;color:var(--faint);letter-spacing:.04em;text-transform:uppercase}
-.sm-frame{width:100%;height:56vh;border:1px solid var(--edge);border-radius:10px;background:#fff}
+.sm-frame{width:100%;height:56vh;border:0;border-radius:16px;background:#fff}
 textarea.in{resize:vertical;font-family:inherit}
+#hero{margin-bottom:12px}
+.hero-h{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--soft)}
+.spark{display:block;width:100%;height:46px;margin:6px 0 2px;color:var(--ink)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.pair div{background:var(--paper);border-radius:14px;padding:10px 12px;font-size:12px;color:var(--soft)}
+.pair b{display:block;font-size:16px;font-weight:700;color:var(--ink);margin-top:1px;font-variant-numeric:tabular-nums}
+.pair b.neg{color:var(--red)}
+.nudge{margin:0 0 12px;padding:11px 14px;border-radius:var(--r2);background:var(--card);box-shadow:var(--sh);font-size:13.5px;color:var(--soft);display:flex;gap:10px;align-items:center}
+.nudge::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--red)}
+.toast .tb{background:transparent;border:0;color:inherit;font-weight:700;text-decoration:underline;margin-left:10px;padding:0 4px}
 /* живость: короткие плавные переходы, без цвета и без шума */
 @keyframes arUp{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
 @keyframes arFade{from{opacity:0}to{opacity:1}}
@@ -426,6 +443,8 @@ html:not(.mob) .sheet:not([hidden]) .sheet-box{animation:arFade .18s ease-out}
   <main>
     <section class="tab on" id="tab-book">
       <div class="banner" id="rem-banner" hidden></div>
+      <div class="card" id="hero" hidden></div>
+      <div class="nudge" id="nudge" hidden></div>
       <div class="card col" id="entry">
         <div class="rowf">
           <div class="pt" id="entry-pt"></div>
@@ -445,6 +464,7 @@ html:not(.mob) .sheet:not([hidden]) .sheet-box{animation:arFade .18s ease-out}
         <select class="in" id="entry-obj" aria-label="К объекту"></select>
         <button class="btn" id="entry-go" data-act="entryGo" disabled>Записать</button>
       </div>
+      <input class="in" id="feed-q" placeholder="Поиск по записям" autocomplete="off" aria-label="Поиск по записям" style="margin-top:16px">
       <div id="feed"></div>
     </section>
 
@@ -582,7 +602,7 @@ html:not(.mob) .sheet:not([hidden]) .sheet-box{animation:arFade .18s ease-out}
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.12</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.13</div>
       </div>
     </section>
   </main>
@@ -827,13 +847,15 @@ async function liveAdapter(){
     addObject: obj => fs.addDoc(fs.collection(db, 'objects'), { ...obj, statusTs: fs.serverTimestamp(), createdAt: fs.serverTimestamp() }),
     addTx: (oid, tx) => fs.updateDoc(fs.doc(db, 'objects', oid), { transactions: fs.arrayUnion(tx) }),
     removeTx: (oid, tx) => fs.updateDoc(fs.doc(db, 'objects', oid), { transactions: fs.arrayRemove(tx) }),
-    setStatus: (oid, s) => fs.updateDoc(fs.doc(db, 'objects', oid), { status: s, statusTs: fs.serverTimestamp() })
+    setStatus: (oid, s) => fs.updateDoc(fs.doc(db, 'objects', oid), { status: s, statusTs: fs.serverTimestamp() }),
+    updateObject: (oid, patch) => fs.updateDoc(fs.doc(db, 'objects', oid), patch),
+    updateStock: (id, patch) => fs.updateDoc(fs.doc(db, 'stock', id), patch)
   };
 }
 function offlineAdapter(e){
   const fail = () => Promise.reject(new Error('нет связи с базой'));
   return { mode: 'live', subscribe(on){ on.conn('err', 'Не удалось загрузить базу. Проверь интернет и открой приложение заново.'); },
-    addCash: fail, addStock: fail, addSmeta: fail, updateSmeta: fail, deleteSmeta: fail, deleteStock: fail, deleteCash: fail, updateCash: fail, editTx: fail, addObject: fail, addTx: fail, removeTx: fail, setStatus: fail };
+    addCash: fail, addStock: fail, addSmeta: fail, updateSmeta: fail, deleteSmeta: fail, deleteStock: fail, deleteCash: fail, updateCash: fail, editTx: fail, addObject: fail, addTx: fail, removeTx: fail, setStatus: fail, updateObject: fail, updateStock: fail };
 }
 // Демо: всё в памяти, в базу ничего не пишется
 function demoAdapter(){
@@ -905,15 +927,18 @@ function demoAdapter(){
     addObject(obj){ objects.unshift({ id: uid(), ...obj }); return ok(); },
     addTx(oid, tx){ const o = objects.find(x => x.id === oid); if(o) o.transactions.push(tx); return ok(); },
     removeTx(oid, tx){ const o = objects.find(x => x.id === oid); if(o) o.transactions = o.transactions.filter(t => t.id !== tx.id); return ok(); },
-    setStatus(oid, s){ const o = objects.find(x => x.id === oid); if(o) o.status = s; return ok(); }
+    setStatus(oid, s){ const o = objects.find(x => x.id === oid); if(o) o.status = s; return ok(); },
+    updateObject(oid, patch){ const o = objects.find(x => x.id === oid); if(o) Object.assign(o, patch); return ok(); },
+    updateStock(id, patch){ const r = stock.find(x => x.id === id); if(r) Object.assign(r, patch); return ok(); }
   };
 }
 
 // ───────────── интерфейс ─────────────
 let toastTimer = null;
-function toast(msg){
+function toast(msg, act){
   const t = $('#toast'); t.textContent = msg; t.hidden = false;
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600);
+  if(act){ const b = document.createElement('button'); b.className = 'tb'; b.textContent = act.label; b.onclick = () => { t.hidden = true; clearTimeout(toastTimer); act.fn(); }; t.append(b); }
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, act ? 7000 : 2600);
 }
 const partnerOf = x => (x === 'redvan' ? 'redvan' : 'aziz');
 
@@ -976,20 +1001,48 @@ function sigLine(it){
 }
 function updateFeed(){
   const el = $('#feed');
-  const items = feedItems();
-  if(!items.length){ el.innerHTML = '<div class="empty">Пока пусто. Первая запись — в строке выше.</div>'; return; }
-  let html = '', last = '';
-  items.forEach(it => {
+  let items = feedItems();
+  const q = (S.q || '').trim().toLowerCase();
+  if(q) items = items.filter(it => (String(it.desc) + ' ' + it.tag + ' ' + NAMES[it.partner]).toLowerCase().includes(q));
+  if(!items.length){ el.innerHTML = q ? '<div class="empty">Ничего не найдено</div>' : '<div class="empty">Пока пусто. Первая запись — в строке выше.</div>'; return; }
+  const shown = items.slice(0, S.feedN || 60);
+  let html = '', last = '', open = false;
+  shown.forEach(it => {
     const k = dayKey(it.ts);
-    if(k !== last){ html += `<div class="day">${dayTitle(it.ts)}<span>${weekday(it.ts)}</span></div>`; last = k; }
-    const open = S.openRow === it.key;
-    html += `<div class="row ${open ? 'open' : ''}" data-act="row" data-key="${esc(it.key)}">
+    if(k !== last){ if(open) html += '</div>'; html += `<div class="day">${dayTitle(it.ts)}<span class="hint">${weekday(it.ts)}</span></div><div class="dg">`; open = true; last = k; }
+    const isOpen = S.openRow === it.key;
+    html += `<div class="row ${isOpen ? 'open' : ''}" data-act="row" data-key="${esc(it.key)}">
       <div class="bd">${LET[it.partner]}</div>
       <div class="rb"><div class="rd">${esc(it.desc)}</div><div class="rt">${esc(it.tag)}</div>${sigLine(it)}
         <div class="acts"><div class="sig" style="margin-bottom:4px">Внёс: ${esc(actor(it.by) || '—')} · ${dtm(it.ts)}</div>${it.locked ? '<span class="rt">Заблокировано</span>' : `<button class="link-ed" data-act="editItem" data-key="${esc(it.key)}">Изменить</button><button class="link-del" data-act="delItem" data-key="${esc(it.key)}">Удалить</button>`}</div></div>
-      <div class="ra">${signed(it.amount, it.plus)}</div></div>`;
+      <div class="ra ${it.plus ? 'pos' : ''}">${signed(it.amount, it.plus)}</div></div>`;
   });
+  if(open) html += '</div>';
+  if(items.length > shown.length) html += `<button class="btn2" data-act="feedMore" style="margin-top:12px">Показать ещё (${items.length - shown.length})</button>`;
   el.innerHTML = html;
+}
+// Касса по дням за последние дни: остаток на конец каждого дня
+function cashSeries(days){
+  const evs = [];
+  S.cashbox.forEach(c => { const t = tsNum(c.ts); if(t) evs.push([t, (c.type === 'contribution' ? 1 : -1) * (Number(c.amount) || 0)]); });
+  realObjects().forEach(o => txOf(o).forEach(t => { if(t.type !== 'info' && Number(t.ts)) evs.push([Number(t.ts), (t.type === 'income' ? 1 : -1) * (Number(t.amount) || 0)]); }));
+  const end = new Date(); end.setHours(23, 59, 59, 999);
+  const out = [];
+  for(let i = days - 1; i >= 0; i--){ const cut = end.getTime() - i * 86400000; out.push(evs.reduce((a, e) => e[0] <= cut ? a + e[1] : a, 0)); }
+  return out;
+}
+function updateHero(){
+  const el = $('#hero'); if(!el) return;
+  if(!S.cashbox.length && !realObjects().length){ el.hidden = true; return; }
+  el.hidden = false;
+  const ser = cashSeries(14), lo = Math.min(...ser), hi = Math.max(...ser), W = 300, H = 46, rng = (hi - lo) || 1;
+  const pts = ser.map((v, i) => [i / (ser.length - 1) * W, H - 4 - (v - lo) / rng * (H - 10)]);
+  const line = pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ');
+  const m = calc(), st = ['aziz', 'redvan'].map(p => partnerStats(p, m).owed);
+  const html = `<div class="hero-h"><span>Касса за 14 дней</span><span class="num">${signed(ser[ser.length - 1] - ser[0], ser[ser.length - 1] >= ser[0])}</span></div>
+    <svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><path d="${line} L${W} ${H} L0 ${H}Z" fill="currentColor" opacity=".07"/><path d="${line}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+    <div class="pair"><div>Азиз получает<b class="${st[0] < 0 ? 'neg' : ''}">${fmt(st[0])}</b></div><div>Редван получает<b class="${st[1] < 0 ? 'neg' : ''}">${fmt(st[1])}</b></div></div>`;
+  if(el.dataset.h !== html){ el.innerHTML = html; el.dataset.h = html; }
 }
 function updateObjOptions(){
   const sel = $('#entry-obj'); const cur = S.entry.objectId;
@@ -1082,6 +1135,12 @@ function remCheck(){
   const b = $('#rem-banner'); if(!b) return;
   const due = remDue();
   b.hidden = !due; if(due) b.textContent = REM_TEXT;
+  const nd = $('#nudge');
+  if(nd){
+    const show = !due && (S.conn === 'ok' || S.conn === 'demo') && (S.cashbox.length || realObjects().length) && new Date().getHours() >= 10 && !hasToday();
+    nd.hidden = !show;
+    if(show) nd.textContent = 'Сегодня записей нет' + (S.rem.on ? ', напомню в ' + pad2(S.rem.hour) + ':00' : '');
+  }
   // местное уведомление нужно, только если серверное не подключено
   if(due && !S.rem.push && remSupported() && Notification.permission === 'granted' && LS.get('ar_rem_last') !== dayKey(Date.now())){
     LS.set('ar_rem_last', dayKey(Date.now())); remNotify('АР · Тетрадь', REM_TEXT).catch(() => {});
@@ -1391,7 +1450,7 @@ function updateMore(){
   updateModelCard(); updateLook();
 }
 function updateAll(){
-  updateHeader(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateArchive(); updateStock(); updateSmeta(); updateCal(); updateCharts(); updateRem(); remCheck(); drRender();
+  updateHeader(); updateHero(); updateFeed(); updateObjOptions(); updateEntry(); updateObjects(); updateSums(); updateMore(); updateSheetLive(); updateReportMonths(); updateCabinet(); updateAi(); updateArchive(); updateStock(); updateSmeta(); updateCal(); updateCharts(); updateRem(); remCheck(); drRender();
 }
 
 // ───────────── записи ─────────────
@@ -1430,8 +1489,16 @@ function entryGo(){
   const keepText = $('#entry-text').value;
   $('#entry-text').value = ''; S.entry.kind = null; S.entry.src = 'cash';
   // не записалось: возвращаем текст в поле, чтобы не набирать заново
-  guard(job, 'Записано', () => { const f = $('#entry-text'); if(!f.value){ f.value = keepText; updateEntry(); } });
+  guard(job, null, () => { const f = $('#entry-text'); if(!f.value){ f.value = keepText; updateEntry(); } });
+  toast('Записано', { label: 'Отменить', fn: () => undoEntry(now) });
   updateEntry();
+}
+// Отмена только что сделанной записи (в течение нескольких секунд после «Записать»)
+function undoEntry(ts){
+  const items = feedItems().filter(i => i.ts === ts || i.ts === ts + 1);
+  if(!items.length){ toast('Запись ещё не появилась, попробуй через секунду'); return; }
+  if(items.some(i => i.locked)){ toast('Запись заблокирована'); return; }
+  guard(() => Promise.all(items.map(g => g.src === 'cash' ? adapter.deleteCash(g.id) : adapter.removeTx(g.oid, g.rec))), 'Запись отменена');
 }
 function findItem(key){ return feedItems().find(i => i.key === key); }
 const pairItems = pid => feedItems().filter(i => i.rec && i.rec.pairId === pid);
@@ -1493,7 +1560,13 @@ function saveEdit(){
 }
 
 // ───────────── окно объекта ─────────────
-function openSheet(html){ $('#sheet-box').innerHTML = html; $('#sheet').hidden = false; }
+// Одна служебная запись в истории браузера: системная кнопка «назад» закрывает окно, а не выходит из приложения
+function openSheet(html){
+  $('#sheet-box').innerHTML = html;
+  if(!S.hs){ try { history.pushState({ ar: 1 }, ''); S.hs = true; } catch(e){} }
+  $('#sheet').hidden = false;
+}
+window.addEventListener('popstate', () => { S.hs = false; if(!$('#sheet').hidden) dismissSheet(); });
 // closeSheet() — окно закрыто по делу (записали, удалили): черновик этого окна стирается.
 // dismissSheet() — закрыли крестиком или кликом мимо: введённое сохраняется как «незаконченное».
 function closeSheet(keep){
@@ -1529,7 +1602,7 @@ function renderObjSheet(){
     o.note ? ['Заметка', esc(o.note)] : null,
     ['Приход', fmt(inc)], ['Расход', fmt(exp)], ['Итог по объекту', fmt(inc - exp)]
   ].filter(Boolean).map(([a, b]) => `<div class="kv"><span>${a}</span><span>${b}</span></div>`).join('')
-    + (o.locked ? '<div class="hint" style="margin-top:6px">Объект заблокирован в старой CRM: менять нельзя.</div>' : '');
+    + (o.locked ? '<div class="hint" style="margin-top:6px">Объект заблокирован в старой CRM: менять нельзя.</div>' : '<button class="btn3" data-act="objEdit">Изменить данные объекта</button>');
   if(!$('#sh-add').dataset.ready){
     $('#sh-add').dataset.ready = '1';
     $('#sh-add').innerHTML = `<div class="card col">
@@ -1592,6 +1665,33 @@ function setStatus(s){
   guard(() => adapter.setStatus(o.id, s), STATUS[s]);
 }
 
+// ───────────── правка объекта ─────────────
+function openObjEdit(){
+  const o = S.objects.find(x => x.id === (S.sheet && S.sheet.id)); if(!o || o.locked) return;
+  S.sheet = { kind: 'oedit', id: o.id };
+  openSheet(`<div class="sheet-h"><h3>Данные объекта</h3><button class="x" data-act="closeSheet" aria-label="Закрыть">✕</button></div>
+    <div class="col">
+      <div class="fl"><span class="hint">Название</span><input class="in" id="oe-name" value="${esc(o.name)}" autocomplete="off"></div>
+      <div class="fl"><span class="hint">Адрес</span><input class="in" id="oe-addr" value="${esc(o.addr || '')}" autocomplete="off"></div>
+      <div class="two"><div class="fl"><span class="hint">Площадь, м²</span><input class="in" id="oe-area" inputmode="decimal" value="${esc(o.area || '')}" autocomplete="off"></div>
+        <div class="fl"><span class="hint">Дата</span><input class="in" id="oe-date" type="date" value="${esc(o.date || '')}"></div></div>
+      <div class="fl"><span class="hint">Заметка</span><input class="in" id="oe-note" value="${esc(o.note || '')}" autocomplete="off"></div>
+      <div class="rowf"><div class="hint">Кто ведёт</div><div class="pt" id="oe-pt"></div></div>
+      <button class="btn" data-act="objSave">Сохранить</button>
+    </div>`);
+  S.oePartner = partnerOf(o.partner); renderPT($('#oe-pt'), S.oePartner, 'oep');
+}
+function saveObjEdit(){
+  const id = S.sheet && S.sheet.id, o = S.objects.find(x => x.id === id); if(!o || o.locked) return;
+  const name = $('#oe-name').value.replace(/\s+/g, ' ').trim();
+  if(!name){ toast('Введи название'); return; }
+  const patch = { name, addr: $('#oe-addr').value.trim(), area: parseFloat(String($('#oe-area').value).replace(',', '.')) || 0, date: $('#oe-date').value, note: $('#oe-note').value.trim(), partner: S.oePartner };
+  const jobs = [() => adapter.updateObject(id, patch)];
+  // название объекта дублируется в записях склада: обновляем и там
+  if(name !== o.name) S.stock.filter(r => r.objectId === id).forEach(r => jobs.push(() => adapter.updateStock(r.id, { objectName: name })));
+  guard(() => Promise.all(jobs.map(j => j())), 'Сохранено');
+  closeSheet(true); openObj(id);
+}
 // ───────────── новый объект ─────────────
 const NEW = { type: 'measure', partner: 'aziz' };
 function openNewObj(){
@@ -2130,6 +2230,8 @@ const ACT = {
   stDel: el => stockDel(el.dataset.id),
   stMin: el => stockSaveMin(el.dataset.key),
   row: (el, e) => { if(e.target.closest('[data-act="delItem"],[data-act="editItem"]')) return; const k = el.dataset.key; S.openRow = S.openRow === k ? null : k; updateFeed(); },
+  feedMore: () => { S.feedN = (S.feedN || 60) + 60; updateFeed(); },
+  objEdit: () => openObjEdit(), objSave: () => saveObjEdit(),
   delItem: el => delItem(el.dataset.key),
   editItem: el => openEdit(el.dataset.key),
   saveEdit,
@@ -2146,6 +2248,7 @@ const ACT = {
   aiApprove: el => aiApprove(el.dataset.id),
   aiReject: el => aiReject(el.dataset.id),
   edp: el => { S.edit.partner = el.dataset.p; renderPT($('#ed-pt'), S.edit.partner, 'edp'); },
+  oep: el => { S.oePartner = el.dataset.p; renderPT($('#oe-pt'), S.oePartner, 'oep'); },
   src: el => { S.entry.src = el.dataset.s; updateEntry(); },
   calNav, calDay, remOn, remOff, remTest, chTab, chNav, aiPlus, aiFileDel, aiModelSet,
   archNow: () => archNow(), archXlsx: el => archXlsx(el), archJson: el => archJson(el),
@@ -2170,6 +2273,7 @@ document.addEventListener('click', e => {
 $('#sheet').addEventListener('click', e => { if(e.target.id === 'sheet') dismissSheet(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && !$('#sheet').hidden) dismissSheet(); });
 $('#entry-text').addEventListener('input', () => { S.entry.kind = null; updateEntry(); });
+$('#feed-q').addEventListener('input', e => { S.q = e.target.value; S.feedN = 60; updateFeed(); });
 $('#entry-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); entryGo(); } });
 $('#ai-text').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); aiSend(); } });
 $('#ai-model').addEventListener('change', e => aiModelSet({ dataset: { id: e.target.value } }));
