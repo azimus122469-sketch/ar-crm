@@ -582,7 +582,7 @@ html:not(.mob) .sheet:not([hidden]) .sheet-box{animation:arFade .18s ease-out}
           <div class="lbl">Установка на телефон</div>
           <div class="hint">iPhone: Safari, кнопка «Поделиться», «На экран Домой».<br>Android: Chrome, меню, «Установить приложение».</div>
         </div>
-        <div class="hint" style="text-align:center">АР · Тетрадь v5.11</div>
+        <div class="hint" style="text-align:center">АР · Тетрадь v5.12</div>
       </div>
     </section>
   </main>
@@ -1123,7 +1123,11 @@ async function remHour(el){
 async function remTest(){
   try {
     if(Notification.permission !== 'granted') throw new Error('нет разрешения');
-    if(S.rem.push){ await api('/push/test', {}); S.rem.msg = 'Тест отправлен с сервера, он придёт через несколько секунд.'; }
+    if(S.rem.push){
+      try { await api('/push/test', {}); }
+      catch(e){ if(e.status !== 404) throw e; await remPushSync(); await api('/push/test', {}); }
+      S.rem.msg = 'Тест отправлен с сервера, он придёт через несколько секунд. Если не пришёл: на iPhone приложение должно быть добавлено «На экран Домой».';
+    }
     else { await remNotify('АР · Тетрадь', 'Проверка: уведомления работают.', 'ar-test'); S.rem.msg = 'Тест показан на этом телефоне.'; }
   } catch(e){ S.rem.msg = 'Не получилось: ' + e.message; }
   updateRem();
@@ -3246,7 +3250,14 @@ document.addEventListener('change', e => {
     conn: (c, msg) => { S.conn = c; S.connMsg = msg || ''; updateHeader(); updateAi(); }
   });
   if(S.dev.token){ cabPull(); aiPull(); }
-  if(S.rem.on && remSupported() && 'PushManager' in window){ navigator.serviceWorker.ready.then(r => r.pushManager.getSubscription()).then(sub => { S.rem.push = !!sub && S.dev.token !== ''; updateRem(); remCheck(); }).catch(() => {}); }
+  // При каждом запуске заново отправляем подписку на сервер: если там её нет (удалена, не дошла, телефон сменил адрес подписки), она восстановится.
+  // «Фоновые уведомления включены» показываем только после ответа сервера, а не по одному наличию подписки в браузере.
+  if(S.rem.on && remSupported()){
+    if(Notification.permission !== 'granted'){ S.rem.msg = 'Разрешение на уведомления отозвано в настройках телефона. Включи его и нажми «Включить напоминание» ещё раз.'; updateRem(); }
+    else if('PushManager' in window && S.dev.token){
+      remPushSync().then(ok => { S.rem.push = !!ok; }).catch(e => { S.rem.push = false; S.rem.msg = 'Фоновые уведомления не подключились (' + e.message + '). Напоминания работают, когда приложение открыто.'; }).finally(() => { updateRem(); remCheck(); });
+    }
+  }
   setInterval(remCheck, 60000);
   document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') remCheck(); });
   let tick = 0;
